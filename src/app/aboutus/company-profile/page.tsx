@@ -102,16 +102,16 @@ export default function CompanyProfilePage() {
 
           {/* Step Indicator */}
           <div className="flex items-center justify-center relative mb-8">
-            {/* Connecting Line */}
-            <div className="absolute left-1/2 -translate-x-1/2 w-[calc(100%-80px)] h-0.5 bg-gray-700 top-4" />
-            
             <div className="flex items-center justify-between w-full relative z-10 max-w-[200px]">
-              <div className="flex flex-col items-center">
+              {/* Connecting Line */}
+              <div className="absolute left-8 right-8 h-0.5 bg-gray-700 top-4 z-0" />
+              
+              <div className="flex flex-col items-center relative z-10">
                 <div className="w-8 h-8 rounded-full bg-gray-500 border-2 border-gray-500" />
                 <span className="text-xs mt-2">Company info.</span>
               </div>
 
-              <div className="flex flex-col items-center">
+              <div className="flex flex-col items-center relative z-10">
                 <div className="w-8 h-8 rounded-full border-2 border-gray-400 bg-white" />
                 <span className="text-xs mt-2">KYC Verification</span>
               </div>
