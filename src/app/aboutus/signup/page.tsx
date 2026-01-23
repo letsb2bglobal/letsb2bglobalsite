@@ -2,6 +2,8 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
+import AuthLayout from '@/components/AuthLayout';
 
 export default function SignUpPage() {
   const router = useRouter();
@@ -102,136 +104,112 @@ export default function SignUpPage() {
   const subLogoText = "GLOBAL";
 
   return (
-    <div className="flex min-h-screen w-full font-sans bg-white">
-      {/* Left Section */}
-      <div className="hidden md:flex flex-col items-center justify-center w-1/2 bg-[#f4f5f7] p-12">
-        <div className="w-full max-w-md flex flex-col items-center">
-          <div className="w-64 h-48 bg-[#cbd5e0] rounded-sm flex items-center justify-center relative overflow-hidden mb-12">
-             {/* Placeholder Image Icon Style */}
-             <svg width="100%" height="100%" viewBox="0 0 200 150" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <rect width="200" height="150" fill="#CBD5E0"/>
-                <circle cx="70" cy="50" r="8" fill="white"/>
-                <path d="M0 150L60 90L100 120L160 60L200 100V150H0Z" fill="white" fillOpacity="0.6"/>
-             </svg>
-          </div>
-          <button className="w-full bg-[#0066ff] hover:bg-blue-700 text-white font-semibold py-4 px-8 rounded-md transition-colors text-xl">
-            List Your Business
-          </button>
+    <AuthLayout>
+      {/* Logo */}
+      <div className="flex items-center justify-center mb-8">
+        <Image 
+          src="/images/logo.png" 
+          alt="Company Logo" 
+          width={120} 
+          height={48}
+          className="object-contain mr-3"
+        />
+        <div className="flex flex-col">
+          <span className="text-2xl font-bold text-[#1e293b] tracking-tight">{logoText}</span>
+          <span className="text-[10px] tracking-[0.4em] text-[#94a3b8] -mt-1">{subLogoText}</span>
         </div>
       </div>
 
-      {/* Right Section */}
-      <div className="w-full md:w-1/2 flex flex-col items-center justify-center p-8 md:p-16">
-        <div className="w-full max-w-sm">
-          {/* Logo */}
-          <div className="flex items-center justify-center mb-10">
-            <div className="relative mr-3">
-               <svg width="48" height="48" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M30 20L80 50L30 80V20Z" fill="#0066ff" />
-                <circle cx="20" cy="30" r="4" fill="#0066ff" />
-                <circle cx="15" cy="45" r="4" fill="#0066ff" />
-                <rect x="18" y="55" width="8" height="8" fill="#ff6600" />
-              </svg>
-            </div>
-            <div className="flex flex-col">
-              <h1 className="text-2xl font-bold tracking-tight text-gray-800 leading-none">{logoText}</h1>
-              <span className="text-[10px] tracking-[0.3em] text-gray-400 mt-1 text-center">{subLogoText}</span>
-            </div>
-          </div>
-
-          {/* Form Header */}
-          <div className="text-center mb-8">
-            <h2 className="text-2xl font-semibold text-gray-900 mb-2">SignUp</h2>
-            <p className="text-sm text-gray-500">Lorem Ipsum is simply dummy text of the printing</p>
-          </div>
-
-          {/* Form Fields */}
-          <form className="space-y-4" onSubmit={handleSubmit}>
-            <div className="relative">
-              <input 
-                type="text" 
-                name="fullName"
-                value={formData.fullName}
-                onChange={handleInputChange}
-                placeholder="Full Name" 
-                className={`w-full px-4 py-3 border rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm placeholder-gray-400 ${
-                  errors.fullName ? 'border-red-500' : 'border-gray-200'
-                }`}
-              />
-              {errors.fullName && (
-                <p className="text-red-500 text-xs mt-1">{errors.fullName}</p>
-              )}
-            </div>
-            <div className="relative">
-              <input 
-                type="email" 
-                name="email"
-                value={formData.email}
-                onChange={handleInputChange}
-                placeholder="Email" 
-                className={`w-full px-4 py-3 border rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm placeholder-gray-400 ${
-                  errors.email ? 'border-red-500' : 'border-gray-200'
-                }`}
-              />
-              {errors.email && (
-                <p className="text-red-500 text-xs mt-1">{errors.email}</p>
-              )}
-            </div>
-            <div className="relative">
-              <input 
-                type="password" 
-                name="password"
-                value={formData.password}
-                onChange={handleInputChange}
-                placeholder="Password" 
-                className={`w-full px-4 py-3 border rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm placeholder-gray-400 ${
-                  errors.password ? 'border-red-500' : 'border-gray-200'
-                }`}
-              />
-              {errors.password && (
-                <p className="text-red-500 text-xs mt-1">{errors.password}</p>
-              )}
-            </div>
-
-            {submitError && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded-md text-sm">
-                {submitError}
-              </div>
-            )}
-
-            {/* Checkbox */}
-            <div className="flex items-center pt-2">
-              <input 
-                type="checkbox" 
-                name="isBusinessType"
-                checked={formData.isBusinessType}
-                onChange={handleInputChange}
-                id="business-type" 
-                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-              />
-              <label htmlFor="business-type" className="ml-2 text-xs text-gray-700">
-                Are you a Hotel, DMC, Event Management
-              </label>
-            </div>
-
-            {/* Register Button */}
-            <button 
-              type="submit"
-              disabled={isLoading}
-              className="w-full bg-[#ebf2ff] hover:bg-blue-100 text-[#0066ff] font-bold py-4 rounded-md transition-colors mt-4 uppercase tracking-wider text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isLoading ? 'Registering...' : 'REGISTER'}
-            </button>
-          </form>
-
-          {/* Footer Link */}
-          <div className="text-center mt-8">
-            <p className="text-sm text-gray-600">
-              Already have an account? <a href="/aboutus/signin" className="font-bold text-gray-900 underline">Login</a>
-            </p>
-          </div>
-        </div>
+      {/* Header - Fixed Height */}
+      <div className="text-center mb-8" style={{ minHeight: '80px' }}>
+        <h2 className="text-2xl font-semibold text-[#1e293b] mb-2">SignUp</h2>
+        <p className="text-sm text-[#64748b] text-center">
+          Lorem Ipsum is simply dummy text of the printing
+        </p>
       </div>
-    </div>
+
+      {/* Form - Takes remaining space */}
+      <form className="w-full space-y-4 flex-1" onSubmit={handleSubmit}>
+        <div className="relative">
+          <input 
+            type="text" 
+            name="fullName"
+            value={formData.fullName}
+            onChange={handleInputChange}
+            placeholder="Full Name" 
+            className={`w-full px-4 py-3 border rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-600 placeholder-[#94a3b8] ${
+              errors.fullName ? 'border-red-500' : 'border-[#e2e8f0]'
+            }`}
+          />
+          {errors.fullName && (
+            <p className="text-red-500 text-xs mt-1">{errors.fullName}</p>
+          )}
+        </div>
+        <div className="relative">
+          <input 
+            type="email" 
+            name="email"
+            value={formData.email}
+            onChange={handleInputChange}
+            placeholder="Email" 
+            className={`w-full px-4 py-3 border rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-600 placeholder-[#94a3b8] ${
+              errors.email ? 'border-red-500' : 'border-[#e2e8f0]'
+            }`}
+          />
+          {errors.email && (
+            <p className="text-red-500 text-xs mt-1">{errors.email}</p>
+          )}
+        </div>
+        <div className="relative">
+          <input 
+            type="password" 
+            name="password"
+            value={formData.password}
+            onChange={handleInputChange}
+            placeholder="Password" 
+            className={`w-full px-4 py-3 border rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-600 placeholder-[#94a3b8] ${
+              errors.password ? 'border-red-500' : 'border-[#e2e8f0]'
+            }`}
+          />
+          {errors.password && (
+            <p className="text-red-500 text-xs mt-1">{errors.password}</p>
+          )}
+        </div>
+
+        {submitError && (
+          <div className="bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded-md text-sm">
+            {submitError}
+          </div>
+        )}
+
+        {/* Checkbox */}
+        <div className="flex items-center pt-2">
+          <input 
+            type="checkbox" 
+            name="isBusinessType"
+            checked={formData.isBusinessType}
+            onChange={handleInputChange}
+            id="business-type" 
+            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+          />
+          <label htmlFor="business-type" className="ml-2 text-xs text-gray-700">
+            Are you a Hotel, DMC, Event Management
+          </label>
+        </div>
+
+        <button 
+          type="submit"
+          disabled={isLoading}
+          className="w-full py-4 bg-[#eff6ff] text-[#1e293b] font-bold text-sm rounded-md hover:bg-blue-100 transition-colors mt-4 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {isLoading ? 'Registering...' : 'REGISTER'}
+        </button>
+      </form>
+
+      {/* Footer - Fixed Height */}
+      <div className="mt-8 text-sm text-gray-600 text-center">
+        Already have an account? <a href="/aboutus/signin" className="text-black font-bold hover:underline">Login</a>
+      </div>
+    </AuthLayout>
   );
 }
