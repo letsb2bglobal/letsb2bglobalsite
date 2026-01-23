@@ -76,9 +76,12 @@ export default function CompanyProfilePage() {
             width={36}
             height={36}
           />
-          <span className="text-lg font-medium">
-            Let’s <span className="font-bold">B2B</span>
-          </span>
+          <div className="flex flex-col">
+            <span className="text-lg font-medium">
+              Let's <span className="font-bold">B2B</span>
+            </span>
+            <span className="text-[10px] tracking-[0.4em] text-[#94a3b8] -mt-1">GLOBAL</span>
+          </div>
         </div>
 
         <div className="w-6 h-6 bg-black rounded-full flex items-center justify-center text-white text-sm font-medium">?</div>
@@ -98,17 +101,20 @@ export default function CompanyProfilePage() {
           </div>
 
           {/* Step Indicator */}
-          <div className="flex items-center justify-center gap-6 mb-8">
-            <div className="flex flex-col items-center">
-              <div className="w-4 h-4 rounded-full bg-gray-400" />
-              <span className="text-xs mt-1">Company info.</span>
-            </div>
+          <div className="flex items-center justify-center relative mb-8">
+            {/* Connecting Line */}
+            <div className="absolute left-1/2 -translate-x-1/2 w-[calc(100%-80px)] h-0.5 bg-gray-700 top-4" />
+            
+            <div className="flex items-center justify-between w-full relative z-10 max-w-[200px]">
+              <div className="flex flex-col items-center">
+                <div className="w-8 h-8 rounded-full bg-gray-500 border-2 border-gray-500" />
+                <span className="text-xs mt-2">Company info.</span>
+              </div>
 
-            <div className="w-20 h-px bg-gray-300" />
-
-            <div className="flex flex-col items-center">
-              <div className="w-4 h-4 rounded-full border border-gray-400" />
-              <span className="text-xs mt-1">KYC Verification</span>
+              <div className="flex flex-col items-center">
+                <div className="w-8 h-8 rounded-full border-2 border-gray-400 bg-white" />
+                <span className="text-xs mt-2">KYC Verification</span>
+              </div>
             </div>
           </div>
 

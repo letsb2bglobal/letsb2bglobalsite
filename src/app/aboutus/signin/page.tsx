@@ -99,7 +99,10 @@ export default function SignInPage() {
           className="object-contain mr-3"
         />
         <div className="flex flex-col">
-          <span className="text-2xl font-bold text-[#1e293b] tracking-tight">{logoText}</span>
+          <span className="text-2xl tracking-tight text-[#1e293b]">
+            <span className="font-normal">LET'S</span>{' '}
+            <span className="font-bold">B2B</span>
+          </span>
           <span className="text-[10px] tracking-[0.4em] text-[#94a3b8] -mt-1">{subLogoText}</span>
         </div>
       </div>
