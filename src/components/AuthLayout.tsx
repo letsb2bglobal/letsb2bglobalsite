@@ -16,9 +16,11 @@ export default function AuthLayout({
       </div>
 
       {/* Right Section */}
-      <div className="flex items-center justify-center">
-        <div className="w-full max-w-md bg-white p-8 rounded-lg">
-          {children}
+      <div className="flex items-center justify-center p-8">
+        <div className="w-full max-w-md bg-white rounded-lg" style={{ minHeight: '600px' }}>
+          <div className="p-8 flex flex-col h-full">
+            {children}
+          </div>
         </div>
       </div>
     </div>
