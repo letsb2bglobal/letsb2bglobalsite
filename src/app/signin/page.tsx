@@ -4,6 +4,8 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import AuthLayout from '@/components/AuthLayout';
+import { setAuthData } from '@/lib/auth';
+import { checkUserProfile } from '@/lib/profile';
 
 export default function SignInPage() {
   const router = useRouter();
@@ -54,31 +56,47 @@ export default function SignInPage() {
     setSubmitError('');
     
     try {
-      // TODO: Replace with actual API call
-      // const response = await fetch('/api/auth/login', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(formData)
-      // });
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://api.letsb2b.com';
+      const response = await fetch(`${apiUrl}/api/auth/local`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          identifier: formData.email,
+          password: formData.password
+        })
+      });
       
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const data = await response.json();
       
-      // TODO: Handle actual response
-      // if (response.ok) {
-      //   const data = await response.json();
-      //   // Store token, redirect, etc.
-      //   router.push('/dashboard');
-      // } else {
-      //   const error = await response.json();
-      //   setSubmitError(error.message || 'Login failed');
-      // }
-      
-      // For now, just redirect on success
-      router.push('/dashboard');
+      if (response.ok) {
+        // Store JWT token and user data in cookies using js-cookie
+        setAuthData(data.jwt, data.user);
+        
+        // Check if user profile exists
+        try {
+          const profile = await checkUserProfile(data.user.id);
+          
+          if (profile) {
+            // Profile exists, redirect to dashboard
+            router.push('/dashboard');
+          } else {
+            // Profile doesn't exist, redirect to complete profile page
+            router.push('/company-profile');
+          }
+        } catch (profileError) {
+          console.error('Error checking profile:', profileError);
+          // If there's an error checking profile, still redirect to complete profile page
+          router.push('/company-profile');
+        }
+      } else {
+        // Handle error response
+        const errorMessage = data?.error?.message || 'Invalid email or password';
+        setSubmitError(errorMessage);
+      }
       
     } catch (error) {
-      setSubmitError('Something went wrong. Please try again.');
+      console.error('Login error:', error);
+      setSubmitError('Network error. Please check your connection and try again.');
     } finally {
       setIsLoading(false);
     }
