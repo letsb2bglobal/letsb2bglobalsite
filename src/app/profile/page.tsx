@@ -5,6 +5,21 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import ProtectedRoute, { useAuth } from '@/components/ProtectedRoute';
 import { checkUserProfile, updateUserProfile, type UserProfile } from '@/lib/profile';
+import { authenticatedFetch } from '@/lib/auth';
+
+interface Enquiry {
+  id: number;
+  documentId: string;
+  fromUserId: number;
+  toUserId: number;
+  title: string;
+  description: string;
+  destination: string;
+  messagestatus: string;
+  createdAt: string;
+  updatedAt: string;
+  publishedAt: string;
+}
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -31,6 +46,48 @@ export default function ProfilePage() {
     website: '',
     whatsapp: ''
   });
+
+  // Enquiry states
+  const [showEnquiries, setShowEnquiries] = useState(false);
+  const [enquiries, setEnquiries] = useState<Enquiry[]>([]);
+  const [loadingEnquiries, setLoadingEnquiries] = useState(false);
+
+ const fetchEnquiries = async () => {
+  if (!user?.id) return;
+
+  setLoadingEnquiries(true);
+  setShowEnquiries(true);
+
+  try {
+    const apiUrl =
+      `https://api.letsb2b.com/api/enquiries` +
+      `?filters[$or][0][fromUserId][$eq]=${user.id}` +
+      `&filters[$or][1][toUserId][$eq]=${user.id}` +
+      `&sort=createdAt:desc`;
+
+    const response = await fetch(apiUrl, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json"
+        // ❌ NO Authorization header
+      }
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      console.error("Strapi error:", result);
+      return;
+    }
+
+    setEnquiries(result.data || []);
+  } catch (error) {
+    console.error("Error fetching enquiries:", error);
+  } finally {
+    setLoadingEnquiries(false);
+  }
+};
+
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -108,6 +165,7 @@ export default function ProfilePage() {
           </div>
           <div className="flex items-center gap-4">
              <button onClick={() => router.push('/dashboard')} className="text-gray-600 hover:text-gray-900 text-sm font-medium">Dashboard</button>
+             <button onClick={() => router.push('/messages')} className="text-gray-600 hover:text-gray-900 text-sm font-medium">Messages</button>
              <div className="h-8 w-8 rounded-full bg-gray-200 overflow-hidden border border-gray-300">
                <div className="w-full h-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-xs">
                  {user?.username?.substring(0, 2).toUpperCase()}
@@ -145,6 +203,7 @@ export default function ProfilePage() {
                          <div className="flex items-center gap-2">
                             <h1 className="text-3xl font-bold text-gray-900">{profile?.company_name}</h1>
                             <span className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs font-semibold rounded uppercase">{profile?.user_type}</span>
+                             <span className="px-2 py-0.5 bg-blue-50 text-blue-600 text-[10px] font-bold rounded border border-blue-100 ml-2 uppercase">ID: {profile?.userId}</span>
                          </div>
                          <p className="text-lg text-gray-600 mt-1">{profile?.category}</p>
                          <p className="text-gray-500 text-sm mt-1">{profile?.city}, {profile?.country} • <span className="text-blue-600 font-semibold hover:underline cursor-pointer">Contact info</span></p>
@@ -157,8 +216,15 @@ export default function ProfilePage() {
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
                             Edit Profile
                          </button>
-                         <button className="px-4 py-1.5 border border-blue-600 text-blue-600 font-semibold rounded-full hover:bg-blue-50 transition-colors">Resources</button>
-                      </div>
+                          <button 
+                            onClick={fetchEnquiries}
+                            className="px-4 py-1.5 bg-indigo-600 text-white font-semibold rounded-full hover:bg-indigo-700 transition-all shadow-md hover:shadow-lg flex items-center gap-2"
+                          >
+                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
+                             Enquiries
+                          </button>
+                          <button className="px-4 py-1.5 border border-blue-600 text-blue-600 font-semibold rounded-full hover:bg-blue-50 transition-colors">Resources</button>
+                       </div>
                    </div>
                  ) : (
                    <div className="space-y-4 animate-in fade-in duration-300">
@@ -333,6 +399,94 @@ export default function ProfilePage() {
               </div>
            </div>
         </div>
+
+        {/* Enquiry Modal */}
+        {showEnquiries && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-300">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[80vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-300">
+              <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gradient-to-r from-indigo-50 to-white">
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900">Your Enquiries</h2>
+                  <p className="text-sm text-gray-500">View and manage your business messages</p>
+                </div>
+                <button 
+                  onClick={() => setShowEnquiries(false)}
+                  className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                >
+                  <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+              </div>
+              
+              <div className="flex-1 overflow-y-auto p-6 space-y-4">
+                {loadingEnquiries ? (
+                  <div className="flex flex-col items-center justify-center py-12">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mb-4"></div>
+                    <p className="text-gray-500 font-medium">Fetching your messages...</p>
+                  </div>
+                ) : enquiries.length > 0 ? (
+                  enquiries.map((enquiry) => (
+                    <div key={enquiry.id} className="p-4 rounded-xl border border-gray-100 hover:border-indigo-200 hover:bg-indigo-50/30 transition-all group">
+                      <div className="flex justify-between items-start mb-2">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold">
+                            {enquiry.fromUserId === user?.id ? 'TO' : 'FR'}
+                          </div>
+                          <div>
+                            <h4 className="font-bold text-gray-900">
+                              {enquiry.title || 'No Subject'}
+                            </h4>
+                            <p className="text-xs text-gray-500">
+                              {new Date(enquiry.createdAt).toLocaleString()}
+                            </p>
+                          </div>
+                        </div>
+                        <span className={`px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider ${
+                          enquiry.fromUserId === user?.id 
+                            ? 'bg-blue-100 text-blue-700' 
+                            : 'bg-green-100 text-green-700'
+                        }`}>
+                          {enquiry.fromUserId === user?.id ? 'Sent' : 'Received'}
+                        </span>
+                      </div>
+                      <p className="text-gray-700 text-sm leading-relaxed ml-12">
+                        {enquiry.description}
+                      </p>
+                      {enquiry.destination && (
+                        <p className="text-[10px] text-gray-400 mt-2 ml-12 flex items-center gap-1 font-bold italic uppercase">
+                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                          {enquiry.destination}
+                        </p>
+                      )}
+                      <div className="mt-3 flex justify-end">
+                        <button className="text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          View Details
+                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path></svg>
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-12">
+                    <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <svg className="w-10 h-10 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path></svg>
+                    </div>
+                    <p className="text-gray-500 font-medium">No enquiries yet</p>
+                    <p className="text-sm text-gray-400">Your business inquiries will appear here</p>
+                  </div>
+                )}
+              </div>
+              
+              <div className="p-4 bg-gray-50 border-t border-gray-100 flex justify-end">
+                <button 
+                  onClick={() => setShowEnquiries(false)}
+                  className="px-6 py-2 bg-white border border-gray-200 text-gray-600 font-bold rounded-lg hover:bg-gray-50 transition-colors text-sm"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Floating Save Indicator */}
         {saving && (

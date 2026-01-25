@@ -1,65 +1,290 @@
-import Image from "next/image";
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/components/ProtectedRoute'; // Using the hook
+import { getAllUserProfiles, checkUserProfile, type UserProfile } from '@/lib/profile';
+import { clearAuthData, isAuthenticated } from '@/lib/auth';
+import Cookies from 'js-cookie';
+import EnquiryModal from '@/components/EnquiryModal';
+import { getOrCreateConversation } from '@/lib/messages';
 
 export default function Home() {
+  const router = useRouter();
+  const user = useAuth();
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [allProfiles, setAllProfiles] = useState<UserProfile[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [allLoading, setAllLoading] = useState(true);
+
+  // Enquiry Modal States
+  const [isInquiryModalOpen, setIsInquiryModalOpen] = useState(false);
+  const [selectedProfile, setSelectedProfile] = useState<UserProfile | null>(null);
+
+  useEffect(() => {
+    // If not authenticated, we could show a landing page, 
+    // but for now let's redirect to signin if not authenticated
+    if (typeof window !== 'undefined' && !isAuthenticated()) {
+      router.push('/signin');
+      return;
+    }
+
+    const fetchData = async () => {
+      if (user?.id) {
+        try {
+          const userProfile = await checkUserProfile(user.id);
+          setProfile(userProfile);
+          setLoading(false);
+
+          const response = await getAllUserProfiles();
+          if (response && response.data) {
+            // Filter out the current user's profile
+            const filteredProfiles = response.data.filter(p => p.userId !== user.id);
+            setAllProfiles(filteredProfiles);
+          }
+        } catch (error) {
+          console.error('Error fetching data:', error);
+        } finally {
+          setAllLoading(false);
+        }
+      }
+    };
+    fetchData();
+  }, [user, router]);
+
+  const handleLogout = () => {
+    clearAuthData();
+    router.push('/signin');
+  };
+
+  const handleConversationClick = async (targetUserId: number) => {
+    if (!user?.id) return;
+    try {
+      // Check if exists or create new
+      await getOrCreateConversation(user.id, targetUserId);
+      router.push('/messages');
+    } catch (error) {
+      console.error("Failed to start conversation:", error);
+      // Even if it fails (e.g. unique constraint if already exists), we navigateto messages
+      router.push('/messages');
+    }
+  };
+
+  const handleOpenInquiry = (profile: UserProfile) => {
+    setSelectedProfile(profile);
+    setIsInquiryModalOpen(true);
+  };
+
+
+  if (loading && !profile && isAuthenticated()) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#f3f2ef]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  // If not authenticated, we'll just return null as the useEffect handles redirect
+  if (!isAuthenticated()) return null;
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
+    <div className="min-h-screen bg-[#f3f2ef]">
+      {/* Navigation Bar */}
+      <div className="h-14 w-full bg-white border-b border-gray-200 sticky top-0 z-50 flex items-center px-4 md:px-20 justify-between">
+        <div className="flex items-center gap-2 cursor-pointer" onClick={() => router.push('/')}>
+          <span className="text-blue-600 font-bold text-2xl italic">L</span>
+          <span className="font-bold text-gray-800 hidden md:block uppercase tracking-tight">Let's B2B</span>
+        </div>
+        <div className="flex bg-gray-100 rounded-md px-3 py-1.5 w-full max-w-md mx-4 items-center gap-2 border border-transparent focus-within:border-blue-500 transition-all">
+           <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+           <input type="text" placeholder="Search profiles..." className="bg-transparent border-none outline-none text-sm w-full" />
+        </div>
+        <div className="flex items-center gap-6">
+             <button onClick={() => router.push('/')} className="flex flex-col items-center text-blue-600 transition-colors">
+                <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+                <span className="text-[10px] font-bold hidden md:block">Home</span>
+             </button>
+             <button onClick={() => router.push('/messages')} className="flex flex-col items-center text-gray-500 hover:text-blue-600 transition-colors">
+                <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 9h12v2H6V9zm8 5H6v-2h8v2zm4-6H6V6h12v2z"/></svg>
+                <span className="text-[10px] font-medium hidden md:block">Messaging</span>
+             </button>
+             <button onClick={() => router.push('/profile')} className="flex flex-col items-center text-gray-500 hover:text-blue-600 transition-colors">
+              <div className="h-6 w-6 rounded-full bg-gray-200 overflow-hidden border border-gray-300">
+                <div className="w-full h-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-[8px]">
+                  {user?.username?.substring(0, 2).toUpperCase()}
+                </div>
+              </div>
+              <span className="text-[10px] font-medium hidden md:block">Me</span>
+           </button>
+           <button onClick={handleLogout} className="text-gray-500 hover:text-red-600 transition-colors font-medium text-sm">Logout</button>
+        </div>
+      </div>
+
+      <div className="max-w-6xl mx-auto mt-6 px-4 grid grid-cols-1 md:grid-cols-4 gap-6 pb-10">
+        
+        {/* Main Feed */}
+        <div className="md:col-span-3 space-y-4">
+          <div className="bg-white rounded-lg border border-gray-200 p-4 mb-2 shadow-sm">
+             <div className="flex items-center gap-3">
+                <div className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold">
+                  {user?.username?.substring(0, 1).toUpperCase()}
+                </div>
+                <button className="flex-1 bg-gray-50 border border-gray-100 rounded-full py-3 px-4 text-left text-gray-500 hover:bg-gray-100 transition-all font-medium text-sm">
+                  Find your next B2B partner...
+                </button>
+             </div>
+          </div>
+
+          <div className="flex items-center gap-2 py-2">
+             <div className="h-[1px] flex-1 bg-gray-300"></div>
+             <span className="text-xs text-gray-500 font-bold px-2 uppercase tracking-widest">Recommended for you</span>
+             <div className="h-[1px] flex-1 bg-gray-300"></div>
+          </div>
+
+          {allLoading ? (
+            <div className="space-y-4">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="bg-white rounded-xl border border-gray-200 p-6 animate-pulse">
+                  <div className="h-20 bg-gray-100 rounded-lg mb-4"></div>
+                  <div className="h-4 bg-gray-100 rounded w-1/4 mb-2"></div>
+                  <div className="h-3 bg-gray-100 rounded w-1/2"></div>
+                </div>
+              ))}
+            </div>
+          ) : allProfiles.length > 0 ? (
+            allProfiles.map((p) => (
+              <div key={p.id} className="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all overflow-hidden group">
+                <div className="h-20 w-full bg-gradient-to-r from-blue-400 to-indigo-500 opacity-80 group-hover:opacity-100 transition-opacity"></div>
+                <div className="px-6 pb-6 relative">
+                  <div className="absolute -top-10 left-6 w-20 h-20 rounded-xl bg-white border-4 border-white shadow-lg flex items-center justify-center text-blue-500 font-bold text-3xl overflow-hidden">
+                     <div className="w-full h-full bg-blue-50 flex items-center justify-center">
+                        {p.company_name.substring(0, 1).toUpperCase()}
+                     </div>
+                  </div>
+                  
+                  <div className="pt-12">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h3 
+                            onClick={() => router.push(`/profile/${p.documentId}`)}
+                            className="text-xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors cursor-pointer"
+                          >
+                            {p.company_name}
+                          </h3>
+                          {p.user_type === 'seller' ? (
+                            <span className="bg-blue-100 text-blue-700 text-[10px] font-bold px-2 py-0.5 rounded uppercase">Seller</span>
+                          ) : (
+                            <span className="bg-green-100 text-green-700 text-[10px] font-bold px-2 py-0.5 rounded uppercase">Buyer</span>
+                          )}
+                        </div>
+                        <p className="text-gray-600 font-medium text-sm">{p.category}</p>
+                        <p className="text-gray-500 text-xs mt-1 flex items-center gap-1 font-medium">
+                          <svg className="w-3 h-3 text-gray-400" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd"></path></svg>
+                          {p.city}, {p.country}
+                        </p>
+                      </div>
+                      <button 
+                        onClick={() => handleOpenInquiry(p)}
+                        className="px-6 py-1.5 bg-blue-600 text-white font-bold rounded-full hover:bg-blue-700 transition-all text-sm shadow-sm hover:shadow-md"
+                      >
+                        Inquire
+                      </button>
+                    </div>
+                    
+                    <div className="mt-6 pt-4 border-t border-gray-50 flex gap-6">
+                       <button className="flex items-center gap-1.5 text-gray-500 hover:text-blue-600 transition-colors text-xs font-bold uppercase tracking-wider">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
+                          Recommend
+                       </button>
+                       <button 
+                         onClick={() => handleConversationClick(p.userId)}
+                         className="flex items-center gap-1.5 text-gray-500 hover:text-blue-600 transition-colors text-xs font-bold uppercase tracking-wider"
+                       >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
+                          MESSAGE
+                       </button>
+                       <button className="flex items-center gap-1.5 text-gray-500 hover:text-blue-600 transition-colors text-xs font-bold uppercase tracking-wider">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path></svg>
+                          SHARE
+                       </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="bg-white rounded-xl border border-gray-200 p-12 text-center shadow-sm">
+               <h3 className="text-lg font-bold text-gray-900">No profiles available</h3>
+               <p className="text-gray-500">Try searching for other categories or check back later.</p>
+            </div>
+          )}
+        </div>
+
+        {/* Right Sidebar - User Profile Card */}
+        <div className="space-y-4">
+           <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm sticky top-20">
+              <div className="h-16 w-full bg-blue-600"></div>
+              <div className="px-5 pb-5">
+                 <div className="relative -mt-10 mb-3 cursor-pointer" onClick={() => router.push('/profile')}>
+                    <div className="w-16 h-16 rounded-xl bg-white border-2 border-white shadow-md flex items-center justify-center text-blue-600 font-bold text-2xl overflow-hidden hover:scale-105 transition-transform">
+                       <div className="w-full h-full bg-blue-50 flex items-center justify-center">
+                          {profile?.company_name?.substring(0, 1).toUpperCase() || user?.username?.substring(0, 1).toUpperCase()}
+                       </div>
+                    </div>
+                 </div>
+                 <div className="mb-4">
+                    <h4 className="font-bold text-gray-900 hover:text-blue-600 hover:underline cursor-pointer transition-colors" onClick={() => router.push('/profile')}>
+                      {profile?.company_name || user?.username || 'User'}
+                    </h4>
+                    <p className="text-gray-500 text-xs mt-0.5 font-medium">{profile?.category || 'Professional at Let\'s B2B'}</p>
+                 </div>
+                 
+                 <div className="border-t border-gray-100 pt-3 space-y-2.5">
+                    <div className="flex justify-between items-center group cursor-pointer" onClick={() => router.push('/profile')}>
+                       <span className="text-[11px] font-bold text-gray-500 group-hover:text-blue-600 transition-colors">Profile views</span>
+                       <span className="text-[11px] font-bold text-blue-600">128</span>
+                    </div>
+                    <div className="flex justify-between items-center group cursor-pointer" onClick={() => router.push('/profile')}>
+                       <span className="text-[11px] font-bold text-gray-500 group-hover:text-blue-600 transition-colors">Post impressions</span>
+                       <span className="text-[11px] font-bold text-blue-600">45</span>
+                    </div>
+                 </div>
+
+                 <div className="border-t border-gray-100 mt-3 pt-3">
+                    <button 
+                      onClick={() => router.push('/profile')}
+                      className="w-full py-1.5 flex items-center justify-center gap-1.5 text-gray-700 hover:bg-gray-50 rounded transition-all text-xs font-bold border border-gray-100"
+                    >
+                       <svg className="w-3.5 h-3.5 text-gray-400" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 2a4 4 0 00-4 4v1H5a1 1 0 00-1 1v9a1 1 0 001 1h10a1 1 0 001-1V7a1 1 0 00-1-1h-1V6a4 4 0 00-4-4zM8 6a2 2 0 114 0v1H8V6zm-1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd"></path></svg>
+                       My Network
+                    </button>
+                 </div>
+              </div>
+           </div>
+
+           <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm sticky top-[420px]">
+              <h5 className="text-[11px] font-bold text-gray-900 mb-3 uppercase tracking-wider opacity-70">Top Markets</h5>
+              <div className="space-y-2">
+                 {['Dubai DMC', 'Bali Packages', 'Europe Wholesaler', 'USA Tourism'].map((cat) => (
+                   <div key={cat} className="flex items-center gap-2 group cursor-pointer">
+                      <span className="text-blue-600 font-bold text-sm">#</span>
+                      <span className="text-xs font-bold text-gray-600 group-hover:text-blue-600 transition-colors">{cat}</span>
+                   </div>
+                 ))}
+              </div>
+           </div>
+        </div>
+      </div>
+
+      {/* Reusable Enquiry Modal */}
+      {isInquiryModalOpen && selectedProfile && (
+        <EnquiryModal 
+          isOpen={isInquiryModalOpen} 
+          onClose={() => setIsInquiryModalOpen(false)} 
+          targetProfile={selectedProfile} 
         />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+      )}
     </div>
   );
 }
