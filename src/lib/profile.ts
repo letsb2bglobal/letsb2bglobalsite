@@ -9,6 +9,7 @@ export interface UserProfile {
   category: string;
   country: string;
   city: string;
+  about?: string | null;
   website?: string;
   whatsapp?: string;
   userId: number;
@@ -158,9 +159,70 @@ export const updateUserProfile = async (
 };
 
 /**
- * Check if profile exists, if not redirect to profile creation
- * Returns true if profile exists, false if needs to be created
+ * Get all user profiles
  */
+export const getAllUserProfiles = async (): Promise<ProfileResponse> => {
+  const token = getToken();
+  
+  if (!token) {
+    throw new Error('No authentication token found');
+  }
+
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://api.letsb2b.com';
+  
+  try {
+    const response = await fetch(`${apiUrl}/api/user-profiles`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch user profiles');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching user profiles:', error);
+    throw error;
+  }
+};
+
+/**
+ * Get a single profile by documentId
+ */
+export const getProfileByDocumentId = async (documentId: string): Promise<UserProfile | null> => {
+  const token = getToken();
+  
+  if (!token) {
+    throw new Error('No authentication token found');
+  }
+
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://api.letsb2b.com';
+  
+  try {
+    const response = await fetch(`${apiUrl}/api/user-profiles/${documentId}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch user profile');
+    }
+
+    const data = await response.json();
+    return data.data;
+  } catch (error) {
+    console.error('Error fetching user profile:', error);
+    throw error;
+  }
+};
+
 export const verifyUserProfile = async (userId: number): Promise<boolean> => {
   try {
     const profile = await checkUserProfile(userId);
