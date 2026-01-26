@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { type UserProfile } from '@/lib/profile';
 import { useAuth } from '@/components/ProtectedRoute';
+import { useToast } from '@/components/Toast';
 
 interface EnquiryModalProps {
   isOpen: boolean;
@@ -12,6 +13,7 @@ interface EnquiryModalProps {
 
 export default function EnquiryModal({ isOpen, onClose, targetProfile }: EnquiryModalProps) {
   const user = useAuth();
+  const { showToast } = useToast();
   const [inquiryForm, setInquiryForm] = useState({
     title: '',
     description: '',
@@ -49,15 +51,15 @@ export default function EnquiryModal({ isOpen, onClose, targetProfile }: Enquiry
 
       if (!response.ok) {
         console.error("Strapi error:", result);
-        alert(`Failed to send enquiry: ${result?.error?.message || "Something went wrong"}`);
+        showToast(`Failed to send enquiry: ${result?.error?.message || "Something went wrong"}`, 'error');
         return;
       }
 
-      alert("Enquiry sent successfully!");
+      showToast("Enquiry sent successfully!");
       onClose();
     } catch (error) {
       console.error("Network error:", error);
-      alert("An error occurred. Please try again.");
+      showToast("An error occurred. Please try again.", 'error');
     } finally {
       setSubmitting(false);
     }

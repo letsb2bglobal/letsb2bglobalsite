@@ -7,6 +7,7 @@ import { getProfileByDocumentId, type UserProfile } from '@/lib/profile';
 import Cookies from 'js-cookie';
 import EnquiryModal from '@/components/EnquiryModal';
 import { getOrCreateConversation } from '@/lib/messages';
+import { getUserPosts, type Post } from '@/lib/posts';
 
 export default function PublicProfilePage() {
   const params = useParams();
@@ -20,6 +21,24 @@ export default function PublicProfilePage() {
   // Enquiry Modal States
   const [isInquiryModalOpen, setIsInquiryModalOpen] = useState(false);
 
+  // Posts states
+  const [userPosts, setUserPosts] = useState<Post[]>([]);
+  const [loadingPosts, setLoadingPosts] = useState(false);
+
+  const fetchUserPosts = async (userId: number) => {
+    setLoadingPosts(true);
+    try {
+      const response = await getUserPosts(userId);
+      if (response && response.data) {
+        setUserPosts(response.data);
+      }
+    } catch (error) {
+      console.error('Error fetching user posts:', error);
+    } finally {
+      setLoadingPosts(false);
+    }
+  };
+
   useEffect(() => {
     const fetchProfile = async () => {
       if (documentId) {
@@ -27,6 +46,9 @@ export default function PublicProfilePage() {
           const data = await getProfileByDocumentId(documentId);
           if (data) {
             setProfile(data);
+            if (data.userId) {
+              fetchUserPosts(data.userId);
+            }
           }
         } catch (error) {
           console.error('Error fetching public profile:', error);
@@ -145,10 +167,53 @@ export default function PublicProfilePage() {
                           <h3 className="font-bold text-gray-900">{profile?.company_name}</h3>
                           <p className="text-gray-700 text-sm">Full-time • {profile?.category}</p>
                           <p className="text-gray-500 text-sm mt-1">{profile?.city}, {profile?.country}</p>
-                          <p className="text-gray-500 text-sm mt-2">Active on Let's B2B since {new Date(profile.createdAt).toLocaleDateString()}</p>
+                          <p className="text-gray-500 text-sm mt-2">Active on Let's B2B since {new Date(profile.createdAt).toLocaleDateString('en-GB')}</p>
                        </div>
                     </div>
                  </div>
+
+                  {/* Tradewall Posts Section */}
+                  <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+                    <div className="flex justify-between items-center mb-6">
+                      <h2 className="text-xl font-bold text-gray-900">Tradewall Posts</h2>
+                      <span className="bg-indigo-100 text-indigo-700 text-xs font-bold px-2.5 py-1 rounded-full">{userPosts.length}</span>
+                    </div>
+
+                    {loadingPosts ? (
+                      <div className="space-y-4">
+                        {[1, 2].map((i) => (
+                          <div key={i} className="h-24 bg-gray-50 rounded-xl animate-pulse"></div>
+                        ))}
+                      </div>
+                    ) : userPosts.length > 0 ? (
+                      <div className="space-y-4">
+                        {userPosts.map((post) => (
+                          <div key={post.id} className="p-4 rounded-xl border border-gray-100 hover:border-indigo-200 hover:bg-indigo-50/20 transition-all group">
+                            <div className="flex justify-between items-start mb-2">
+                              <h4 className="font-bold text-gray-900 group-hover:text-indigo-600 transition-colors">{post.title}</h4>
+                              <span className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase ${post.intentType === 'demand' ? 'bg-red-50 text-red-600' : 'bg-green-50 text-green-600'}`}>
+                                {post.intentType}
+                              </span>
+                            </div>
+                            <p className="text-xs text-gray-500 mb-2">
+                              {post.destinationCity} • {new Date(post.createdAt).toLocaleDateString()}
+                            </p>
+                            <div className="text-sm text-gray-600 line-clamp-2">
+                              {post.content && Array.isArray(post.content) ? (
+                                post.content.map((block: any) => block.children?.map((child: any) => child.text).join(' ')).join(' ')
+                              ) : (
+                                typeof post.content === 'string' ? post.content : ''
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-8 bg-gray-50 rounded-xl border border-dashed border-gray-200">
+                        <p className="text-gray-500 text-sm">{profile.company_name} hasn't posted anything on the Tradewall yet.</p>
+                      </div>
+                    )}
+                  </div>
               </div>
 
               <div className="space-y-6">

@@ -90,8 +90,8 @@ export default function CompleteProfilePage() {
         userId: user.id,
       });
       
-      // Redirect to dashboard or company profile page
-      const redirectTo = searchParams.get('redirect') || '/dashboard';
+      // Redirect to home or company profile page
+      const redirectTo = searchParams.get('redirect') || '/';
       router.push(redirectTo);
       
     } catch (error) {
