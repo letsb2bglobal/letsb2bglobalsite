@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import ProtectedRoute, { useAuth } from '@/components/ProtectedRoute';
 import { checkUserProfile, updateUserProfile, type UserProfile } from '@/lib/profile';
 import { authenticatedFetch } from '@/lib/auth';
+import { getUserPosts, type Post } from '@/lib/posts';
 
 interface Enquiry {
   id: number;
@@ -52,6 +53,10 @@ export default function ProfilePage() {
   const [enquiries, setEnquiries] = useState<Enquiry[]>([]);
   const [loadingEnquiries, setLoadingEnquiries] = useState(false);
 
+  // Posts states
+  const [userPosts, setUserPosts] = useState<Post[]>([]);
+  const [loadingPosts, setLoadingPosts] = useState(false);
+
  const fetchEnquiries = async () => {
   if (!user?.id) return;
 
@@ -88,6 +93,20 @@ export default function ProfilePage() {
   }
 };
 
+const fetchUserPosts = async (userId: number) => {
+  setLoadingPosts(true);
+  try {
+    const response = await getUserPosts(userId);
+    if (response && response.data) {
+      setUserPosts(response.data);
+    }
+  } catch (error) {
+    console.error('Error fetching user posts:', error);
+  } finally {
+    setLoadingPosts(false);
+  }
+};
+
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -108,6 +127,7 @@ export default function ProfilePage() {
               website: data.website || '',
               whatsapp: data.whatsapp || ''
             });
+            fetchUserPosts(user.id);
           } else {
             router.push('/company-profile');
           }
@@ -159,12 +179,12 @@ export default function ProfilePage() {
       <div className="min-h-screen bg-[#f3f2ef] pb-12">
         {/* Navigation Bar Spacing */}
         <div className="h-14 w-full bg-white border-b border-gray-200 sticky top-0 z-50 flex items-center px-4 md:px-20 justify-between">
-          <div className="flex items-center gap-2 cursor-pointer" onClick={() => router.push('/dashboard')}>
+          <div className="flex items-center gap-2 cursor-pointer" onClick={() => router.push('/')}>
             <span className="text-blue-600 font-bold text-2xl italic">L</span>
             <span className="font-bold text-gray-800 hidden md:block">LET'S B2B</span>
           </div>
           <div className="flex items-center gap-4">
-             <button onClick={() => router.push('/dashboard')} className="text-gray-600 hover:text-gray-900 text-sm font-medium">Dashboard</button>
+             <button onClick={() => router.push('/')} className="text-gray-600 hover:text-gray-900 text-sm font-medium">Home</button>
              <button onClick={() => router.push('/messages')} className="text-gray-600 hover:text-gray-900 text-sm font-medium">Messages</button>
              <div className="h-8 w-8 rounded-full bg-gray-200 overflow-hidden border border-gray-300">
                <div className="w-full h-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-xs">
@@ -333,10 +353,59 @@ export default function ProfilePage() {
                           <h3 className="font-bold text-gray-900">{profile?.company_name}</h3>
                           <p className="text-gray-700 text-sm">Full-time • {profile?.category}</p>
                           <p className="text-gray-500 text-sm mt-1">{profile?.city}, {profile?.country}</p>
-                          <p className="text-gray-500 text-sm mt-2">Active since {profile ? new Date(profile.createdAt).toLocaleDateString() : 'N/A'}</p>
+                          <p className="text-gray-500 text-sm mt-2">Active since {profile ? new Date(profile.createdAt).toLocaleDateString('en-GB') : 'N/A'}</p>
                        </div>
                     </div>
                  </div>
+
+                  {/* My Posts Section */}
+                  <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+                    <div className="flex justify-between items-center mb-6">
+                      <h2 className="text-xl font-bold text-gray-900">My Tradewall Posts</h2>
+                      <span className="bg-blue-100 text-blue-700 text-xs font-bold px-2.5 py-1 rounded-full">{userPosts.length}</span>
+                    </div>
+
+                    {loadingPosts ? (
+                      <div className="space-y-4">
+                        {[1, 2].map((i) => (
+                          <div key={i} className="h-24 bg-gray-50 rounded-xl animate-pulse"></div>
+                        ))}
+                      </div>
+                    ) : userPosts.length > 0 ? (
+                      <div className="space-y-4">
+                        {userPosts.map((post) => (
+                          <div key={post.id} className="p-4 rounded-xl border border-gray-100 hover:border-blue-200 hover:bg-blue-50/20 transition-all group">
+                            <div className="flex justify-between items-start mb-2">
+                              <h4 className="font-bold text-gray-900 group-hover:text-blue-600 transition-colors">{post.title}</h4>
+                              <span className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase ${post.intentType === 'demand' ? 'bg-red-50 text-red-600' : 'bg-green-50 text-green-600'}`}>
+                                {post.intentType}
+                              </span>
+                            </div>
+                            <p className="text-xs text-gray-500 mb-2 truncate">
+                              {post.destinationCity} • {new Date(post.createdAt).toLocaleDateString()}
+                            </p>
+                            <div className="text-sm text-gray-600 line-clamp-2">
+                              {post.content && Array.isArray(post.content) ? (
+                                post.content.map((block: any) => block.children?.map((child: any) => child.text).join(' ')).join(' ')
+                              ) : (
+                                typeof post.content === 'string' ? post.content : ''
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-8 bg-gray-50 rounded-xl border border-dashed border-gray-200">
+                        <p className="text-gray-500 text-sm">You haven't posted anything on the Tradewall yet.</p>
+                        <button 
+                          onClick={() => router.push('/')}
+                          className="mt-3 text-blue-600 font-bold text-sm hover:underline"
+                        >
+                          Go to Tradewall to create a post
+                        </button>
+                      </div>
+                    )}
+                  </div>
               </div>
 
               {/* Right Column (Sidebar) */}
