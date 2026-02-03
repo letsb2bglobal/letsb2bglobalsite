@@ -1,15 +1,29 @@
 // User Profile API functions
-import { getToken } from './auth';
+import { getToken } from "./auth";
+
+// profile.ts
+
+export interface RichTextChild {
+  text: string;
+  type: string;
+}
+
+export interface RichTextBlock {
+  type: string;
+  children?: RichTextChild[];
+}
 
 export interface UserProfile {
   id: number;
   documentId: string;
   company_name: string;
-  user_type: 'seller' | 'buyer';
-  category: string;
+  user_type: "seller" | "buyer";
+  category: {
+    type: string;
+  } | null;
   country: string;
   city: string;
-  about?: string | null;
+  about?: RichTextBlock[] | null;
   website?: string;
   whatsapp?: string;
   userId: number;
@@ -20,7 +34,7 @@ export interface UserProfile {
 
 export interface CreateProfileData {
   company_name: string;
-  user_type: 'seller' | 'buyer';
+  user_type: "seller" | "buyer";
   category: string;
   country: string;
   city: string;
@@ -44,37 +58,39 @@ export interface ProfileResponse {
 /**
  * Check if user profile exists for the given userId
  */
-export const checkUserProfile = async (userId: number): Promise<UserProfile | null> => {
+export const checkUserProfile = async (
+  userId: number
+): Promise<UserProfile | null> => {
   const token = getToken();
-  
+
   if (!token) {
-    throw new Error('No authentication token found');
+    throw new Error("No authentication token found");
   }
 
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://api.letsb2b.com';
-  
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://api.letsb2b.com";
+
   try {
     const response = await fetch(
       `${apiUrl}/api/user-profiles?filters[userId]=${userId}`,
       {
-        method: 'GET',
+        method: "GET",
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
         },
       }
     );
 
     if (!response.ok) {
-      throw new Error('Failed to check user profile');
+      throw new Error("Failed to check user profile");
     }
 
     const data: ProfileResponse = await response.json();
-    
+
     // Return the first profile if it exists, otherwise null
     return data.data && data.data.length > 0 ? data.data[0] : null;
   } catch (error) {
-    console.error('Error checking user profile:', error);
+    console.error("Error checking user profile:", error);
     throw error;
   }
 };
@@ -86,19 +102,19 @@ export const createUserProfile = async (
   profileData: CreateProfileData
 ): Promise<UserProfile> => {
   const token = getToken();
-  
+
   if (!token) {
-    throw new Error('No authentication token found');
+    throw new Error("No authentication token found");
   }
 
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://api.letsb2b.com';
-  
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://api.letsb2b.com";
+
   try {
     const response = await fetch(`${apiUrl}/api/user-profiles`, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({
         data: profileData,
@@ -107,13 +123,15 @@ export const createUserProfile = async (
 
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(errorData?.error?.message || 'Failed to create user profile');
+      throw new Error(
+        errorData?.error?.message || "Failed to create user profile"
+      );
     }
 
     const data = await response.json();
     return data.data;
   } catch (error) {
-    console.error('Error creating user profile:', error);
+    console.error("Error creating user profile:", error);
     throw error;
   }
 };
@@ -126,19 +144,19 @@ export const updateUserProfile = async (
   profileData: Partial<CreateProfileData>
 ): Promise<UserProfile> => {
   const token = getToken();
-  
+
   if (!token) {
-    throw new Error('No authentication token found');
+    throw new Error("No authentication token found");
   }
 
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://api.letsb2b.com';
-  
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://api.letsb2b.com";
+
   try {
     const response = await fetch(`${apiUrl}/api/user-profiles/${documentId}`, {
-      method: 'PUT',
+      method: "PUT",
       headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({
         data: profileData,
@@ -147,13 +165,15 @@ export const updateUserProfile = async (
 
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(errorData?.error?.message || 'Failed to update user profile');
+      throw new Error(
+        errorData?.error?.message || "Failed to update user profile"
+      );
     }
 
     const data = await response.json();
     return data.data;
   } catch (error) {
-    console.error('Error updating user profile:', error);
+    console.error("Error updating user profile:", error);
     throw error;
   }
 };
@@ -163,29 +183,29 @@ export const updateUserProfile = async (
  */
 export const getAllUserProfiles = async (): Promise<ProfileResponse> => {
   const token = getToken();
-  
+
   if (!token) {
-    throw new Error('No authentication token found');
+    throw new Error("No authentication token found");
   }
 
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://api.letsb2b.com';
-  
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://api.letsb2b.com";
+
   try {
     const response = await fetch(`${apiUrl}/api/user-profiles`, {
-      method: 'GET',
+      method: "GET",
       headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
       },
     });
 
     if (!response.ok) {
-      throw new Error('Failed to fetch user profiles');
+      throw new Error("Failed to fetch user profiles");
     }
 
     return await response.json();
   } catch (error) {
-    console.error('Error fetching user profiles:', error);
+    console.error("Error fetching user profiles:", error);
     throw error;
   }
 };
@@ -193,32 +213,34 @@ export const getAllUserProfiles = async (): Promise<ProfileResponse> => {
 /**
  * Get a single profile by documentId
  */
-export const getProfileByDocumentId = async (documentId: string): Promise<UserProfile | null> => {
+export const getProfileByDocumentId = async (
+  documentId: string
+): Promise<UserProfile | null> => {
   const token = getToken();
-  
+
   if (!token) {
-    throw new Error('No authentication token found');
+    throw new Error("No authentication token found");
   }
 
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://api.letsb2b.com';
-  
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://api.letsb2b.com";
+
   try {
     const response = await fetch(`${apiUrl}/api/user-profiles/${documentId}`, {
-      method: 'GET',
+      method: "GET",
       headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
       },
     });
 
     if (!response.ok) {
-      throw new Error('Failed to fetch user profile');
+      throw new Error("Failed to fetch user profile");
     }
 
     const data = await response.json();
     return data.data;
   } catch (error) {
-    console.error('Error fetching user profile:', error);
+    console.error("Error fetching user profile:", error);
     throw error;
   }
 };
@@ -228,7 +250,7 @@ export const verifyUserProfile = async (userId: number): Promise<boolean> => {
     const profile = await checkUserProfile(userId);
     return profile !== null;
   } catch (error) {
-    console.error('Error verifying user profile:', error);
+    console.error("Error verifying user profile:", error);
     return false;
   }
 };
