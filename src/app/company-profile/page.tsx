@@ -347,7 +347,7 @@ export default function CompanyProfilePage() {
             <button
               type="button"
               onClick={() => router.push('/')}
-              className="w-full h-12 text-black border border-gray-200 rounded-md font-medium hover:bg-gray-50 transition-colors"
+              className="w-full h-12 border border-gray-200 rounded-md font-medium hover:bg-gray-50 transition-colors"
             >
               SKIP NOW
             </button>
