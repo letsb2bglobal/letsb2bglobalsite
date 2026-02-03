@@ -284,7 +284,6 @@ export default function CompanyProfilePage() {
               onChange={handleFormChange}
             />
 
-            {/* Logo Upload */}
             <div className="border rounded-md px-4 py-3 flex items-center justify-between text-sm bg-gray-50">
               <span className="text-gray-500">
                 Logo{" "}
