@@ -25,6 +25,15 @@ export default function PublicProfilePage() {
   const [userPosts, setUserPosts] = useState<Post[]>([]);
   const [loadingPosts, setLoadingPosts] = useState(false);
 
+  const richTextToString = (blocks: any[] | null | undefined) => {
+  if (!Array.isArray(blocks)) return "";
+
+  return blocks
+    .map(block => block.children?.map((child: any) => child.text).join(""))
+    .join("\n");
+};
+
+
   const fetchUserPosts = async (userId: number) => {
     setLoadingPosts(true);
     try {
@@ -125,7 +134,7 @@ export default function PublicProfilePage() {
                           <span className="px-2 py-0.5 bg-gray-100 text-gray-600 text-[10px] font-bold rounded uppercase tracking-wider">{profile?.user_type}</span>
                           <span className="px-2 py-0.5 bg-blue-50 text-blue-600 text-[10px] font-bold rounded border border-blue-100 uppercase">ID: {profile?.userId}</span>
                        </div>
-                       <p className="text-lg text-gray-600 mt-1">{profile?.category}</p>
+                       <p className="text-lg text-gray-600 mt-1">{profile?.category?.type || ""}</p>
                        <p className="text-gray-500 text-sm mt-1">{profile?.city}, {profile?.country}</p>
                     </div>
                     <div className="mt-4 md:mt-0 flex gap-2">
@@ -153,7 +162,10 @@ export default function PublicProfilePage() {
                  <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
                     <h2 className="text-xl font-bold text-gray-900 mb-4">About</h2>
                     <p className="text-gray-700 whitespace-pre-wrap leading-relaxed">
-                       {profile.about || `${profile.company_name} is a leading ${profile.category} based in ${profile.city}. Connect with us for premium B2B services.`}
+                       {profile.about?.length
+  ? richTextToString(profile.about)
+  : `${profile.company_name} is a leading ${profile.category?.type || ""} based in ${profile.city}. Connect with us for premium B2B services.`
+}
                     </p>
                  </div>
 
@@ -165,7 +177,7 @@ export default function PublicProfilePage() {
                        </div>
                        <div>
                           <h3 className="font-bold text-gray-900">{profile?.company_name}</h3>
-                          <p className="text-gray-700 text-sm">Full-time • {profile?.category}</p>
+                          <p className="text-gray-700 text-sm">Full-time • {profile?.category?.type || ""}</p>
                           <p className="text-gray-500 text-sm mt-1">{profile?.city}, {profile?.country}</p>
                           <p className="text-gray-500 text-sm mt-2">Active on Let's B2B since {new Date(profile.createdAt).toLocaleDateString('en-GB')}</p>
                        </div>

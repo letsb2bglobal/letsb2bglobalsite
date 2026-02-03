@@ -124,7 +124,7 @@ export default function CompanyProfilePage() {
             height={36}
           />
           <div className="flex flex-col">
-            <span className="text-lg font-medium">
+            <span className="text-lg font-medium text-black">
               Let's <span className="font-bold">B2B</span>
             </span>
             <span className="text-[10px] tracking-[0.4em] text-[#94a3b8] -mt-1">GLOBAL</span>
@@ -139,7 +139,7 @@ export default function CompanyProfilePage() {
         <div className="w-full max-w-md">
           {/* Welcome Text */}
           <div className="text-center mb-8">
-            <h1 className="text-xl font-semibold">
+            <h1 className="text-xl text-black font-semibold">
               Hello {user?.username || 'User'}, Welcome to Let’s <span className="font-bold">B2B</span>
             </h1>
             <p className="text-sm text-gray-500 mt-1">
@@ -174,7 +174,7 @@ export default function CompanyProfilePage() {
             )}
             
             <input 
-              className="input" 
+              className="input text-black" 
               placeholder="Company Name" 
               name="companyName"
               value={formData.companyName}
@@ -215,7 +215,7 @@ export default function CompanyProfilePage() {
                   onFocus={() => setShowSuggestions(inputValue.length > 0)}
                   onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
                   placeholder={categories.length === 0 ? "Category" : ""}
-                  className="flex-1 outline-none min-w-[120px] px-2 py-1 text-sm bg-transparent"
+                  className="flex-1 text-black outline-none min-w-[120px] px-2 py-1 text-sm bg-transparent"
                 />
               </div>
               
@@ -236,7 +236,7 @@ export default function CompanyProfilePage() {
             </div>
 
             <textarea
-              className="input h-20 resize-none py-2"
+              className="input h-20 resize-none py-2 text-black"
               placeholder="About (optional)"
               name="about"
               value={formData.about}
@@ -244,7 +244,7 @@ export default function CompanyProfilePage() {
             />
 
             <input 
-              className="input" 
+              className="input text-black" 
               placeholder="Phone Number" 
               name="phone"
               value={formData.phone}
@@ -252,7 +252,7 @@ export default function CompanyProfilePage() {
               required
             />
             <input 
-              className="input" 
+              className="input text-black" 
               placeholder="Address Line" 
               name="address"
               value={formData.address}
@@ -260,7 +260,7 @@ export default function CompanyProfilePage() {
             />
             <div className="grid grid-cols-2 gap-4">
               <input 
-                className="input" 
+                className="input text-black" 
                 placeholder="Country" 
                 name="country"
                 value={formData.country}
@@ -268,7 +268,7 @@ export default function CompanyProfilePage() {
                 required
               />
               <input 
-                className="input" 
+                className="input text-black" 
                 placeholder="City" 
                 name="city"
                 value={formData.city}
@@ -277,7 +277,7 @@ export default function CompanyProfilePage() {
               />
             </div>
             <input 
-              className="input" 
+              className="input text-black" 
               placeholder="PIN" 
               name="pin"
               value={formData.pin}
@@ -294,7 +294,7 @@ export default function CompanyProfilePage() {
               </span>
               <button
                 type="button"
-                className="px-3 py-1 border border-gray-300 bg-white rounded text-sm hover:bg-gray-100 transition-colors font-medium"
+                className="px-3 py-1 text-black border border-gray-300 bg-white rounded text-sm hover:bg-gray-100 transition-colors font-medium"
               >
                 Choose file
               </button>
@@ -303,7 +303,7 @@ export default function CompanyProfilePage() {
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-gray-700 ml-1">User Type</label>
               <select 
-                className="input" 
+                className="input text-black" 
                 name="userType"
                 value={formData.userType}
                 onChange={(e) => setFormData(prev => ({ ...prev, userType: e.target.value as 'seller' | 'buyer' }))}
@@ -315,14 +315,14 @@ export default function CompanyProfilePage() {
             </div>
 
             <input 
-              className="input" 
+              className="input text-black" 
               placeholder="Website link (optional)" 
               name="website"
               value={formData.website}
               onChange={handleFormChange}
             />
             <input 
-              className="input" 
+              className="input text-black" 
               placeholder="Facebook (optional)" 
               name="facebook"
               value={formData.facebook}
@@ -347,7 +347,7 @@ export default function CompanyProfilePage() {
             <button
               type="button"
               onClick={() => router.push('/')}
-              className="w-full h-12 border border-gray-200 rounded-md font-medium hover:bg-gray-50 transition-colors"
+              className="w-full h-12 text-black border border-gray-200 rounded-md font-medium hover:bg-gray-50 transition-colors"
             >
               SKIP NOW
             </button>
