@@ -1,109 +1,131 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { useAuth } from '@/components/ProtectedRoute';
-import { createUserProfile, type CreateProfileData } from '@/lib/profile';
-import AuthLayout from '@/components/AuthLayout';
-import Image from 'next/image';
+import React, { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useAuth } from "@/components/ProtectedRoute";
+import { createUserProfile, type CreateProfileData } from "@/lib/profile";
+import AuthLayout from "@/components/AuthLayout";
+import Image from "next/image";
 
 export default function CompleteProfileContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const user = useAuth();
-  
-  const [formData, setFormData] = useState<CreateProfileData>({
-    company_name: '',
-    user_type: 'seller',
-    category: '',
-    country: '',
-    city: '',
-    website: '',
-    whatsapp: '',
+
+  const [categoryInput, setCategoryInput] = useState("");
+
+  const [formData, setFormData] = useState<
+    Omit<CreateProfileData, "slug" | "category">
+  >({
+    company_name: "",
+    user_type: "seller",
+    country: "",
+    city: "",
+    website: "",
+    whatsapp: "",
     userId: 0,
   });
-  
+
   // Update userId when user is available
   useEffect(() => {
     if (user?.id) {
-      setFormData(prev => ({ ...prev, userId: user.id }));
+      setFormData((prev) => ({ ...prev, userId: user.id }));
     }
   }, [user]);
-  
+
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
-  const [submitError, setSubmitError] = useState('');
+  const [submitError, setSubmitError] = useState("");
+
+  const slug = formData.company_name
+  .toLowerCase()
+  .trim()
+  .replace(/\s+/g, '-');
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
-    
+
     if (!formData.company_name.trim()) {
-      newErrors.company_name = 'Company name is required';
-    }
-    
-    if (!formData.category.trim()) {
-      newErrors.category = 'Category is required';
-    }
-    
-    if (!formData.country.trim()) {
-      newErrors.country = 'Country is required';
-    }
-    
-    if (!formData.city.trim()) {
-      newErrors.city = 'City is required';
+      newErrors.company_name = "Company name is required";
     }
 
-    if (formData.whatsapp && !/^\+?[1-9]\d{1,14}$/.test(formData.whatsapp.replace(/\s/g, ''))) {
-      newErrors.whatsapp = 'Invalid WhatsApp number format';
+    if (!categoryInput.trim()) {
+      newErrors.category = "Category is required";
+    }
+
+    if (!formData.country.trim()) {
+      newErrors.country = "Country is required";
+    }
+
+    if (!formData.city.trim()) {
+      newErrors.city = "City is required";
+    }
+
+    if (
+      formData.whatsapp &&
+      !/^\+?[1-9]\d{1,14}$/.test(formData.whatsapp.replace(/\s/g, ""))
+    ) {
+      newErrors.whatsapp = "Invalid WhatsApp number format";
     }
 
     if (formData.website && !/^https?:\/\/.+/.test(formData.website)) {
-      newErrors.website = 'Website must start with http:// or https://';
+      newErrors.website = "Website must start with http:// or https://";
     }
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-    
+    setFormData((prev) => ({ ...prev, [name]: value }));
+
     // Clear error when user starts typing
     if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: '' }));
+      setErrors((prev) => ({ ...prev, [name]: "" }));
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
-    
+
     if (!user?.id) {
-      setSubmitError('User not authenticated');
+      setSubmitError("User not authenticated");
       return;
     }
-    
+
     setIsLoading(true);
-    setSubmitError('');
-    
+    setSubmitError("");
+
     try {
       // Create the profile
       await createUserProfile({
         ...formData,
         userId: user.id,
+
+        slug,
+
+        category: {
+          type: categoryInput.trim(),
+        },
       });
-      
+
       // Redirect to home or company profile page
-      const redirectTo = searchParams.get('redirect') || '/';
+      const redirectTo = searchParams.get("redirect") || "/";
       router.push(redirectTo);
-      
     } catch (error) {
-      console.error('Profile creation error:', error);
-      setSubmitError(error instanceof Error ? error.message : 'Failed to create profile. Please try again.');
+      console.error("Profile creation error:", error);
+      setSubmitError(
+        error instanceof Error
+          ? error.message
+          : "Failed to create profile. Please try again."
+      );
     } finally {
       setIsLoading(false);
     }
@@ -115,25 +137,29 @@ export default function CompleteProfileContent() {
     <AuthLayout>
       {/* Logo */}
       <div className="flex items-center justify-center mb-6">
-        <Image 
-          src="/images/logo.png" 
-          alt="Company Logo" 
-          width={100} 
+        <Image
+          src="/images/logo.png"
+          alt="Company Logo"
+          width={100}
           height={40}
           className="object-contain mr-3"
         />
         <div className="flex flex-col">
           <span className="text-xl tracking-tight text-[#1e293b]">
-            <span className="font-normal">LET'S</span>{' '}
+            <span className="font-normal">LET'S</span>{" "}
             <span className="font-bold">B2B</span>
           </span>
-          <span className="text-[10px] tracking-[0.4em] text-[#94a3b8] -mt-1">{subLogoText}</span>
+          <span className="text-[10px] tracking-[0.4em] text-[#94a3b8] -mt-1">
+            {subLogoText}
+          </span>
         </div>
       </div>
 
       {/* Header */}
       <div className="text-center mb-6">
-        <h2 className="text-2xl font-semibold text-[#1e293b] mb-2">Complete Your Profile</h2>
+        <h2 className="text-2xl font-semibold text-[#1e293b] mb-2">
+          Complete Your Profile
+        </h2>
         <p className="text-sm text-[#64748b]">
           Please provide your company details to continue
         </p>
@@ -149,7 +175,7 @@ export default function CompleteProfileContent() {
             onChange={handleInputChange}
             placeholder="Company Name *"
             className={`w-full px-4 py-3 border rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-600 placeholder-[#94a3b8] ${
-              errors.company_name ? 'border-red-500' : 'border-[#e2e8f0]'
+              errors.company_name ? "border-red-500" : "border-[#e2e8f0]"
             }`}
           />
           {errors.company_name && (
@@ -173,11 +199,11 @@ export default function CompleteProfileContent() {
           <input
             type="text"
             name="category"
-            value={formData.category}
-            onChange={handleInputChange}
+            value={categoryInput}
+            onChange={(e) => setCategoryInput(e.target.value)}
             placeholder="Category (e.g., DMC, Hotel, Tour Operator) *"
             className={`w-full px-4 py-3 border rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-600 placeholder-[#94a3b8] ${
-              errors.category ? 'border-red-500' : 'border-[#e2e8f0]'
+              errors.category ? "border-red-500" : "border-[#e2e8f0]"
             }`}
           />
           {errors.category && (
@@ -194,7 +220,7 @@ export default function CompleteProfileContent() {
               onChange={handleInputChange}
               placeholder="Country *"
               className={`w-full px-4 py-3 border rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-600 placeholder-[#94a3b8] ${
-                errors.country ? 'border-red-500' : 'border-[#e2e8f0]'
+                errors.country ? "border-red-500" : "border-[#e2e8f0]"
               }`}
             />
             {errors.country && (
@@ -210,7 +236,7 @@ export default function CompleteProfileContent() {
               onChange={handleInputChange}
               placeholder="City *"
               className={`w-full px-4 py-3 border rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-600 placeholder-[#94a3b8] ${
-                errors.city ? 'border-red-500' : 'border-[#e2e8f0]'
+                errors.city ? "border-red-500" : "border-[#e2e8f0]"
               }`}
             />
             {errors.city && (
@@ -227,7 +253,7 @@ export default function CompleteProfileContent() {
             onChange={handleInputChange}
             placeholder="Website (optional)"
             className={`w-full px-4 py-3 border rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-600 placeholder-[#94a3b8] ${
-              errors.website ? 'border-red-500' : 'border-[#e2e8f0]'
+              errors.website ? "border-red-500" : "border-[#e2e8f0]"
             }`}
           />
           {errors.website && (
@@ -243,7 +269,7 @@ export default function CompleteProfileContent() {
             onChange={handleInputChange}
             placeholder="WhatsApp Number (optional)"
             className={`w-full px-4 py-3 border rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-600 placeholder-[#94a3b8] ${
-              errors.whatsapp ? 'border-red-500' : 'border-[#e2e8f0]'
+              errors.whatsapp ? "border-red-500" : "border-[#e2e8f0]"
             }`}
           />
           {errors.whatsapp && (
@@ -257,12 +283,12 @@ export default function CompleteProfileContent() {
           </div>
         )}
 
-        <button 
+        <button
           type="submit"
           disabled={isLoading}
           className="w-full py-4 bg-[#eff6ff] text-[#1e293b] font-bold text-sm rounded-md hover:bg-blue-100 transition-colors mt-4 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {isLoading ? 'Creating Profile...' : 'COMPLETE PROFILE'}
+          {isLoading ? "Creating Profile..." : "COMPLETE PROFILE"}
         </button>
       </form>
     </AuthLayout>
