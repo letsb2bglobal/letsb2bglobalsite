@@ -247,7 +247,42 @@ useEffect(() => {
     }
   };
 
-  // Handle search input focus
+  // Utility function to highlight search keywords
+  const highlightText = (text: string, searchText: string, location: string): React.ReactNode => {
+    if (!searchText.trim() && !location.trim()) return text;
+    
+    // Combine search text and location for highlighting
+    const allKeywords = [
+      ...searchText.trim().split(/\s+/).filter(word => word.length > 0),
+      ...location.trim().split(/\s+/).filter(word => word.length > 0)
+    ];
+    
+    if (allKeywords.length === 0) return text;
+    
+    // Create regex pattern for all keywords (case insensitive)
+    const pattern = new RegExp(`(${allKeywords.map(word => word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})`, 'gi');
+    
+    const parts = text.split(pattern);
+    
+    return (
+      <>
+        {parts.map((part, index) => {
+          // Check if this part matches any keyword (case insensitive)
+          const isHighlighted = allKeywords.some(keyword => 
+            part.toLowerCase() === keyword.toLowerCase()
+          );
+          
+          return isHighlighted ? (
+            <mark key={index} className="bg-yellow-200 text-yellow-900 px-0.5 rounded font-medium">
+              {part}
+            </mark>
+          ) : (
+            <span key={index}>{part}</span>
+          );
+        })}
+      </>
+    );
+  };
   const handleSearchFocus = () => {
     if (searchHistory.length > 0 && !searchText) {
       setShowSearchHistory(true);
@@ -611,7 +646,7 @@ useEffect(() => {
                               }
                               className="text-xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors cursor-pointer"
                             >
-                              {p.company_name}
+                              {isSearchActive ? highlightText(p.company_name, searchText, location) : p.company_name}
                             </h3>
                             {p.user_type === "seller" ? (
                               <span className="bg-blue-100 text-blue-700 text-[10px] font-bold px-2 py-0.5 rounded uppercase">
@@ -624,7 +659,7 @@ useEffect(() => {
                             )}
                           </div>
                           <p className="text-gray-600 font-medium text-sm">
-                              {p.category?.type || ""}
+                              {isSearchActive ? highlightText(p.category?.type || "", searchText, location) : (p.category?.type || "")}
                           </p>
                           <p className="text-gray-500 text-xs mt-1 flex items-center gap-1 font-medium">
                             <svg
@@ -638,7 +673,7 @@ useEffect(() => {
                                 clipRule="evenodd"
                               ></path>
                             </svg>
-                            {p.city}, {p.country}
+                            {isSearchActive ? highlightText(`${p.city}, ${p.country}`, searchText, location) : `${p.city}, ${p.country}`}
                           </p>
                         </div>
                         <button
