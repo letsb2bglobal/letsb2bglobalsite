@@ -33,6 +33,10 @@ export default function Home() {
   const [location, setLocation] = useState("");
   const [filteredCities, setFilteredCities] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  
+  // Search History States
+  const [searchHistory, setSearchHistory] = useState<Array<{text: string, location: string, timestamp: number}>>([]);
+  const [showSearchHistory, setShowSearchHistory] = useState(false);
 
   // Static list of famous cities for autocomplete
   const famousCities = [
@@ -80,6 +84,20 @@ export default function Home() {
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Load search history from localStorage on mount
+  useEffect(() => {
+    if (mounted) {
+      const savedHistory = localStorage.getItem('searchHistory');
+      if (savedHistory) {
+        try {
+          setSearchHistory(JSON.parse(savedHistory));
+        } catch (error) {
+          console.error('Error parsing search history:', error);
+        }
+      }
+    }
+  }, [mounted]);
 
 useEffect(() => {
   if (!mounted) return;
@@ -134,7 +152,34 @@ useEffect(() => {
     }
   }, [activeTab]);
 
-  // Search handlers
+  // Save search history to localStorage
+  const saveSearchHistory = (text: string, loc: string) => {
+    const newSearch = {
+      text: text.trim(),
+      location: loc.trim(),
+      timestamp: Date.now()
+    };
+    
+    // Remove duplicate searches and add new one to the beginning
+    const updatedHistory = [newSearch, ...searchHistory.filter(item => 
+      !(item.text === newSearch.text && item.location === newSearch.location)
+    )].slice(0, 10); // Keep only last 10 searches
+    
+    setSearchHistory(updatedHistory);
+    localStorage.setItem('searchHistory', JSON.stringify(updatedHistory));
+  };
+
+  // Handle search history item click
+  const handleHistoryItemClick = (historyItem: {text: string, location: string}) => {
+    setSearchText(historyItem.text);
+    setLocation(historyItem.location);
+    setShowSearchHistory(false);
+    setShowSuggestions(false);
+    // Trigger search after a short delay to allow state to update
+    setTimeout(() => {
+      handleSearch();
+    }, 100);
+  };
   const handleLocationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setLocation(value);
@@ -164,6 +209,9 @@ useEffect(() => {
       setAllProfiles(allProfilesList.filter(p => p.userId !== user?.id));
       return;
     }
+
+    // Save to search history
+    saveSearchHistory(searchText, location);
 
     setSearchLoading(true);
     setIsSearchActive(true);
@@ -199,12 +247,21 @@ useEffect(() => {
     }
   };
 
-  // Close suggestions when clicking outside
+  // Handle search input focus
+  const handleSearchFocus = () => {
+    if (searchHistory.length > 0 && !searchText) {
+      setShowSearchHistory(true);
+    }
+    setShowSuggestions(false);
+  };
+
+  // Close suggestions and search history when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as HTMLElement;
-      if (!target.closest('.location-search-container')) {
+      if (!target.closest('.location-search-container') && !target.closest('.search-history-container')) {
         setShowSuggestions(false);
+        setShowSearchHistory(false);
       }
     };
 
@@ -298,28 +355,69 @@ useEffect(() => {
         </div>
         <div className="flex items-center gap-2 w-full max-w-lg mx-4">
           {/* Search Query Input */}
-          <div className="flex items-center gap-2 bg-gray-100 rounded-md px-3 py-1.5 flex-1 border border-transparent focus-within:border-blue-500 transition-all">
-            <svg
-              className="w-4 h-4 text-gray-500"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-              ></path>
-            </svg>
-            <input
-              type="text"
-              placeholder="Search keywords..."
-              value={searchText}
-              onChange={(e) => setSearchText(e.target.value)}
-              onKeyDown={handleSearchKeyDown}
-              className="bg-transparent border-none outline-none text-sm w-full"
-            />
+          <div className="relative search-history-container">
+            <div className="flex items-center gap-2 bg-gray-100 rounded-md px-3 py-1.5 flex-1 border border-transparent focus-within:border-blue-500 transition-all">
+              <svg
+                className="w-4 h-4 text-gray-500"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                ></path>
+              </svg>
+              <input
+                type="text"
+                placeholder="Search keywords..."
+                value={searchText}
+                onChange={(e) => {
+                  setSearchText(e.target.value);
+                  setShowSearchHistory(false); // Hide history when typing
+                }}
+                onFocus={handleSearchFocus}
+                onKeyDown={handleSearchKeyDown}
+                className="bg-transparent border-none outline-none text-sm w-full"
+              />
+            </div>
+
+            {/* Search History Dropdown */}
+            {showSearchHistory && searchHistory.length > 0 && (
+              <div className="absolute top-full mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg z-50 max-h-64 overflow-y-auto">
+                <div className="px-3 py-2 text-xs text-gray-500 font-medium border-b border-gray-100">
+                  Recent Searches
+                </div>
+                {searchHistory.map((item, index) => (
+                  <div
+                    key={`${item.timestamp}-${index}`}
+                    onClick={() => handleHistoryItemClick(item)}
+                    className="px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 cursor-pointer transition-colors border-b border-gray-50 last:border-b-0"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium text-gray-900 truncate">
+                          {item.text || 'All categories'}
+                        </div>
+                        {item.location && (
+                          <div className="text-xs text-gray-500 flex items-center gap-1 mt-0.5">
+                            <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd"></path>
+                            </svg>
+                            {item.location}
+                          </div>
+                        )}
+                      </div>
+                      <div className="text-xs text-gray-400 ml-2">
+                        {new Date(item.timestamp).toLocaleDateString()}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Location Input with Autocomplete */}
