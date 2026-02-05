@@ -1,16 +1,16 @@
 "use client";
 
 import Image from "next/image";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/ProtectedRoute";
 import { createUserProfile, uploadProfileMedia } from "@/lib/profile";
-
 
 export default function CompanyProfilePage() {
   const router = useRouter();
   const user = useAuth();
 
+  const [step, setStep] = useState<1 | 2 | 3>(1);
   const [categories, setCategories] = useState<string[]>([]);
   const [inputValue, setInputValue] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -21,10 +21,118 @@ export default function CompanyProfilePage() {
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState("");
   const [uploadedSocialMedia, setUploadedSocialMedia] = useState<any[]>([]);
+  const categoryRef = useRef<HTMLDivElement>(null);
+
+  const [profileImageFile, setProfileImageFile] = useState<File | null>(null);
+  const [profileImageUrl, setProfileImageUrl] = useState<string | null>(null);
+  const [profileImageUploading, setProfileImageUploading] = useState(false);
+
+  const [headerImageFile, setHeaderImageFile] = useState<File | null>(null);
+  const [headerImageUrl, setHeaderImageUrl] = useState<string | null>(null);
+  const [headerImageUploading, setHeaderImageUploading] = useState(false);
+
+  const MAX_FILE_SIZE_MB = 5;
+  const MAX_FILE_SIZE = MAX_FILE_SIZE_MB * 1024 * 1024;
+
+  const getMediaUrl = (url: string) => {
+    if (!url) return "";
+    if (url.startsWith("http")) return url;
+    return `${process.env.NEXT_PUBLIC_API_URL}${url}`;
+  };
+
+  const removeUploadedMedia = (indexToRemove: number) => {
+    setUploadedSocialMedia((prev) =>
+      prev.filter((_, index) => index !== indexToRemove)
+    );
+  };
+
+  const handleProfileImageChange = async (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    if (!e.target.files || e.target.files.length === 0) return;
+
+    const file = e.target.files[0];
+
+    // optional size check (1MB)
+    if (file.size > 1024 * 1024) {
+      alert("File size must be less than 1MB");
+      return;
+    }
+
+    setProfileImageUploading(true);
+
+    try {
+      const response = await uploadProfileMedia([file]);
+
+      // backend returns array
+      const uploaded = response[0];
+
+      setProfileImageUrl(uploaded.url);
+      setProfileImageFile(file);
+    } catch (err) {
+      console.error("Profile image upload failed", err);
+    } finally {
+      setProfileImageUploading(false);
+    }
+  };
+
+  const handleHeaderImageSelect = async (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    if (!e.target.files?.[0]) return;
+
+    const file = e.target.files[0];
+
+    if (file.size > 2 * 1024 * 1024) {
+      alert("Header image must be less than 2MB");
+      return;
+    }
+
+    setHeaderImageUploading(true);
+
+    try {
+      const response = await uploadProfileMedia([file]);
+      const uploaded = response[0];
+
+      setHeaderImageUrl(uploaded.url); // ✅ THIS WAS MISSING
+      setHeaderImageFile(file);
+    } catch (err) {
+      console.error("Header image upload failed", err);
+    } finally {
+      setHeaderImageUploading(false);
+    }
+  };
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        categoryRef.current &&
+        !categoryRef.current.contains(event.target as Node)
+      ) {
+        setShowSuggestions(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   const handleSocialFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files) return;
-    setSocialFiles(Array.from(e.target.files));
+
+    const files = Array.from(e.target.files);
+
+    const invalidFiles = files.filter((file) => file.size > MAX_FILE_SIZE);
+
+    if (invalidFiles.length > 0) {
+      setUploadError(`Each file must be less than ${MAX_FILE_SIZE_MB}MB`);
+      return;
+    }
+
+    setUploadError("");
+    setSocialFiles(files);
   };
 
   const handleSocialMediaSave = async () => {
@@ -53,6 +161,12 @@ export default function CompanyProfilePage() {
     }
   };
 
+  const removeSocialFile = (indexToRemove: number) => {
+    setSocialFiles((prev) =>
+      prev.filter((_, index) => index !== indexToRemove)
+    );
+  };
+
   const [formData, setFormData] = useState({
     companyName: "",
     about: "",
@@ -62,7 +176,6 @@ export default function CompanyProfilePage() {
     city: "",
     pin: "",
     website: "",
-    facebook: "",
     userType: "seller" as "seller" | "buyer",
   });
 
@@ -125,105 +238,74 @@ export default function CompanyProfilePage() {
     }
   };
 
-  // const handleSubmit = async (e: React.FormEvent) => {
-  //   e.preventDefault();
-  //   if (!user) return;
-
-  //   setIsLoading(true);
-  //   setError("");
-
-  //   try {
-  //     await createUserProfile({
-  //       company_name: formData.companyName,
-  //       user_type: formData.userType,
-  //       category: categories.join(", "),
-  //       country: formData.country,
-  //       city: formData.city,
-  //       website: formData.website,
-  //       whatsapp: formData.phone, // mapping phone to whatsapp as per previous schema
-  //       userId: user.id,
-  //     });
-
-  //     router.push("/profile");
-  //   } catch (err: any) {
-  //     setError(err.message || "Something went wrong while creating profile");
-  //   } finally {
-  //     setIsLoading(false);
-  //   }
-  // };
-  
   const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  if (!user) return;
+    e.preventDefault();
+    if (!user) return;
 
-  setIsLoading(true);
-  setError("");
+    setIsLoading(true);
+    setError("");
 
-  try {
-    const imageSections =
-      uploadedSocialMedia.length > 0
-        ? [
-            {
-              Title: "Social Media",
-              description: "Uploaded social media images",
-              order: 1,
-              imageUrls: uploadedSocialMedia.map(
-                (file) =>
-                  `${file.url}`
-              ),
-            },
-          ]
-        : [];
+    try {
+      const imageSections =
+        uploadedSocialMedia.length > 0
+          ? [
+              {
+                Title: "Social Media",
+                description: "Uploaded social media images",
+                order: 1,
+                imageUrls: uploadedSocialMedia.map((file) => `${file.url}`),
+              },
+            ]
+          : [];
 
-    await createUserProfile({
-      company_name: formData.companyName,
-      user_type: formData.userType,
-      country: formData.country,
-      city: formData.city,
+      await createUserProfile({
+        company_name: formData.companyName,
+        user_type: formData.userType,
+        country: formData.country,
+        city: formData.city,
 
-      about: formData.about
-        ? [
-            {
-              type: "paragraph",
-              children: [
-                {
-                  type: "text",
-                  text: formData.about,
-                },
-              ],
-            },
-          ]
-        : undefined,
+        about: formData.about
+          ? [
+              {
+                type: "paragraph",
+                children: [
+                  {
+                    type: "text",
+                    text: formData.about,
+                  },
+                ],
+              },
+            ]
+          : undefined,
 
-      website: formData.website,
-      whatsapp: formData.phone,
+        website: formData.website,
+        whatsapp: formData.phone,
 
-      slug: formData.companyName
-        .toLowerCase()
-        .replace(/\s+/g, "-"),
+        slug: formData.companyName.toLowerCase().replace(/\s+/g, "-"),
 
-      verified_badge: false,
-      founding_member: false,
-      profile_status: "active",
+        verified_badge: false,
+        founding_member: false,
+        profile_status: "active",
 
-      userId: user.id,
+        userId: user.id,
+        profileImageUrl: profileImageUrl || undefined,
+        headerImageUrl: headerImageUrl || undefined,
 
-      category: {
-        type: categories[0] || "General",
-      },
+        category: {
+          type: categories[0] || "General",
+        },
 
-      image_sections: imageSections,
-    });
+        image_sections: imageSections,
+      });
 
-    router.push("/profile");
-  } catch (err: any) {
-    setError(err.message || "Something went wrong while creating profile");
-  } finally {
-    setIsLoading(false);
-  }
-};
+      router.push("/profile");
+    } catch (err: any) {
+      setError(err.message || "Something went wrong while creating profile");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-  
   return (
     <div className="min-h-screen bg-slate-100">
       {/* Top Header */}
@@ -291,231 +373,342 @@ export default function CompanyProfilePage() {
             onSubmit={handleSubmit}
             className="space-y-4 bg-white p-6 rounded-lg border border-slate-200 shadow-sm transition-all"
           >
+            {step === 1 && (
+              <>
+                <input
+                  className="input text-black"
+                  placeholder="Company Name"
+                  name="companyName"
+                  value={formData.companyName}
+                  onChange={handleFormChange}
+                  required
+                />
+
+                {/* Category Tag Input */}
+                <div className="relative" ref={categoryRef}>
+                  <div
+                    className="min-h-[48px] p-2 border border-gray-300 rounded-md flex flex-wrap gap-2 items-center cursor-text transition-colors focus-within:border-blue-500"
+                    onClick={() =>
+                      document.getElementById("category-input")?.focus()
+                    }
+                  >
+                    {categories.map((category, index) => (
+                      <span
+                        key={index}
+                        className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-800 rounded text-sm transition-all"
+                      >
+                        {category}
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            removeCategory(category);
+                          }}
+                          className="ml-1 text-blue-600 hover:text-blue-800 font-bold text-base leading-none"
+                        >
+                          ×
+                        </button>
+                      </span>
+                    ))}
+                    <input
+                      id="category-input"
+                      type="text"
+                      value={inputValue}
+                      onChange={handleInputChange}
+                      onKeyDown={handleInputKeyDown}
+                      placeholder={categories.length === 0 ? "Category" : ""}
+                      className="flex-1 text-black outline-none min-w-[120px] px-2 py-1 text-sm bg-transparent"
+                    />
+                  </div>
+
+                  {/* Autocomplete Dropdown */}
+                  {showSuggestions && filteredSuggestions.length > 0 && (
+                    <div className="absolute z-30 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-xl max-h-48 overflow-y-auto">
+                      {filteredSuggestions.map((suggestion, index) => (
+                        <div
+                          key={index}
+                          onClick={() => {
+                            addCategory(suggestion);
+                            setShowSuggestions(false);
+                          }}
+                          className="px-3 py-2 text-sm text-black cursor-pointer hover:bg-blue-50 hover:text-blue-700 border-b border-gray-100 last:border-b-0"
+                        >
+                          {suggestion}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <textarea
+                  className="input h-20 resize-none pt-3 text-black"
+                  style={{
+                    paddingTop: "10px",
+                    // paddingBottom: "18px",
+                  }}
+                  placeholder="About (optional)"
+                  name="about"
+                  value={formData.about}
+                  onChange={handleFormChange}
+                />
+
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-sm font-medium text-gray-700 ml-1">
+                    User Type
+                  </label>
+                  <select
+                    className="input text-black"
+                    name="userType"
+                    value={formData.userType}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        userType: e.target.value as "seller" | "buyer",
+                      }))
+                    }
+                    required
+                  >
+                    <option value="seller">Seller</option>
+                    <option value="buyer">Buyer</option>
+                  </select>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setStep(2)}
+                  className="w-full h-12 bg-blue-600 text-white rounded-md"
+                >
+                  NEXT
+                </button>
+              </>
+            )}
+
+            {step === 2 && (
+              <>
+                <input
+                  className="input text-black"
+                  placeholder="Phone Number"
+                  name="phone"
+                  value={formData.phone}
+                  onChange={handleFormChange}
+                  required
+                />
+                <input
+                  className="input text-black"
+                  placeholder="Address Line"
+                  name="address"
+                  value={formData.address}
+                  onChange={handleFormChange}
+                />
+                <div className="grid grid-cols-2 gap-4">
+                  <input
+                    className="input text-black"
+                    placeholder="Country"
+                    name="country"
+                    value={formData.country}
+                    onChange={handleFormChange}
+                    required
+                  />
+                  <input
+                    className="input text-black"
+                    placeholder="City"
+                    name="city"
+                    value={formData.city}
+                    onChange={handleFormChange}
+                    required
+                  />
+                </div>
+                <input
+                  className="input text-black"
+                  placeholder="PIN"
+                  name="pin"
+                  value={formData.pin}
+                  onChange={handleFormChange}
+                />
+
+                <input
+                  className="input text-black"
+                  placeholder="Website link (optional)"
+                  name="website"
+                  value={formData.website}
+                  onChange={handleFormChange}
+                />
+
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setStep(1)}
+                    className="w-full h-12 border border-gray-300 rounded-md text-black"
+                  >
+                    BACK
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setStep(3)}
+                    className="w-full h-12 bg-blue-600 text-white rounded-md"
+                  >
+                    NEXT
+                  </button>
+                </div>
+              </>
+            )}
+
+            {step === 3 && (
+              <>
+                <div className="border rounded-md px-4 py-3 bg-gray-50 space-y-2">
+                  <span className="text-gray-500 text-sm">
+                    Profile Image
+                    <span className="text-red-500 text-xs ml-2">
+                      500x500px · max 1MB
+                    </span>
+                  </span>
+
+                  <div className="flex items-center gap-4">
+                    {/* Preview */}
+                    {profileImageUrl ? (
+                      <img
+                        src={getMediaUrl(profileImageUrl)}
+                        alt="Profile"
+                        className="w-16 h-16 rounded-full object-cover border"
+                      />
+                    ) : (
+                      <div className="w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center text-gray-400 text-xs">
+                        No Image
+                      </div>
+                    )}
+
+                    {/* Upload button */}
+                    <label className="cursor-pointer">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handleProfileImageChange}
+                      />
+                      <span className="px-3 py-1 text-black border border-gray-300 bg-white rounded text-sm hover:bg-gray-100 transition font-medium">
+                        {profileImageUploading ? "Uploading..." : "Choose file"}
+                      </span>
+                    </label>
+                  </div>
+                </div>
+
+                <div className="border rounded-md px-4 py-3 bg-gray-50 space-y-2">
+                  <span className="text-gray-500 text-sm">
+                    Header Image
+                    <span className="text-red-500 text-xs ml-2">
+                      Recommended 1200×400 · max 2MB
+                    </span>
+                  </span>
+
+                  {/* Preview */}
+                  {headerImageUrl ? (
+                    <img
+                      src={getMediaUrl(headerImageUrl)}
+                      alt="Header"
+                      className="w-full h-32 object-cover rounded border"
+                    />
+                  ) : (
+                    <div className="w-full h-32 bg-gray-200 rounded flex items-center justify-center text-gray-400 text-sm">
+                      No Header Image
+                    </div>
+                  )}
+
+                  {/* Upload */}
+                  <label className="inline-block cursor-pointer">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleHeaderImageSelect}
+                    />
+                    <span className="px-3 py-1 text-black border border-gray-300 bg-white rounded text-sm hover:bg-gray-100 transition font-medium">
+                      {headerImageUploading ? "Uploading..." : "Choose file"}
+                    </span>
+                  </label>
+                </div>
+
+                <div className="flex justify-end">
+                  <div
+                    onClick={() => setShowSocialModal(true)}
+                    className="text-sm flex items-center gap-2 text-gray-600 cursor-pointer hover:text-black transition-colors font-medium"
+                  >
+                    <div className="w-5 h-5 bg-black rounded-full flex items-center justify-center text-white text-xs font-bold">
+                      +
+                    </div>
+                    Add Social Media Profile
+                  </div>
+                </div>
+
+                {uploadedSocialMedia.length > 0 && (
+                  <div className="mt-3 space-y-2">
+                    <p className="text-sm font-medium text-gray-700">
+                      Uploaded Social Media Images
+                    </p>
+
+                    <div className="flex flex-wrap gap-3">
+                      {uploadedSocialMedia.map((file, index) => (
+                        <div
+                          key={index}
+                          className="relative w-20 text-center text-xs text-gray-600 group"
+                        >
+                          {/* Remove button */}
+                          <button
+                            type="button"
+                            onClick={() => removeUploadedMedia(index)}
+                            className="absolute -top-2 -right-2 z-10 w-5 h-5 bg-black text-white rounded-full text-xs flex items-center justify-center shadow hover:bg-red-600 transition"
+                            title="Remove image"
+                          >
+                            ×
+                          </button>
+
+                          {/* Image */}
+                          <img
+                            src={getMediaUrl(file.url)}
+                            alt={file.name}
+                            className="w-20 h-20 object-cover rounded border"
+                          />
+
+                          <p className="truncate mt-1">{file.name}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className={`w-full h-12 bg-blue-600 text-white font-bold rounded-md transition-all hover:bg-blue-700 active:scale-[0.98] ${
+                    isLoading ? "opacity-70 cursor-not-allowed" : ""
+                  }`}
+                >
+                  {isLoading ? "SUBMITTING..." : "CONTINUE"}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setStep(2)}
+                  className="w-full h-12 border border-gray-300 rounded-md text-black"
+                >
+                  BACK
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => router.push("/")}
+                  className="w-full h-12 text-black border border-gray-200 rounded-md font-medium hover:bg-gray-50 transition-colors"
+                >
+                  SKIP NOW
+                </button>
+              </>
+            )}
+
             {error && (
               <div className="p-3 bg-red-50 border border-red-200 text-red-600 text-sm rounded-md">
                 {error}
               </div>
             )}
-
-            <input
-              className="input text-black"
-              placeholder="Company Name"
-              name="companyName"
-              value={formData.companyName}
-              onChange={handleFormChange}
-              required
-            />
-
-            {/* Category Tag Input */}
-            <div className="relative">
-              <div
-                className="min-h-[48px] p-2 border border-gray-300 rounded-md flex flex-wrap gap-2 items-center cursor-text transition-colors focus-within:border-blue-500"
-                onClick={() =>
-                  document.getElementById("category-input")?.focus()
-                }
-              >
-                {categories.map((category, index) => (
-                  <span
-                    key={index}
-                    className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-800 rounded text-sm transition-all"
-                  >
-                    {category}
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        removeCategory(category);
-                      }}
-                      className="ml-1 text-blue-600 hover:text-blue-800 font-bold text-base leading-none"
-                    >
-                      ×
-                    </button>
-                  </span>
-                ))}
-                <input
-                  id="category-input"
-                  type="text"
-                  value={inputValue}
-                  onChange={handleInputChange}
-                  onKeyDown={handleInputKeyDown}
-                  onFocus={() => setShowSuggestions(inputValue.length > 0)}
-                  onBlur={() =>
-                    setTimeout(() => setShowSuggestions(false), 200)
-                  }
-                  placeholder={categories.length === 0 ? "Category" : ""}
-                  className="flex-1 text-black outline-none min-w-[120px] px-2 py-1 text-sm bg-transparent"
-                />
-              </div>
-
-              {/* Autocomplete Dropdown */}
-              {showSuggestions && filteredSuggestions.length > 0 && (
-                <div className="absolute z-20 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-xl max-h-48 overflow-y-auto">
-                  {filteredSuggestions.map((suggestion, index) => (
-                    <div
-                      key={index}
-                      onClick={() => addCategory(suggestion)}
-                      className="px-3 py-2 text-sm cursor-pointer hover:bg-blue-50 hover:text-blue-700 border-b border-gray-100 last:border-b-0 transition-colors"
-                    >
-                      {suggestion}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <textarea
-              className="input h-20 resize-none py-2 text-black"
-              placeholder="About (optional)"
-              name="about"
-              value={formData.about}
-              onChange={handleFormChange}
-            />
-
-            <input
-              className="input text-black"
-              placeholder="Phone Number"
-              name="phone"
-              value={formData.phone}
-              onChange={handleFormChange}
-              required
-            />
-            <input
-              className="input text-black"
-              placeholder="Address Line"
-              name="address"
-              value={formData.address}
-              onChange={handleFormChange}
-            />
-            <div className="grid grid-cols-2 gap-4">
-              <input
-                className="input text-black"
-                placeholder="Country"
-                name="country"
-                value={formData.country}
-                onChange={handleFormChange}
-                required
-              />
-              <input
-                className="input text-black"
-                placeholder="City"
-                name="city"
-                value={formData.city}
-                onChange={handleFormChange}
-                required
-              />
-            </div>
-            <input
-              className="input text-black"
-              placeholder="PIN"
-              name="pin"
-              value={formData.pin}
-              onChange={handleFormChange}
-            />
-
-            <div className="border rounded-md px-4 py-3 flex items-center justify-between text-sm bg-gray-50">
-              <span className="text-gray-500">
-                Logo{" "}
-                <span className="text-red-500 text-xs ml-2">
-                  500x500px max file size 1mb
-                </span>
-              </span>
-              <button
-                type="button"
-                className="px-3 py-1 text-black border border-gray-300 bg-white rounded text-sm hover:bg-gray-100 transition-colors font-medium"
-              >
-                Choose file
-              </button>
-            </div>
-
-            <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-gray-700 ml-1">
-                User Type
-              </label>
-              <select
-                className="input text-black"
-                name="userType"
-                value={formData.userType}
-                onChange={(e) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    userType: e.target.value as "seller" | "buyer",
-                  }))
-                }
-                required
-              >
-                <option value="seller">Seller</option>
-                <option value="buyer">Buyer</option>
-              </select>
-            </div>
-
-            <input
-              className="input text-black"
-              placeholder="Website link (optional)"
-              name="website"
-              value={formData.website}
-              onChange={handleFormChange}
-            />
-            <input
-              className="input text-black"
-              placeholder="Facebook (optional)"
-              name="facebook"
-              value={formData.facebook}
-              onChange={handleFormChange}
-            />
-
-            <div className="flex justify-end">
-              <div
-                onClick={() => setShowSocialModal(true)}
-                className="text-sm flex items-center gap-2 text-gray-600 cursor-pointer hover:text-black transition-colors font-medium"
-              >
-                <div className="w-5 h-5 bg-black rounded-full flex items-center justify-center text-white text-xs font-bold">
-                  +
-                </div>
-                Add Social Media Profile
-              </div>
-            </div>
-
-            {uploadedSocialMedia.length > 0 && (
-              <div className="mt-3 space-y-2">
-                <p className="text-sm font-medium text-gray-700">
-                  Uploaded Social Media Images
-                </p>
-
-                <div className="flex flex-wrap gap-3">
-                  {uploadedSocialMedia.map((file, index) => (
-                    <div
-                      key={index}
-                      className="w-20 text-center text-xs text-gray-600"
-                    >
-                      <img
-                        src={`${process.env.NEXT_PUBLIC_API_URL}${file.url}`}
-                        alt={file.name}
-                        className="w-20 h-20 object-cover rounded border"
-                      />
-                      <p className="truncate mt-1">{file.name}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            <button
-              type="submit"
-              disabled={isLoading}
-              className={`w-full h-12 bg-blue-600 text-white font-bold rounded-md transition-all hover:bg-blue-700 active:scale-[0.98] ${
-                isLoading ? "opacity-70 cursor-not-allowed" : ""
-              }`}
-            >
-              {isLoading ? "SUBMITTING..." : "CONTINUE"}
-            </button>
-
-            <button
-              type="button"
-              onClick={() => router.push("/")}
-              className="w-full h-12 text-black border border-gray-200 rounded-md font-medium hover:bg-gray-50 transition-colors"
-            >
-              SKIP NOW
-            </button>
           </form>
         </div>
 
@@ -550,16 +743,29 @@ export default function CompanyProfilePage() {
 
               {/* File preview */}
               {socialFiles.length > 0 && (
-                <div className="mt-4 space-y-2 max-h-32 overflow-y-auto">
+                <div className="mt-4 space-y-2 max-h-40 overflow-y-auto">
                   {socialFiles.map((file, index) => (
                     <div
                       key={index}
-                      className="text-sm text-gray-700 flex justify-between items-center border-b pb-1"
+                      className="flex items-center justify-between gap-3 border-b pb-2 text-sm"
                     >
-                      <span className="truncate">{file.name}</span>
-                      <span className="text-xs text-gray-400">
-                        {(file.size / 1024).toFixed(1)} KB
-                      </span>
+                      <div className="flex-1 min-w-0">
+                        <p className="truncate text-gray-800 font-medium">
+                          {file.name}
+                        </p>
+                        <p className="text-xs text-gray-400">
+                          {(file.size / 1024).toFixed(1)} KB
+                        </p>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => removeSocialFile(index)}
+                        className="text-red-500 hover:text-red-700 text-lg font-bold leading-none px-2"
+                        title="Remove file"
+                      >
+                        ×
+                      </button>
                     </div>
                   ))}
                 </div>
@@ -569,15 +775,17 @@ export default function CompanyProfilePage() {
               <div className="flex justify-end gap-3 mt-6">
                 <button
                   onClick={() => setShowSocialModal(false)}
-                  className="px-4 py-2 border rounded-md text-sm hover:bg-gray-50"
+                  className="px-4 py-2 text-black border rounded-md text-sm hover:bg-gray-50"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleSocialMediaSave}
-                  disabled={uploading}
-                  className={`px-4 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 ${
-                    uploading ? "opacity-70 cursor-not-allowed" : ""
+                  disabled={uploading || socialFiles.length === 0}
+                  className={`px-5 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 ${
+                    uploading || socialFiles.length === 0
+                      ? "opacity-70 cursor-not-allowed"
+                      : ""
                   }`}
                 >
                   {uploading ? "Uploading..." : "Save"}
