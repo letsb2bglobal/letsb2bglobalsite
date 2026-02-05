@@ -37,6 +37,9 @@ export default function ProfilePage() {
   const [isEditingHeader, setIsEditingHeader] = useState(false);
   const [isEditingAbout, setIsEditingAbout] = useState(false);
 
+  const [showImageModal, setShowImageModal] = useState(false);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
+
   // Form states
   const [headerForm, setHeaderForm] = useState({
     company_name: "",
@@ -208,20 +211,28 @@ export default function ProfilePage() {
           <div className="flex items-center gap-4">
             <button
               onClick={() => router.push("/")}
-              className="text-gray-600 hover:text-gray-900 text-sm font-medium"
+              className="text-gray-600 hover:text-gray-900 text-sm font-medium cursor-pointer"
             >
               Home
             </button>
             <button
               onClick={() => router.push("/messages")}
-              className="text-gray-600 hover:text-gray-900 text-sm font-medium"
+              className="text-gray-600 hover:text-gray-900 text-sm font-medium cursor-pointers"
             >
               Messages
             </button>
-            <div className="h-8 w-8 rounded-full bg-gray-200 overflow-hidden border border-gray-300">
-              <div className="w-full h-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-xs">
-                {user?.username?.substring(0, 2).toUpperCase()}
-              </div>
+            <div className="h-8 w-8 rounded-full bg-gray-200 overflow-hidden border border-gray-300 cursor-pointer">
+              {profile?.profileImageUrl ? (
+                <img
+                  src={profile.profileImageUrl}
+                  alt={profile.company_name || "Profile"}
+                  className="w-full h-full object-cover cursor-pointer"
+                />
+              ) : (
+                <div className="w-full h-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-xs select-none">
+                  {user?.username?.substring(0, 2).toUpperCase()}
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -230,7 +241,13 @@ export default function ProfilePage() {
           {/* Profile Card */}
           <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden relative">
             {/* Background Cover */}
-            <div className="h-48 w-full relative overflow-hidden">
+            <div
+              onClick={() =>
+                profile?.headerImageUrl &&
+                setPreviewImage(profile.headerImageUrl)
+              }
+              className="h-48 w-full relative overflow-hidden cursor-pointer"
+            >
               {profile?.headerImageUrl ? (
                 <img
                   src={profile.headerImageUrl}
@@ -238,11 +255,17 @@ export default function ProfilePage() {
                   className="absolute inset-0 w-full h-full object-cover"
                 />
               ) : (
-                <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-indigo-600" />
+                <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-indigo-600 " />
               )}
 
               {/* Action button stays on top */}
-              <button className="absolute top-4 right-4 p-2 bg-white/20 backdrop-blur-md rounded-full hover:bg-white/30 transition-all z-10">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  // open upload / edit logic here
+                }}
+                className="absolute top-4 right-4 p-2 bg-white/20 backdrop-blur-md rounded-full hover:bg-white/30 transition-all z-10"
+              >
                 <svg
                   className="w-5 h-5 text-white"
                   fill="none"
@@ -263,12 +286,44 @@ export default function ProfilePage() {
                   />
                 </svg>
               </button>
+
+              {previewImage && (
+                <div
+                  className="fixed inset-0 z-50 flex items-center justify-center bg-black/80"
+                  onClick={() => setPreviewImage(null)}
+                >
+                  <div
+                    className="relative max-w-5xl w-full px-4"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {/* Close button */}
+                    <button
+                      onClick={() => setPreviewImage(null)}
+                      className="absolute -top-10 right-2 text-white text-3xl hover:scale-110 transition"
+                    >
+                      ×
+                    </button>
+
+                    {/* Image */}
+                    <img
+                      src={previewImage}
+                      alt="Preview"
+                      className="w-full max-h-[85vh] object-contain rounded-lg shadow-2xl bg-black"
+                    />
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Profile Image & Content Header */}
             <div className="px-6 pb-6">
-              <div className="relative -mt-24 mb-4">
-                <div className="w-40 h-40 rounded-full border-4 border-white shadow-lg bg-gray-200 overflow-hidden group">
+              <div className="relative -mt-24 mb-4 w-40">
+                <div
+                  onClick={() =>
+                    profile?.profileImageUrl && setShowImageModal(true)
+                  }
+                  className="w-40 h-40 rounded-full border-4 border-white shadow-lg bg-gray-200 overflow-hidden group cursor-pointer"
+                >
                   <div className="w-full h-full rounded-full overflow-hidden bg-blue-50 flex items-center justify-center">
                     {profile?.profileImageUrl ? (
                       <img
@@ -281,28 +336,6 @@ export default function ProfilePage() {
                         {profile?.company_name?.charAt(0).toUpperCase()}
                       </span>
                     )}
-                  </div>
-
-                  <div className="absolute inset-0 bg-black/40 items-center justify-center hidden group-hover:flex transition-all cursor-pointer">
-                    <svg
-                      className="w-8 h-8 text-white"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
-                      ></path>
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
-                      ></path>
-                    </svg>
                   </div>
                 </div>
               </div>
@@ -334,7 +367,7 @@ export default function ProfilePage() {
                   <div className="mt-4 md:mt-0 flex gap-2">
                     <button
                       onClick={() => setIsEditingHeader(true)}
-                      className="px-4 py-1.5 bg-blue-600 text-white font-semibold rounded-full hover:bg-blue-700 transition-colors flex items-center gap-2"
+                      className="px-4 py-1.5 bg-blue-600 text-white font-semibold rounded-full hover:bg-blue-700 transition-colors flex items-center gap-2 cursor-pointer"
                     >
                       <svg
                         className="w-4 h-4"
@@ -353,7 +386,7 @@ export default function ProfilePage() {
                     </button>
                     <button
                       onClick={fetchEnquiries}
-                      className="px-4 py-1.5 bg-indigo-600 text-white font-semibold rounded-full hover:bg-indigo-700 transition-all shadow-md hover:shadow-lg flex items-center gap-2"
+                      className="px-4 py-1.5 bg-indigo-600 text-white font-semibold rounded-full hover:bg-indigo-700 transition-all shadow-md hover:shadow-lg flex items-center gap-2 cursor-pointer"
                     >
                       <svg
                         className="w-4 h-4"
@@ -370,7 +403,7 @@ export default function ProfilePage() {
                       </svg>
                       Enquiries
                     </button>
-                    <button className="px-4 py-1.5 border border-blue-600 text-blue-600 font-semibold rounded-full hover:bg-blue-50 transition-colors">
+                    <button className="px-4 py-1.5 border border-blue-600 text-blue-600 font-semibold rounded-full hover:bg-blue-50 transition-colors cursor-pointer">
                       Resources
                     </button>
                   </div>
@@ -379,7 +412,7 @@ export default function ProfilePage() {
                 <div className="space-y-4 animate-in fade-in duration-300">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <input
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                      className="w-full px-4 py-2 text-black border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
                       placeholder="Company Name"
                       value={headerForm.company_name}
                       onChange={(e) =>
@@ -390,7 +423,7 @@ export default function ProfilePage() {
                       }
                     />
                     <input
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                      className="w-full px-4 py-2 text-black border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
                       placeholder="Category"
                       value={headerForm.category}
                       onChange={(e) =>
@@ -401,7 +434,7 @@ export default function ProfilePage() {
                       }
                     />
                     <input
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                      className="w-full px-4 py-2 text-black border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
                       placeholder="Country"
                       value={headerForm.country}
                       onChange={(e) =>
@@ -412,7 +445,7 @@ export default function ProfilePage() {
                       }
                     />
                     <input
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                      className="w-full px-4 py-2 text-black border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
                       placeholder="City"
                       value={headerForm.city}
                       onChange={(e) =>
@@ -438,6 +471,34 @@ export default function ProfilePage() {
                 </div>
               )}
             </div>
+
+            {showImageModal && profile?.profileImageUrl && (
+              <div
+                className="fixed inset-0 z-50 flex items-center justify-center bg-black/80"
+                onClick={() => setShowImageModal(false)}
+              >
+                {/* Stop click bubbling so image click doesn’t close */}
+                <div
+                  className="relative max-w-3xl w-full px-4"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {/* Close button */}
+                  <button
+                    onClick={() => setShowImageModal(false)}
+                    className="absolute -top-10 right-2 text-white text-3xl hover:scale-110 transition"
+                  >
+                    ×
+                  </button>
+
+                  {/* Large Image */}
+                  <img
+                    src={profile.profileImageUrl}
+                    alt={profile.company_name}
+                    className="w-full max-h-[80vh] object-contain rounded-lg shadow-2xl bg-black"
+                  />
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
@@ -477,7 +538,7 @@ export default function ProfilePage() {
                   <div className="space-y-4">
                     <textarea
                       rows={4}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none resize-none"
+                      className="w-full px-4 py-2 text-black border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none resize-none"
                       value={aboutText}
                       onChange={(e) => setAboutText(e.target.value)}
                     />
@@ -729,7 +790,7 @@ export default function ProfilePage() {
                       handleUpdateProfile({ website: newWebsite });
                     }
                   }}
-                  className="w-full mt-6 py-2 border border-blue-600 text-blue-600 font-bold rounded hover:bg-blue-50 transition-all text-sm"
+                  className="w-full mt-6 py-2 border border-blue-600 text-blue-600 font-bold rounded hover:bg-blue-50 transition-all text-sm cursor-pointer"
                 >
                   Edit Contact Details
                 </button>
