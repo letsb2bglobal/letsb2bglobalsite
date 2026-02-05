@@ -230,8 +230,19 @@ export default function ProfilePage() {
           {/* Profile Card */}
           <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden relative">
             {/* Background Cover */}
-            <div className="h-48 w-full bg-gradient-to-r from-blue-400 to-indigo-600 relative">
-              <button className="absolute top-4 right-4 p-2 bg-white/20 backdrop-blur-md rounded-full hover:bg-white/30 transition-all">
+            <div className="h-48 w-full relative overflow-hidden">
+              {profile?.headerImageUrl ? (
+                <img
+                  src={profile.headerImageUrl}
+                  alt={`${profile.company_name} header`}
+                  className="absolute inset-0 w-full h-full object-cover"
+                />
+              ) : (
+                <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-indigo-600" />
+              )}
+
+              {/* Action button stays on top */}
+              <button className="absolute top-4 right-4 p-2 bg-white/20 backdrop-blur-md rounded-full hover:bg-white/30 transition-all z-10">
                 <svg
                   className="w-5 h-5 text-white"
                   fill="none"
@@ -243,13 +254,13 @@ export default function ProfilePage() {
                     strokeLinejoin="round"
                     strokeWidth="2"
                     d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
-                  ></path>
+                  />
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     strokeWidth="2"
                     d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
-                  ></path>
+                  />
                 </svg>
               </button>
             </div>
@@ -258,9 +269,20 @@ export default function ProfilePage() {
             <div className="px-6 pb-6">
               <div className="relative -mt-24 mb-4">
                 <div className="w-40 h-40 rounded-full border-4 border-white shadow-lg bg-gray-200 overflow-hidden group">
-                  <div className="w-full h-full bg-blue-50 flex items-center justify-center text-blue-500 font-bold text-4xl">
-                    {profile?.company_name.substring(0, 1).toUpperCase()}
+                  <div className="w-full h-full rounded-full overflow-hidden bg-blue-50 flex items-center justify-center">
+                    {profile?.profileImageUrl ? (
+                      <img
+                        src={profile.profileImageUrl}
+                        alt={profile.company_name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <span className="text-blue-500 font-bold text-4xl">
+                        {profile?.company_name?.charAt(0).toUpperCase()}
+                      </span>
+                    )}
                   </div>
+
                   <div className="absolute inset-0 bg-black/40 items-center justify-center hidden group-hover:flex transition-all cursor-pointer">
                     <svg
                       className="w-8 h-8 text-white"
@@ -499,7 +521,6 @@ export default function ProfilePage() {
                     </h3>
                     <p className="text-gray-700 text-sm">
                       Full-time • {profile?.category?.type || ""}
-
                     </p>
                     <p className="text-gray-500 text-sm mt-1">
                       {profile?.city}, {profile?.country}
@@ -515,6 +536,47 @@ export default function ProfilePage() {
                   </div>
                 </div>
               </div>
+
+              {profile?.image_sections && profile.image_sections.length > 0 && (
+                <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+                  <h2 className="text-xl font-bold text-gray-900 mb-6">
+                    Media
+                  </h2>
+
+                  <div className="space-y-8">
+                    {profile.image_sections
+                      .sort((a, b) => a.order - b.order)
+                      .map((section) => (
+                        <div key={section.id}>
+                          <h3 className="text-lg font-semibold text-gray-800 mb-1">
+                            {section.Title}
+                          </h3>
+
+                          {section.description && (
+                            <p className="text-sm text-gray-500 mb-4">
+                              {section.description}
+                            </p>
+                          )}
+
+                          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                            {section.imageUrls.map((url, index) => (
+                              <div
+                                key={index}
+                                className="relative aspect-square overflow-hidden rounded-lg border border-gray-200 bg-gray-50"
+                              >
+                                <img
+                                  src={url}
+                                  alt={`${section.Title}-${index}`}
+                                  className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                                />
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                  </div>
+                </div>
+              )}
 
               {/* My Posts Section */}
               <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
