@@ -25,6 +25,41 @@ export default function Home() {
   const [allLoading, setAllLoading] = useState(true);
   const [mounted, setMounted] = useState(false);
 
+  // Search States
+  const [searchText, setSearchText] = useState("");
+  const [location, setLocation] = useState("");
+  const [filteredCities, setFilteredCities] = useState<string[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+
+  // Static list of famous cities for autocomplete
+  const famousCities = [
+    "New York", "Los Angeles", "Chicago", "Houston", "Phoenix", "Philadelphia",
+    "San Antonio", "San Diego", "Dallas", "San Jose", "Austin", "Jacksonville",
+    "Fort Worth", "Columbus", "Charlotte", "San Francisco", "Indianapolis",
+    "Seattle", "Denver", "Washington", "Boston", "El Paso", "Nashville",
+    "Detroit", "Oklahoma City", "Portland", "Las Vegas", "Memphis", "Louisville",
+    "Milwaukee", "Baltimore", "Albuquerque", "Tucson", "Fresno", "Sacramento",
+    "Kansas City", "Mesa", "Atlanta", "Omaha", "Colorado Springs", "Raleigh",
+    "Long Beach", "Virginia Beach", "Miami", "Oakland", "Minneapolis", "Tampa",
+    "Tulsa", "Arlington", "Wichita", "New Orleans", "Bakersfield", "Cleveland",
+    "Aurora", "Anaheim", "Honolulu", "Santa Ana", "Riverside", "Corpus Christi",
+    "Lexington", "Henderson", "Stockton", "St. Paul", "Cincinnati", "Irvine",
+    "Greensboro", "Pittsburgh", "Lincoln", "St. Louis", "Orlando", "Durham",
+    "London", "Paris", "Tokyo", "Berlin", "Rome", "Madrid", "Amsterdam",
+    "Barcelona", "Vienna", "Prague", "Budapest", "Warsaw", "Moscow", "Istanbul",
+    "Athens", "Lisbon", "Dublin", "Copenhagen", "Stockholm", "Oslo", "Helsinki",
+    "Brussels", "Zurich", "Geneva", "Milan", "Venice", "Florence", "Naples",
+    "Munich", "Hamburg", "Frankfurt", "Cologne", "Dusseldorf", "Stuttgart",
+    "Toronto", "Vancouver", "Montreal", "Calgary", "Edmonton", "Ottawa",
+    "Sydney", "Melbourne", "Brisbane", "Perth", "Adelaide", "Gold Coast",
+    "Auckland", "Wellington", "Christchurch", "Singapore", "Hong Kong", "Seoul",
+    "Bangkok", "Jakarta", "Manila", "Kuala Lumpur", "Ho Chi Minh City", "Delhi",
+    "Mumbai", "Bangalore", "Chennai", "Hyderabad", "Pune", "Kolkata", "Jaipur",
+    "Dubai", "Abu Dhabi", "Doha", "Riyadh", "Jeddah", "Kuwait City", "Manama",
+    "Tel Aviv", "Jerusalem", "Cairo", "Lagos", "Nairobi", "Cape Town",
+    "Johannesburg", "Casablanca", "Marrakech", "Tunis", "Algiers", "Accra"
+  ];
+
   // Enquiry Modal States
   const [isInquiryModalOpen, setIsInquiryModalOpen] = useState(false);
   const [selectedProfile, setSelectedProfile] = useState<UserProfile | null>(
@@ -95,6 +130,62 @@ useEffect(() => {
       fetchPosts();
     }
   }, [activeTab]);
+
+  // Search handlers
+  const handleLocationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setLocation(value);
+    
+    if (value.length > 0) {
+      const filtered = famousCities.filter(city =>
+        city.toLowerCase().includes(value.toLowerCase())
+      ).slice(0, 8); // Limit to 8 suggestions
+      setFilteredCities(filtered);
+      setShowSuggestions(true);
+    } else {
+      setFilteredCities([]);
+      setShowSuggestions(false);
+    }
+  };
+
+  const handleCitySelect = (city: string) => {
+    setLocation(city);
+    setShowSuggestions(false);
+    setFilteredCities([]);
+  };
+
+  const handleSearch = () => {
+    console.log({
+      searchText: searchText,
+      location: location
+    });
+  };
+
+  const handleLocationKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      setShowSuggestions(false);
+      handleSearch();
+    }
+  };
+
+  const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
+  };
+
+  // Close suggestions when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (!target.closest('.location-search-container')) {
+        setShowSuggestions(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const handleLogout = () => {
     clearAuthData();
@@ -180,25 +271,88 @@ useEffect(() => {
             Let's B2B
           </span>
         </div>
-        <div className="flex bg-gray-100 rounded-md px-3 py-1.5 w-full max-w-md mx-4 items-center gap-2 border border-transparent focus-within:border-blue-500 transition-all">
-          <svg
-            className="w-4 h-4 text-gray-500"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
+        <div className="flex items-center gap-2 w-full max-w-lg mx-4">
+          {/* Search Query Input */}
+          <div className="flex items-center gap-2 bg-gray-100 rounded-md px-3 py-1.5 flex-1 border border-transparent focus-within:border-blue-500 transition-all">
+            <svg
+              className="w-4 h-4 text-gray-500"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+              ></path>
+            </svg>
+            <input
+              type="text"
+              placeholder="Search keywords..."
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+              onKeyDown={handleSearchKeyDown}
+              className="bg-transparent border-none outline-none text-sm w-full"
+            />
+          </div>
+
+          {/* Location Input with Autocomplete */}
+          <div className="relative location-search-container">
+            <div className="flex items-center gap-2 bg-gray-100 rounded-md px-3 py-1.5 w-40 border border-transparent focus-within:border-blue-500 transition-all">
+              <svg
+                className="w-4 h-4 text-gray-500"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                ></path>
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                ></path>
+              </svg>
+              <input
+                type="text"
+                placeholder="Location..."
+                value={location}
+                onChange={handleLocationChange}
+                onKeyDown={handleLocationKeyDown}
+                onFocus={() => location.length > 0 && setShowSuggestions(true)}
+                className="bg-transparent border-none outline-none text-sm w-full"
+              />
+            </div>
+
+            {/* Autocomplete Suggestions */}
+            {showSuggestions && filteredCities.length > 0 && (
+              <div className="absolute top-full mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg z-50 max-h-48 overflow-y-auto">
+                {filteredCities.map((city, index) => (
+                  <div
+                    key={index}
+                    onClick={() => handleCitySelect(city)}
+                    className="px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 cursor-pointer transition-colors first:rounded-t-md last:rounded-b-md"
+                  >
+                    {city}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Search Button */}
+          <button
+            onClick={handleSearch}
+            className="px-4 py-1.5 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 transition-all text-sm shadow-sm hover:shadow-md"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-            ></path>
-          </svg>
-          <input
-            type="text"
-            placeholder="Search profiles..."
-            className="bg-transparent border-none outline-none text-sm w-full"
-          />
+            Search
+          </button>
         </div>
         <div className="flex items-center gap-6">
           <button
