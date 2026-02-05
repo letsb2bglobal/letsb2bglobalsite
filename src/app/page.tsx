@@ -6,6 +6,7 @@ import { useAuth } from "@/components/ProtectedRoute"; // Using the hook
 import {
   getAllUserProfiles,
   checkUserProfile,
+  searchUserProfiles,
   type UserProfile,
 } from "@/lib/profile";
 import { clearAuthData, isAuthenticated } from "@/lib/auth";
@@ -24,6 +25,8 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [allLoading, setAllLoading] = useState(true);
   const [mounted, setMounted] = useState(false);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [isSearchActive, setIsSearchActive] = useState(false);
 
   // Search States
   const [searchText, setSearchText] = useState("");
@@ -154,11 +157,33 @@ useEffect(() => {
     setFilteredCities([]);
   };
 
-  const handleSearch = () => {
-    console.log({
-      searchText: searchText,
-      location: location
-    });
+  const handleSearch = async () => {
+    if (!searchText.trim() && !location.trim()) {
+      // If no search criteria, show all profiles
+      setIsSearchActive(false);
+      setAllProfiles(allProfilesList.filter(p => p.userId !== user?.id));
+      return;
+    }
+
+    setSearchLoading(true);
+    setIsSearchActive(true);
+    
+    try {
+      const response = await searchUserProfiles(searchText.trim(), location.trim());
+      if (response?.data) {
+        // Filter out current user from search results
+        const filteredResults = response.data.filter(p => p.userId !== user?.id);
+        setAllProfiles(filteredResults);
+      }
+    } catch (error) {
+      console.error("Error searching profiles:", error);
+      // Show error message and fallback to all profiles
+      alert(`Search failed: ${error instanceof Error ? error.message : 'Unknown error'}. Showing all profiles instead.`);
+      setAllProfiles(allProfilesList.filter(p => p.userId !== user?.id));
+      setIsSearchActive(false);
+    } finally {
+      setSearchLoading(false);
+    }
   };
 
   const handleLocationKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -353,6 +378,21 @@ useEffect(() => {
           >
             Search
           </button>
+
+          {/* Clear Search Button */}
+          {isSearchActive && (
+            <button
+              onClick={() => {
+                setSearchText("");
+                setLocation("");
+                setIsSearchActive(false);
+                setAllProfiles(allProfilesList.filter(p => p.userId !== user?.id));
+              }}
+              className="px-3 py-1.5 bg-gray-500 text-white font-medium rounded-md hover:bg-gray-600 transition-all text-sm shadow-sm hover:shadow-md"
+            >
+              Clear
+            </button>
+          )}
         </div>
         <div className="flex items-center gap-6">
           <button
@@ -427,14 +467,16 @@ useEffect(() => {
             <div className="h-[1px] flex-1 bg-gray-300"></div>
             <span className="text-xs text-gray-500 font-bold px-2 uppercase tracking-widest">
               {activeTab === "profiles"
-                ? "Recommended for you"
+                ? isSearchActive
+                  ? "Search Results"
+                  : "Recommended for you"
                 : "Latest Opportunities"}
             </span>
             <div className="h-[1px] flex-1 bg-gray-300"></div>
           </div>
 
           {activeTab === "profiles" ? (
-            allLoading ? (
+            allLoading || searchLoading ? (
               <div className="space-y-4">
                 {[1, 2, 3].map((i) => (
                   <div
@@ -569,10 +611,13 @@ useEffect(() => {
             ) : (
               <div className="bg-white rounded-xl border border-gray-200 p-12 text-center shadow-sm">
                 <h3 className="text-lg font-bold text-gray-900">
-                  No profiles available
+                  {isSearchActive ? "No search results found" : "No profiles available"}
                 </h3>
                 <p className="text-gray-500">
-                  Try searching for other categories or check back later.
+                  {isSearchActive 
+                    ? "Try adjusting your search criteria or location."
+                    : "Try searching for other categories or check back later."
+                  }
                 </p>
               </div>
             )

@@ -417,3 +417,72 @@ export const verifyUserProfile = async (userId: number): Promise<boolean> => {
     return false;
   }
 };
+
+/**
+ * Search user profiles by text and location
+ */
+export const searchUserProfiles = async (
+  searchText: string,
+  location: string
+): Promise<ProfileResponse> => {
+  const token = getToken();
+
+  if (!token) {
+    throw new Error("No authentication token found");
+  }
+
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://api.letsb2b.com";
+
+  try {
+    const params = new URLSearchParams();
+    if (searchText) params.append('text', searchText);
+    if (location) params.append('location', location);
+
+    console.log('Searching with params:', params.toString());
+
+    // Try GET request first as it's more common for search endpoints
+    let response = await fetch(
+      `${apiUrl}/api/user-profiles/search?${params.toString()}`,
+      {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    console.log('GET Search response status:', response.status);
+
+    // If GET fails, try POST as specified in the curl
+    if (!response.ok) {
+      console.log('GET failed, trying POST...');
+      response = await fetch(
+        `${apiUrl}/api/user-profiles/search?${params.toString()}`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({}),
+        }
+      );
+
+      console.log('POST Search response status:', response.status);
+    }
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      console.error('Search API error:', errorData);
+      throw new Error(
+        errorData?.error?.message || errorData?.message || `Failed to search user profiles (${response.status})`
+      );
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Error searching user profiles:", error);
+    throw error;
+  }
+};
