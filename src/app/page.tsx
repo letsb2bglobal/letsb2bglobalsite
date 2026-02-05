@@ -27,6 +27,7 @@ export default function Home() {
   const [mounted, setMounted] = useState(false);
   const [searchLoading, setSearchLoading] = useState(false);
   const [isSearchActive, setIsSearchActive] = useState(false);
+  const [searchCompleted, setSearchCompleted] = useState(false);
 
   // Search States
   const [searchText, setSearchText] = useState("");
@@ -183,6 +184,7 @@ useEffect(() => {
   const handleLocationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setLocation(value);
+    setSearchCompleted(false); // Reset highlighting when location changes
     
     if (value.length > 0) {
       const filtered = famousCities.filter(city =>
@@ -206,6 +208,7 @@ useEffect(() => {
     if (!searchText.trim() && !location.trim()) {
       // If no search criteria, show all profiles
       setIsSearchActive(false);
+      setSearchCompleted(false);
       setAllProfiles(allProfilesList.filter(p => p.userId !== user?.id));
       return;
     }
@@ -215,6 +218,7 @@ useEffect(() => {
 
     setSearchLoading(true);
     setIsSearchActive(true);
+    setSearchCompleted(false); // Reset until search completes
     
     try {
       const response = await searchUserProfiles(searchText.trim(), location.trim());
@@ -222,6 +226,7 @@ useEffect(() => {
         // Filter out current user from search results
         const filteredResults = response.data.filter(p => p.userId !== user?.id);
         setAllProfiles(filteredResults);
+        setSearchCompleted(true); // Only set to true after successful search
       }
     } catch (error) {
       console.error("Error searching profiles:", error);
@@ -229,6 +234,7 @@ useEffect(() => {
       alert(`Search failed: ${error instanceof Error ? error.message : 'Unknown error'}. Showing all profiles instead.`);
       setAllProfiles(allProfilesList.filter(p => p.userId !== user?.id));
       setIsSearchActive(false);
+      setSearchCompleted(false);
     } finally {
       setSearchLoading(false);
     }
@@ -412,6 +418,7 @@ useEffect(() => {
                 onChange={(e) => {
                   setSearchText(e.target.value);
                   setShowSearchHistory(false); // Hide history when typing
+                  setSearchCompleted(false); // Reset highlighting when typing
                 }}
                 onFocus={handleSearchFocus}
                 onKeyDown={handleSearchKeyDown}
@@ -519,6 +526,7 @@ useEffect(() => {
                 setSearchText("");
                 setLocation("");
                 setIsSearchActive(false);
+                setSearchCompleted(false);
                 setAllProfiles(allProfilesList.filter(p => p.userId !== user?.id));
               }}
               className="px-3 py-1.5 bg-gray-500 text-white font-medium rounded-md hover:bg-gray-600 transition-all text-sm shadow-sm hover:shadow-md"
@@ -646,7 +654,7 @@ useEffect(() => {
                               }
                               className="text-xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors cursor-pointer"
                             >
-                              {isSearchActive ? highlightText(p.company_name, searchText, location) : p.company_name}
+                              {searchCompleted ? highlightText(p.company_name, searchText, location) : p.company_name}
                             </h3>
                             {p.user_type === "seller" ? (
                               <span className="bg-blue-100 text-blue-700 text-[10px] font-bold px-2 py-0.5 rounded uppercase">
@@ -659,7 +667,7 @@ useEffect(() => {
                             )}
                           </div>
                           <p className="text-gray-600 font-medium text-sm">
-                              {isSearchActive ? highlightText(p.category?.type || "", searchText, location) : (p.category?.type || "")}
+                              {searchCompleted ? highlightText(p.category?.type || "", searchText, location) : (p.category?.type || "")}
                           </p>
                           <p className="text-gray-500 text-xs mt-1 flex items-center gap-1 font-medium">
                             <svg
@@ -673,7 +681,7 @@ useEffect(() => {
                                 clipRule="evenodd"
                               ></path>
                             </svg>
-                            {isSearchActive ? highlightText(`${p.city}, ${p.country}`, searchText, location) : `${p.city}, ${p.country}`}
+                            {searchCompleted ? highlightText(`${p.city}, ${p.country}`, searchText, location) : `${p.city}, ${p.country}`}
                           </p>
                         </div>
                         <button
