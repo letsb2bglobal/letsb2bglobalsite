@@ -13,42 +13,72 @@ export interface RichTextBlock {
   children?: RichTextChild[];
 }
 
+// export interface UserProfile {
+//   id: number;
+//   documentId: string;
+//   company_name: string;
+//   user_type: "seller" | "buyer";
+//   category: {
+//     type: string;
+//   } | null;
+//   country: string;
+//   city: string;
+//   about?: RichTextBlock[] | null;
+//   website?: string;
+//   whatsapp?: string;
+//   userId: number;
+//   createdAt: string;
+//   updatedAt: string;
+//   publishedAt: string;
+// }
+
 export interface UserProfile {
   id: number;
   documentId: string;
   company_name: string;
   user_type: "seller" | "buyer";
+
   category: {
     type: string;
   } | null;
+
   country: string;
   city: string;
+
   about?: RichTextBlock[] | null;
   website?: string;
   whatsapp?: string;
+
+  slug?: string;
+  verified_badge?: boolean;
+  founding_member?: boolean;
+  profile_status?: "active" | "inactive";
+
   userId: number;
+
+  profileImageUrl?: string | null;
+  headerImageUrl?: string | null;
+
+  latitude?: number | null;
+  longitude?: number | null;
+
+  amenities?: string[] | null;
+
+  /** ✅ ADD THIS */
+  image_sections?: ImageSection[];
+
   createdAt: string;
   updatedAt: string;
   publishedAt: string;
 }
 
 export interface ImageSection {
+      id?: number;     
   Title: string;
   description?: string;
   order: number;
   imageUrls: string[];
 }
-
-// export interface CreateProfileData {
-//   company_name: string;
-//   user_type: "seller" | "buyer";
-//   category: string;
-//   country: string;
-//   city: string;
-//   website?: string;
-//   whatsapp?: string;
-//   userId: number;
-// }
 
 export interface CreateProfileData {
   company_name: string;
@@ -162,7 +192,7 @@ export const checkUserProfile = async (
 
   try {
     const response = await fetch(
-      `${apiUrl}/api/user-profiles?filters[userId]=${userId}`,
+      `${apiUrl}/api/user-profiles?filters[userId]=${userId}&populate=image_sections`,
       {
         method: "GET",
         headers: {

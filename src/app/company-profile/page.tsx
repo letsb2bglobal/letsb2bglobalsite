@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/ProtectedRoute";
 import { createUserProfile, uploadProfileMedia } from "@/lib/profile";
 
+
 export default function CompanyProfilePage() {
   const router = useRouter();
   const user = useAuth();
