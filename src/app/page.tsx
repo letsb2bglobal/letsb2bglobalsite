@@ -244,20 +244,7 @@ useEffect(() => {
       <div className="max-w-6xl mx-auto mt-6 px-4 grid grid-cols-1 md:grid-cols-4 gap-6 pb-10">
         {/* Main Feed */}
         <div className="md:col-span-3 space-y-4">
-          <div className="bg-white rounded-lg border border-gray-200 p-4 mb-2 shadow-sm">
-            <div className="flex items-center gap-3">
-              <div className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold">
-                {user?.username?.substring(0, 1).toUpperCase()}
-              </div>
-              <button
-                onClick={() => setIsPostModalOpen(true)}
-                className="flex-1 bg-gray-50 border border-gray-100 rounded-full py-3 px-4 text-left text-gray-500 hover:bg-gray-100 transition-all font-medium text-sm"
-              >
-                Find your next B2B partner...
-              </button>
-            </div>
-          </div>
-
+          
           {/* Tab Switcher */}
           <div className="flex border-b border-gray-200 mb-4 bg-white rounded-t-lg overflow-hidden">
             <button
