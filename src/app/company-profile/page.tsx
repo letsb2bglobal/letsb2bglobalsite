@@ -31,6 +31,10 @@ export default function CompanyProfilePage() {
   const [headerImageUrl, setHeaderImageUrl] = useState<string | null>(null);
   const [headerImageUploading, setHeaderImageUploading] = useState(false);
 
+  const [socialTitle, setSocialTitle] = useState("");
+  const [socialDescription, setSocialDescription] = useState("");
+  const [socialOrder, setSocialOrder] = useState<number | "">("");
+
   const MAX_FILE_SIZE_MB = 5;
   const MAX_FILE_SIZE = MAX_FILE_SIZE_MB * 1024 * 1024;
 
@@ -57,7 +61,7 @@ export default function CompanyProfilePage() {
     if (file.size > 1024 * 1024) {
       alert("File size must be less than 1MB");
       return;
-    }
+    } 
 
     setProfileImageUploading(true);
 
@@ -94,7 +98,7 @@ export default function CompanyProfilePage() {
       const response = await uploadProfileMedia([file]);
       const uploaded = response[0];
 
-      setHeaderImageUrl(uploaded.url); // ✅ THIS WAS MISSING
+      setHeaderImageUrl(uploaded.url);
       setHeaderImageFile(file);
     } catch (err) {
       console.error("Header image upload failed", err);
@@ -147,12 +151,21 @@ export default function CompanyProfilePage() {
     try {
       const response = await uploadProfileMedia(socialFiles);
 
-      console.log("Uploaded media response:", response);
+      const newSection = {
+        Title: socialTitle || "Social Media",
+        description: socialDescription || "",
+        order:
+          socialOrder !== "" ? socialOrder : uploadedSocialMedia.length + 1,
+        imageUrls: response.map((file: any) => file.url),
+      };
 
-      setUploadedSocialMedia((prev) => [...prev, ...response]);
+      setUploadedSocialMedia((prev) => [...prev, newSection]);
 
-      // Later: save response URLs to profile if needed
+      // reset modal state
       setSocialFiles([]);
+      setSocialTitle("");
+      setSocialDescription("");
+      setSocialOrder("");
       setShowSocialModal(false);
     } catch (err: any) {
       setUploadError(err.message || "Upload failed");
@@ -246,17 +259,12 @@ export default function CompanyProfilePage() {
     setError("");
 
     try {
-      const imageSections =
-        uploadedSocialMedia.length > 0
-          ? [
-              {
-                Title: "Social Media",
-                description: "Uploaded social media images",
-                order: 1,
-                imageUrls: uploadedSocialMedia.map((file) => `${file.url}`),
-              },
-            ]
-          : [];
+      const imageSections = uploadedSocialMedia.map((section) => ({
+      Title: section.Title,
+      description: section.description,
+      order: section.order,
+      imageUrls: section.imageUrls,
+    }));
 
       await createUserProfile({
         company_name: formData.companyName,
@@ -641,38 +649,53 @@ export default function CompanyProfilePage() {
                 </div>
 
                 {uploadedSocialMedia.length > 0 && (
-                  <div className="mt-3 space-y-2">
-                    <p className="text-sm font-medium text-gray-700">
-                      Uploaded Social Media Images
-                    </p>
+                  <div className="mt-4 space-y-4">
+                    {uploadedSocialMedia.map((section, index) => (
+                      <div
+                        key={index}
+                        className="border rounded-md p-3 space-y-2"
+                      >
+                        <div className="flex justify-between items-center">
+                          <div>
+                            <p className="font-medium text-black">
+                              {section.Title}
+                            </p>
+                            {section.description && (
+                              <p className="text-sm text-gray-600">
+                                {section.description}
+                              </p>
+                            )}
+                            <p className="text-xs text-gray-400">
+                              Order: {section.order}
+                            </p>
+                          </div>
 
-                    <div className="flex flex-wrap gap-3">
-                      {uploadedSocialMedia.map((file, index) => (
-                        <div
-                          key={index}
-                          className="relative w-20 text-center text-xs text-gray-600 group"
-                        >
-                          {/* Remove button */}
                           <button
                             type="button"
-                            onClick={() => removeUploadedMedia(index)}
-                            className="absolute -top-2 -right-2 z-10 w-5 h-5 bg-black text-white rounded-full text-xs flex items-center justify-center shadow hover:bg-red-600 transition"
-                            title="Remove image"
+                            onClick={() =>
+                              setUploadedSocialMedia((prev) =>
+                                prev.filter((_, i) => i !== index)
+                              )
+                            }
+                            className="text-red-500 text-lg font-bold"
                           >
                             ×
                           </button>
-
-                          {/* Image */}
-                          <img
-                            src={getMediaUrl(file.url)}
-                            alt={file.name}
-                            className="w-20 h-20 object-cover rounded border"
-                          />
-
-                          <p className="truncate mt-1">{file.name}</p>
                         </div>
-                      ))}
-                    </div>
+
+                        <div className="flex gap-3 flex-wrap">
+                          {section.imageUrls.map(
+                            (url: string, imgIndex: number) => (
+                              <img
+                                key={imgIndex}
+                                src={getMediaUrl(url)}
+                                className="w-20 h-20 object-cover rounded border"
+                              />
+                            )
+                          )}
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 )}
 
@@ -726,6 +749,38 @@ export default function CompanyProfilePage() {
               <h2 className="text-lg font-semibold text-black mb-4">
                 Add Social Media Files
               </h2>
+
+              {/* Title */}
+              <input
+                type="text"
+                placeholder="Title"
+                value={socialTitle}
+                onChange={(e) => setSocialTitle(e.target.value)}
+                className="input text-black mb-2"
+                
+              />
+
+              {/* Description */}
+              <textarea
+                placeholder="Description (optional)"
+                value={socialDescription}
+                onChange={(e) => setSocialDescription(e.target.value)}
+                className="input h-20 resize-none text-black mb-0"
+                  style={{
+                    paddingTop: "10px",
+                  }}
+              />
+
+              {/* Order */}
+              <input
+                type="number"
+                placeholder="Order (optional)"
+                value={socialOrder}
+                onChange={(e) =>
+                  setSocialOrder(e.target.value ? Number(e.target.value) : "")
+                }
+                className="input text-black mb-2"
+              />
 
               {/* File upload */}
               <label className="block border border-dashed border-gray-300 rounded-md p-6 text-center cursor-pointer hover:border-blue-500 transition">
