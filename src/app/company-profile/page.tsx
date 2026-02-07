@@ -35,6 +35,43 @@ export default function CompanyProfilePage() {
   const [socialDescription, setSocialDescription] = useState("");
   const [socialOrder, setSocialOrder] = useState<number | "">("");
 
+  const [subcategory, setSubcategory] = useState("");
+  const [categoryDescription, setCategoryDescription] = useState("");
+  const [showSubSuggestions, setShowSubSuggestions] = useState(false);
+  const [showCategoryPopup, setShowCategoryPopup] = useState(false);
+
+  const [categoriesData, setCategoriesData] = useState<
+    { type: string; subtype?: string; description?: string }[]
+  >([]);
+
+  const [popupCategory, setPopupCategory] = useState({
+    type: "",
+    subtype: "",
+    description: "",
+  });
+
+  const savePrimaryCategory = () => {
+    if (!categories[0]) return;
+
+    const primary = {
+      type: categories[0],
+      subtype: subcategory || undefined,
+      description: categoryDescription || undefined,
+    };
+
+    setCategoriesData((prev) => {
+      // If primary already exists, replace only index 0
+      if (prev.length > 0) {
+        const updated = [...prev];
+        updated[0] = primary;
+        return updated;
+      }
+
+      // Otherwise add as first category
+      return [primary];
+    });
+  };
+
   const MAX_FILE_SIZE_MB = 5;
   const MAX_FILE_SIZE = MAX_FILE_SIZE_MB * 1024 * 1024;
 
@@ -61,7 +98,7 @@ export default function CompanyProfilePage() {
     if (file.size > 1024 * 1024) {
       alert("File size must be less than 1MB");
       return;
-    } 
+    }
 
     setProfileImageUploading(true);
 
@@ -204,6 +241,26 @@ export default function CompanyProfilePage() {
     "Insurance",
   ];
 
+  const subcategorySuggestions = [
+    "North Indian",
+    "South Indian",
+    "Chinese",
+    "Continental",
+    "Luxury Hotel",
+    "Budget Hotel",
+    "Resort",
+    "Homestay",
+    "Villa",
+    "Travel Tech",
+    "B2B Services",
+  ];
+
+  const filteredSubcategorySuggestions = subcategorySuggestions.filter(
+    (item) =>
+      item.toLowerCase().includes(subcategory.toLowerCase()) &&
+      subcategory.length > 0
+  );
+
   const filteredSuggestions = categorySuggestions.filter(
     (category) =>
       category.toLowerCase().includes(inputValue.toLowerCase()) &&
@@ -260,11 +317,11 @@ export default function CompanyProfilePage() {
 
     try {
       const imageSections = uploadedSocialMedia.map((section) => ({
-      Title: section.Title,
-      description: section.description,
-      order: section.order,
-      imageUrls: section.imageUrls,
-    }));
+        Title: section.Title,
+        description: section.description,
+        order: section.order,
+        imageUrls: section.imageUrls,
+      }));
 
       await createUserProfile({
         company_name: formData.companyName,
@@ -299,8 +356,18 @@ export default function CompanyProfilePage() {
         profileImageUrl: profileImageUrl || undefined,
         headerImageUrl: headerImageUrl || undefined,
 
-        category: {
+        // category: {
+        //   type: categories[0] || "General",
+        //   subtype: subcategory || undefined,
+        //   description: categoryDescription || undefined,
+        // },
+
+        // categories: categoriesData,
+
+        category: categoriesData[0] || {
           type: categories[0] || "General",
+          subtype: subcategory || undefined,
+          description: categoryDescription || undefined,
         },
 
         image_sections: imageSections,
@@ -448,6 +515,82 @@ export default function CompanyProfilePage() {
                   )}
                 </div>
 
+                {/* Subcategory Input */}
+                <div className="relative">
+                  <input
+                    className="input text-black"
+                    placeholder="Subcategory"
+                    value={subcategory}
+                    onChange={(e) => {
+                      setSubcategory(e.target.value);
+                      setShowSubSuggestions(true);
+                    }}
+                    onFocus={() => subcategory && setShowSubSuggestions(true)}
+                    onBlur={() =>
+                      setTimeout(() => setShowSubSuggestions(false), 150)
+                    }
+                  />
+
+                  {showSubSuggestions &&
+                    filteredSubcategorySuggestions.length > 0 && (
+                      <div className="absolute z-30 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-xl max-h-40 overflow-y-auto">
+                        {filteredSubcategorySuggestions.map((item, index) => (
+                          <div
+                            key={index}
+                            onClick={() => {
+                              setSubcategory(item);
+                              setShowSubSuggestions(false);
+                            }}
+                            className="px-3 py-2 text-sm text-black cursor-pointer hover:bg-blue-50 hover:text-blue-700 border-b border-gray-100 last:border-b-0"
+                          >
+                            {item}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                </div>
+
+                <textarea
+                  className="input h-20 resize-none text-black"
+                  placeholder="Category description"
+                  value={categoryDescription}
+                  onChange={(e) => setCategoryDescription(e.target.value)}
+                  style={{ paddingTop: "10px" }}
+                />
+
+                {categoriesData.slice(1).map((cat, index) => (
+                  <div
+                    key={index}
+                    className="mt-3 p-3 border border-gray-200 rounded-md bg-gray-50 text-sm"
+                  >
+                    <div className="font-semibold text-black">{cat.type}</div>
+
+                    {cat.subtype && (
+                      <div className="text-gray-700">
+                        <span className="font-medium">Subcategory:</span>{" "}
+                        {cat.subtype}
+                      </div>
+                    )}
+
+                    {cat.description && (
+                      <div className="text-gray-600">
+                        <span className="font-medium">Description:</span>{" "}
+                        {cat.description}
+                      </div>
+                    )}
+                  </div>
+                ))}
+
+                <div className="flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => setShowCategoryPopup(true)}
+                    className="text-sm text-black font-medium underline"
+                  >
+                    + Add More Category
+                  </button>
+                </div>
+
                 <textarea
                   className="input h-20 resize-none pt-3 text-black"
                   style={{
@@ -483,7 +626,11 @@ export default function CompanyProfilePage() {
 
                 <button
                   type="button"
-                  onClick={() => setStep(2)}
+                  // onClick={() => setStep(2)}
+                  onClick={() => {
+                    savePrimaryCategory();
+                    setStep(2);
+                  }}
                   className="w-full h-12 bg-blue-600 text-white rounded-md"
                 >
                   NEXT
@@ -757,7 +904,6 @@ export default function CompanyProfilePage() {
                 value={socialTitle}
                 onChange={(e) => setSocialTitle(e.target.value)}
                 className="input text-black mb-2"
-                
               />
 
               {/* Description */}
@@ -766,9 +912,9 @@ export default function CompanyProfilePage() {
                 value={socialDescription}
                 onChange={(e) => setSocialDescription(e.target.value)}
                 className="input h-20 resize-none text-black mb-0"
-                  style={{
-                    paddingTop: "10px",
-                  }}
+                style={{
+                  paddingTop: "10px",
+                }}
               />
 
               {/* Order */}
@@ -850,6 +996,95 @@ export default function CompanyProfilePage() {
                     {uploadError}
                   </div>
                 )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {showCategoryPopup && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+            <div className="bg-white w-full max-w-md rounded-lg shadow-lg p-6">
+              <h2 className="text-lg font-semibold text-black mb-4">
+                Category {categoriesData.length + 1}
+              </h2>
+
+              {/* Category */}
+              <input
+                className="input text-black mb-2"
+                placeholder="Category"
+                value={popupCategory.type}
+                onChange={(e) =>
+                  setPopupCategory({ ...popupCategory, type: e.target.value })
+                }
+              />
+
+              {/* Subcategory */}
+              <input
+                className="input text-black mb-2"
+                placeholder="Subcategory"
+                value={popupCategory.subtype}
+                onChange={(e) =>
+                  setPopupCategory({
+                    ...popupCategory,
+                    subtype: e.target.value,
+                  })
+                }
+              />
+
+              {/* Description */}
+              <textarea
+                className="input h-20 resize-none text-black"
+                placeholder="Description"
+                value={popupCategory.description}
+                onChange={(e) =>
+                  setPopupCategory({
+                    ...popupCategory,
+                    description: e.target.value,
+                  })
+                }
+                style={{ paddingTop: "10px" }}
+              />
+
+              <div className="flex justify-end gap-3 mt-4">
+                <button
+                  onClick={() => setShowCategoryPopup(false)}
+                  className="px-4 py-2 text-black border rounded-md"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  onClick={() => {
+                    if (!popupCategory.type) return;
+
+                    setCategoriesData((prev) => {
+                      // If primary category not saved yet, create it at index 0
+                      if (prev.length === 0) {
+                        return [
+                          {
+                            type: categories[0] || "General",
+                            subtype: subcategory || undefined,
+                            description: categoryDescription || undefined,
+                          },
+                          popupCategory, // Category 2
+                        ];
+                      }
+
+                      // Otherwise, append as Category 2, 3, ...
+                      return [...prev, popupCategory];
+                    });
+
+                    setPopupCategory({
+                      type: "",
+                      subtype: "",
+                      description: "",
+                    });
+                    setShowCategoryPopup(false);
+                  }}
+                  className="px-4 py-2 bg-black text-white rounded-md"
+                >
+                  Save
+                </button>
               </div>
             </div>
           </div>
