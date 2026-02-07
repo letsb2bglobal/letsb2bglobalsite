@@ -110,3 +110,34 @@ export const getUserPosts = async (userId: number): Promise<PostResponse> => {
     throw error;
   }
 };
+
+export const searchPosts = async (text: string, location: string): Promise<PostResponse> => {
+  try {
+    const params = new URLSearchParams();
+    if (text.trim()) {
+      params.append('text', text.trim());
+    }
+    if (location.trim()) {
+      params.append('location', location.trim());
+    }
+
+    const response = await fetch(
+      `${apiUrl}/api/posts/search?${params.toString()}`,
+      {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error('Failed to search posts');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error searching posts:', error);
+    throw error;
+  }
+};

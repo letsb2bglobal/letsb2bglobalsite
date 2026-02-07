@@ -14,7 +14,7 @@ import Cookies from "js-cookie";
 import EnquiryModal from "@/components/EnquiryModal";
 import PostModal from "@/components/PostModal";
 import { getOrCreateConversation } from "@/lib/messages";
-import { getAllPosts, type Post } from "@/lib/posts";
+import { getAllPosts, searchPosts, type Post } from "@/lib/posts";
 
 export default function Home() {
   const router = useRouter();
@@ -28,6 +28,12 @@ export default function Home() {
   const [searchLoading, setSearchLoading] = useState(false);
   const [isSearchActive, setIsSearchActive] = useState(false);
   const [searchCompleted, setSearchCompleted] = useState(false);
+  
+  // Posts search states
+  const [postsSearchLoading, setPostsSearchLoading] = useState(false);
+  const [isPostsSearchActive, setIsPostsSearchActive] = useState(false);
+  const [postsSearchCompleted, setPostsSearchCompleted] = useState(false);
+  const [allPostsList, setAllPostsList] = useState<Post[]>([]);
 
   // Search States
   const [searchText, setSearchText] = useState("");
@@ -139,6 +145,7 @@ useEffect(() => {
       const response = await getAllPosts();
       if (response && response.data) {
         setPosts(response.data);
+        setAllPostsList(response.data); // Store all posts for search functionality
       }
     } catch (error) {
       console.error("Error fetching posts:", error);
@@ -206,37 +213,66 @@ useEffect(() => {
 
   const handleSearch = async () => {
     if (!searchText.trim() && !location.trim()) {
-      // If no search criteria, show all profiles
+      // If no search criteria, show all profiles/posts
       setIsSearchActive(false);
       setSearchCompleted(false);
-      setAllProfiles(allProfilesList.filter(p => p.userId !== user?.id));
+      setIsPostsSearchActive(false);
+      setPostsSearchCompleted(false);
+      
+      if (activeTab === "profiles") {
+        setAllProfiles(allProfilesList.filter(p => p.userId !== user?.id));
+      } else {
+        setPosts(allPostsList);
+      }
       return;
     }
 
     // Save to search history
     saveSearchHistory(searchText, location);
 
-    setSearchLoading(true);
-    setIsSearchActive(true);
-    setSearchCompleted(false); // Reset until search completes
-    
-    try {
-      const response = await searchUserProfiles(searchText.trim(), location.trim());
-      if (response?.data) {
-        // Filter out current user from search results
-        const filteredResults = response.data.filter(p => p.userId !== user?.id);
-        setAllProfiles(filteredResults);
-        setSearchCompleted(true); // Only set to true after successful search
-      }
-    } catch (error) {
-      console.error("Error searching profiles:", error);
-      // Show error message and fallback to all profiles
-      alert(`Search failed: ${error instanceof Error ? error.message : 'Unknown error'}. Showing all profiles instead.`);
-      setAllProfiles(allProfilesList.filter(p => p.userId !== user?.id));
-      setIsSearchActive(false);
+    if (activeTab === "profiles") {
+      setSearchLoading(true);
+      setIsSearchActive(true);
       setSearchCompleted(false);
-    } finally {
-      setSearchLoading(false);
+      
+      try {
+        const response = await searchUserProfiles(searchText.trim(), location.trim());
+        if (response?.data) {
+          // Filter out current user from search results
+          const filteredResults = response.data.filter(p => p.userId !== user?.id);
+          setAllProfiles(filteredResults);
+          setSearchCompleted(true);
+        }
+      } catch (error) {
+        console.error("Error searching profiles:", error);
+        alert(`Search failed: ${error instanceof Error ? error.message : 'Unknown error'}. Showing all profiles instead.`);
+        setAllProfiles(allProfilesList.filter(p => p.userId !== user?.id));
+        setIsSearchActive(false);
+        setSearchCompleted(false);
+      } finally {
+        setSearchLoading(false);
+      }
+    } else {
+      // Search posts for tradewall
+      setPostsSearchLoading(true);
+      setIsPostsSearchActive(true);
+      setPostsSearchCompleted(false);
+      
+      try {
+        const response = await searchPosts(searchText.trim(), location.trim());
+        if (response?.data) {
+          setPosts(response.data);
+          setPostsSearchCompleted(true);
+        }
+      } catch (error) {
+        console.error("Error searching posts:", error);
+        alert(`Search failed: ${error instanceof Error ? error.message : 'Unknown error'}. Showing all posts instead.`);
+        setPosts(allPostsList);
+        setIsPostsSearchActive(false);
+        setPostsSearchCompleted(false);
+      } finally {
+        setPostsSearchLoading(false);
+      }
     }
   };
 
@@ -520,14 +556,21 @@ useEffect(() => {
           </button>
 
           {/* Clear Search Button */}
-          {isSearchActive && (
+          {(isSearchActive || isPostsSearchActive) && (
             <button
               onClick={() => {
                 setSearchText("");
                 setLocation("");
                 setIsSearchActive(false);
                 setSearchCompleted(false);
-                setAllProfiles(allProfilesList.filter(p => p.userId !== user?.id));
+                setIsPostsSearchActive(false);
+                setPostsSearchCompleted(false);
+                
+                if (activeTab === "profiles") {
+                  setAllProfiles(allProfilesList.filter(p => p.userId !== user?.id));
+                } else {
+                  setPosts(allPostsList);
+                }
               }}
               className="px-3 py-1.5 bg-gray-500 text-white font-medium rounded-md hover:bg-gray-600 transition-all text-sm shadow-sm hover:shadow-md"
             >
@@ -611,7 +654,9 @@ useEffect(() => {
                 ? isSearchActive
                   ? "Search Results"
                   : "Recommended for you"
-                : "Latest Opportunities"}
+                : isPostsSearchActive
+                  ? "Search Results"
+                  : "Latest Opportunities"}
             </span>
             <div className="h-[1px] flex-1 bg-gray-300"></div>
           </div>
@@ -763,7 +808,7 @@ useEffect(() => {
               </div>
             )
           ) : /* Tradewall Feed */
-          postsLoading ? (
+          postsLoading || postsSearchLoading ? (
             <div className="space-y-4">
               {[1, 2, 3].map((i) => (
                 <div
@@ -809,7 +854,7 @@ useEffect(() => {
                         }}
                         className="font-bold text-gray-900 hover:text-blue-600 cursor-pointer transition-colors"
                       >
-                        {post.title}
+                        {postsSearchCompleted ? highlightText(post.title, searchText, location) : post.title}
                       </h3>
                       <div className="flex items-center gap-2 mt-0.5">
                         <span
@@ -833,16 +878,26 @@ useEffect(() => {
                   {post.content && Array.isArray(post.content) ? (
                     post.content.map((block: any, idx: number) => (
                       <p key={idx}>
-                        {block.children
-                          ?.map((child: any) => child.text)
-                          .join(" ")}
+                        {postsSearchCompleted ? 
+                          highlightText(
+                            block.children?.map((child: any) => child.text).join(" ") || "",
+                            searchText,
+                            location
+                          ) :
+                          block.children?.map((child: any) => child.text).join(" ")
+                        }
                       </p>
                     ))
                   ) : (
                     <p>
-                      {typeof post.content === "string"
-                        ? post.content
-                        : "No content available"}
+                      {postsSearchCompleted ? 
+                        highlightText(
+                          typeof post.content === "string" ? post.content : "No content available",
+                          searchText,
+                          location
+                        ) :
+                        typeof post.content === "string" ? post.content : "No content available"
+                      }
                     </p>
                   )}
                 </div>
@@ -886,17 +941,22 @@ useEffect(() => {
           ) : (
             <div className="bg-white rounded-xl border border-gray-200 p-12 text-center shadow-sm">
               <h3 className="text-lg font-bold text-gray-900">
-                No posts available
+                {isPostsSearchActive ? "No search results found" : "No posts available"}
               </h3>
               <p className="text-gray-500">
-                Be the first one to post a B2B opportunity!
+                {isPostsSearchActive 
+                  ? "Try adjusting your search criteria or location."
+                  : "Be the first one to post a B2B opportunity!"
+                }
               </p>
-              <button
-                onClick={() => setIsPostModalOpen(true)}
-                className="mt-4 px-6 py-2 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700 transition-all text-sm"
-              >
-                Create Post
-              </button>
+              {!isPostsSearchActive && (
+                <button
+                  onClick={() => setIsPostModalOpen(true)}
+                  className="mt-4 px-6 py-2 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700 transition-all text-sm"
+                >
+                  Create Post
+                </button>
+              )}
             </div>
           )}
         </div>
