@@ -34,6 +34,13 @@ export default function Home() {
   const [isPostsSearchActive, setIsPostsSearchActive] = useState(false);
   const [postsSearchCompleted, setPostsSearchCompleted] = useState(false);
   const [allPostsList, setAllPostsList] = useState<Post[]>([]);
+  
+  // Unified search states
+  const [partnerProfiles, setPartnerProfiles] = useState<UserProfile[]>([]);
+  const [tradeWallPosts, setTradeWallPosts] = useState<Post[]>([]);
+  const [unifiedSearchLoading, setUnifiedSearchLoading] = useState(false);
+  const [isUnifiedSearchActive, setIsUnifiedSearchActive] = useState(false);
+  const [unifiedSearchCompleted, setUnifiedSearchCompleted] = useState(false);
 
   // Search States
   const [searchText, setSearchText] = useState("");
@@ -127,6 +134,8 @@ useEffect(() => {
       if (response?.data) {
         setAllProfilesList(response.data);
         setAllProfiles(response.data.filter(p => p.userId !== user.id));
+        // Initialize unified state with filtered data
+        setPartnerProfiles(response.data.filter(p => p.userId !== user.id));
       }
     } catch (err) {
       console.error("Error fetching data:", err);
@@ -146,6 +155,8 @@ useEffect(() => {
       if (response && response.data) {
         setPosts(response.data);
         setAllPostsList(response.data); // Store all posts for search functionality
+        // Initialize unified state with posts data
+        setTradeWallPosts(response.data);
       }
     } catch (error) {
       console.error("Error fetching posts:", error);
@@ -214,11 +225,19 @@ useEffect(() => {
   const handleSearch = async () => {
     if (!searchText.trim() && !location.trim()) {
       // If no search criteria, show all profiles/posts
+      setIsUnifiedSearchActive(false);
+      setUnifiedSearchCompleted(false);
+      
+      setPartnerProfiles(allProfilesList.filter(p => p.userId !== user?.id));
+      setTradeWallPosts(allPostsList);
+      
+      // Update tab-specific states for UI consistency
       setIsSearchActive(false);
       setSearchCompleted(false);
       setIsPostsSearchActive(false);
       setPostsSearchCompleted(false);
       
+      // Update display data based on current tab
       if (activeTab === "profiles") {
         setAllProfiles(allProfilesList.filter(p => p.userId !== user?.id));
       } else {
@@ -230,49 +249,71 @@ useEffect(() => {
     // Save to search history
     saveSearchHistory(searchText, location);
 
+    // Set unified search states
+    setUnifiedSearchLoading(true);
+    setIsUnifiedSearchActive(true);
+    setUnifiedSearchCompleted(false);
+    
+    // Set tab-specific loading states for UI
     if (activeTab === "profiles") {
       setSearchLoading(true);
       setIsSearchActive(true);
       setSearchCompleted(false);
-      
-      try {
-        const response = await searchUserProfiles(searchText.trim(), location.trim());
-        if (response?.data) {
-          // Filter out current user from search results
-          const filteredResults = response.data.filter(p => p.userId !== user?.id);
-          setAllProfiles(filteredResults);
-          setSearchCompleted(true);
-        }
-      } catch (error) {
-        console.error("Error searching profiles:", error);
-        alert(`Search failed: ${error instanceof Error ? error.message : 'Unknown error'}. Showing all profiles instead.`);
-        setAllProfiles(allProfilesList.filter(p => p.userId !== user?.id));
-        setIsSearchActive(false);
-        setSearchCompleted(false);
-      } finally {
-        setSearchLoading(false);
-      }
     } else {
-      // Search posts for tradewall
       setPostsSearchLoading(true);
       setIsPostsSearchActive(true);
       setPostsSearchCompleted(false);
+    }
+    
+    try {
+      // Fetch both APIs simultaneously using Promise.all
+      const [profilesResponse, postsResponse] = await Promise.all([
+        searchUserProfiles(searchText.trim(), location.trim()),
+        searchPosts(searchText.trim(), location.trim())
+      ]);
       
-      try {
-        const response = await searchPosts(searchText.trim(), location.trim());
-        if (response?.data) {
-          setPosts(response.data);
-          setPostsSearchCompleted(true);
-        }
-      } catch (error) {
-        console.error("Error searching posts:", error);
-        alert(`Search failed: ${error instanceof Error ? error.message : 'Unknown error'}. Showing all posts instead.`);
+      // Store results in unified state variables
+      const filteredProfiles = profilesResponse?.data ? 
+        profilesResponse.data.filter(p => p.userId !== user?.id) : [];
+      const filteredPosts = postsResponse?.data || [];
+      
+      setPartnerProfiles(filteredProfiles);
+      setTradeWallPosts(filteredPosts);
+      setUnifiedSearchCompleted(true);
+      
+      // Update tab-specific display data
+      if (activeTab === "profiles") {
+        setAllProfiles(filteredProfiles);
+        setSearchCompleted(true);
+      } else {
+        setPosts(filteredPosts);
+        setPostsSearchCompleted(true);
+      }
+      
+    } catch (error) {
+      console.error("Error in unified search:", error);
+      alert(`Search failed: ${error instanceof Error ? error.message : 'Unknown error'}. Showing all data instead.`);
+      
+      // Fallback to all data
+      setPartnerProfiles(allProfilesList.filter(p => p.userId !== user?.id));
+      setTradeWallPosts(allPostsList);
+      setIsUnifiedSearchActive(false);
+      setUnifiedSearchCompleted(false);
+      
+      // Update tab-specific states
+      if (activeTab === "profiles") {
+        setAllProfiles(allProfilesList.filter(p => p.userId !== user?.id));
+        setIsSearchActive(false);
+        setSearchCompleted(false);
+      } else {
         setPosts(allPostsList);
         setIsPostsSearchActive(false);
         setPostsSearchCompleted(false);
-      } finally {
-        setPostsSearchLoading(false);
       }
+    } finally {
+      setUnifiedSearchLoading(false);
+      setSearchLoading(false);
+      setPostsSearchLoading(false);
     }
   };
 
@@ -556,16 +597,23 @@ useEffect(() => {
           </button>
 
           {/* Clear Search Button */}
-          {(isSearchActive || isPostsSearchActive) && (
+          {(isUnifiedSearchActive || isSearchActive || isPostsSearchActive) && (
             <button
               onClick={() => {
                 setSearchText("");
                 setLocation("");
+                setIsUnifiedSearchActive(false);
+                setUnifiedSearchCompleted(false);
                 setIsSearchActive(false);
                 setSearchCompleted(false);
                 setIsPostsSearchActive(false);
                 setPostsSearchCompleted(false);
                 
+                // Reset unified data
+                setPartnerProfiles(allProfilesList.filter(p => p.userId !== user?.id));
+                setTradeWallPosts(allPostsList);
+                
+                // Update display data based on current tab
                 if (activeTab === "profiles") {
                   setAllProfiles(allProfilesList.filter(p => p.userId !== user?.id));
                 } else {
@@ -626,7 +674,19 @@ useEffect(() => {
           {/* Tab Switcher */}
           <div className="flex border-b border-gray-200 mb-4 bg-white rounded-t-lg overflow-hidden">
             <button
-              onClick={() => setActiveTab("profiles")}
+              onClick={() => {
+                setActiveTab("profiles");
+                // Use already fetched data from unified search state
+                if (isUnifiedSearchActive && unifiedSearchCompleted) {
+                  setAllProfiles(partnerProfiles);
+                  setSearchCompleted(true);
+                  setIsSearchActive(true);
+                } else {
+                  setAllProfiles(allProfilesList.filter(p => p.userId !== user?.id));
+                  setSearchCompleted(false);
+                  setIsSearchActive(false);
+                }
+              }}
               className={`flex-1 py-3 text-sm font-bold transition-all ${
                 activeTab === "profiles"
                   ? "text-blue-600 border-b-2 border-blue-600 bg-blue-50/30"
@@ -636,7 +696,22 @@ useEffect(() => {
               Partner Profiles
             </button>
             <button
-              onClick={() => setActiveTab("tradewall")}
+              onClick={() => {
+                setActiveTab("tradewall");
+                // Use already fetched data from unified search state
+                if (isUnifiedSearchActive && unifiedSearchCompleted) {
+                  setPosts(tradeWallPosts);
+                  setPostsSearchCompleted(true);
+                  setIsPostsSearchActive(true);
+                } else {
+                  // Fetch posts only if not already loaded
+                  if (posts.length === 0) {
+                    fetchPosts();
+                  }
+                  setPostsSearchCompleted(false);
+                  setIsPostsSearchActive(false);
+                }
+              }}
               className={`flex-1 py-3 text-sm font-bold transition-all ${
                 activeTab === "tradewall"
                   ? "text-indigo-600 border-b-2 border-indigo-600 bg-indigo-50/30"
@@ -651,10 +726,10 @@ useEffect(() => {
             <div className="h-[1px] flex-1 bg-gray-300"></div>
             <span className="text-xs text-gray-500 font-bold px-2 uppercase tracking-widest">
               {activeTab === "profiles"
-                ? isSearchActive
+                ? (isUnifiedSearchActive && unifiedSearchCompleted)
                   ? "Search Results"
                   : "Recommended for you"
-                : isPostsSearchActive
+                : (isUnifiedSearchActive && unifiedSearchCompleted)
                   ? "Search Results"
                   : "Latest Opportunities"}
             </span>
