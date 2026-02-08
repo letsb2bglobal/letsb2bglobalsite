@@ -1070,7 +1070,6 @@ export default function CompanyProfilePage() {
                         ];
                       }
 
-                      // Otherwise, append as Category 2, 3, ...
                       return [...prev, popupCategory];
                     });
 
