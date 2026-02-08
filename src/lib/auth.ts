@@ -112,6 +112,77 @@ export const login = async (
 };
 
 /**
+ * Register with OTP
+ */
+export const registerWithOtp = async (
+  email: string,
+  username: string
+): Promise<{ message: string }> => {
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://api.letsb2b.com';
+  
+  const response = await fetch(`${apiUrl}/api/auth/register-with-otp`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, username })
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data?.error?.message || 'Registration request failed');
+  }
+
+  return data;
+};
+
+/**
+ * Login with OTP
+ */
+export const loginWithOtp = async (
+  email: string
+): Promise<{ message: string }> => {
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://api.letsb2b.com';
+  
+  const response = await fetch(`${apiUrl}/api/auth/login-with-otp`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email })
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data?.error?.message || 'Login request failed');
+  }
+
+  return data;
+};
+
+/**
+ * Verify OTP
+ */
+export const verifyEmailOtp = async (
+  email: string,
+  otp: number
+): Promise<AuthResponse> => {
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://api.letsb2b.com';
+  
+  const response = await fetch(`${apiUrl}/api/auth/verify-email-otp`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, otp })
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data?.error?.message || 'Verification failed');
+  }
+
+  return data;
+};
+
+/**
  * Make authenticated API requests
  */
 export const authenticatedFetch = async (

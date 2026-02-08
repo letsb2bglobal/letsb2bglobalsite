@@ -6,6 +6,7 @@ import { useAuth } from "@/components/ProtectedRoute"; // Using the hook
 import {
   getAllUserProfiles,
   checkUserProfile,
+  searchUserProfiles,
   type UserProfile,
 } from "@/lib/profile";
 import { clearAuthData, isAuthenticated } from "@/lib/auth";
@@ -13,7 +14,7 @@ import Cookies from "js-cookie";
 import EnquiryModal from "@/components/EnquiryModal";
 import PostModal from "@/components/PostModal";
 import { getOrCreateConversation } from "@/lib/messages";
-import { getAllPosts, type Post } from "@/lib/posts";
+import { searchPosts, getAllPosts, type Post } from "@/lib/posts";
 
 export default function Home() {
   const router = useRouter();
@@ -38,6 +39,11 @@ export default function Home() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [postsLoading, setPostsLoading] = useState(false);
   const [isPostModalOpen, setIsPostModalOpen] = useState(false);
+
+  // Search States
+  const [searchText, setSearchText] = useState("");
+  const [locationText, setLocationText] = useState("");
+  const [isSearching, setIsSearching] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -77,6 +83,7 @@ useEffect(() => {
 
 
   const fetchPosts = async () => {
+    if (searchText || locationText) return; // Don't fetch all if searching
     setPostsLoading(true);
     try {
       const response = await getAllPosts();
@@ -91,10 +98,57 @@ useEffect(() => {
   };
 
   useEffect(() => {
-    if (activeTab === "tradewall") {
+    if (activeTab === "tradewall" && !searchText && !locationText) {
       fetchPosts();
     }
   }, [activeTab]);
+
+  // Handle Debounced Search
+  useEffect(() => {
+    if (!mounted) return;
+
+    const handler = setTimeout(async () => {
+      if (!searchText && !locationText) {
+        // If empty, reload initial data if needed or just return if already showing all
+        if (activeTab === "profiles") {
+          setAllLoading(true);
+          const response = await getAllUserProfiles();
+          if (response?.data) {
+            setAllProfiles(response.data.filter(p => p.userId !== user?.id));
+          }
+          setAllLoading(false);
+        } else {
+          fetchPosts();
+        }
+        return;
+      }
+
+      setIsSearching(true);
+      try {
+        if (activeTab === "profiles") {
+          setAllLoading(true);
+          const response = await searchUserProfiles(searchText, locationText);
+          if (response?.data) {
+            setAllProfiles(response.data.filter(p => p.userId !== user?.id));
+          }
+        } else {
+          setPostsLoading(true);
+          const response = await searchPosts(searchText, locationText);
+          if (response?.data) {
+            setPosts(response.data);
+          }
+        }
+      } catch (error) {
+        console.error("Search failed:", error);
+      } finally {
+        setIsSearching(false);
+        setAllLoading(false);
+        setPostsLoading(false);
+      }
+    }, 500); // 500ms debounce
+
+    return () => clearTimeout(handler);
+  }, [searchText, locationText, activeTab, mounted]);
 
   const handleLogout = () => {
     clearAuthData();
@@ -180,25 +234,37 @@ useEffect(() => {
             Let's B2B
           </span>
         </div>
-        <div className="flex bg-gray-100 rounded-md px-3 py-1.5 w-full max-w-md mx-4 items-center gap-2 border border-transparent focus-within:border-blue-500 transition-all">
-          <svg
-            className="w-4 h-4 text-gray-500"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-            ></path>
-          </svg>
-          <input
-            type="text"
-            placeholder="Search profiles..."
-            className="bg-transparent border-none outline-none text-sm w-full"
-          />
+        <div className="flex bg-gray-100 rounded-lg overflow-hidden w-full max-w-2xl mx-4 items-center gap-0 border border-transparent focus-within:border-blue-500 transition-all shadow-sm">
+          <div className="flex-1 flex items-center gap-2 px-3 py-1.5 border-r border-gray-200">
+            <svg className="w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <input
+              type="text"
+              placeholder="Business name or service..."
+              className="bg-transparent border-none outline-none text-sm w-full placeholder:text-gray-400"
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+            />
+          </div>
+          <div className="w-1/3 flex items-center gap-2 px-3 py-1.5 bg-gray-50/50">
+            <svg className="w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            <input
+              type="text"
+              placeholder="Destination..."
+              className="bg-transparent border-none outline-none text-sm w-full placeholder:text-gray-400"
+              value={locationText}
+              onChange={(e) => setLocationText(e.target.value)}
+            />
+          </div>
+          {isSearching && (
+            <div className="pr-3">
+              <div className="animate-spin h-4 w-4 border-2 border-blue-500 border-t-transparent rounded-full" />
+            </div>
+          )}
         </div>
         <div className="flex items-center gap-6">
           <button
@@ -244,19 +310,6 @@ useEffect(() => {
       <div className="max-w-6xl mx-auto mt-6 px-4 grid grid-cols-1 md:grid-cols-4 gap-6 pb-10">
         {/* Main Feed */}
         <div className="md:col-span-3 space-y-4">
-          <div className="bg-white rounded-lg border border-gray-200 p-4 mb-2 shadow-sm">
-            <div className="flex items-center gap-3">
-              <div className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold">
-                {user?.username?.substring(0, 1).toUpperCase()}
-              </div>
-              <button
-                onClick={() => setIsPostModalOpen(true)}
-                className="flex-1 bg-gray-50 border border-gray-100 rounded-full py-3 px-4 text-left text-gray-500 hover:bg-gray-100 transition-all font-medium text-sm"
-              >
-                Find your next B2B partner...
-              </button>
-            </div>
-          </div>
 
           {/* Tab Switcher */}
           <div className="flex border-b border-gray-200 mb-4 bg-white rounded-t-lg overflow-hidden">
@@ -330,7 +383,7 @@ useEffect(() => {
                               }
                               className="text-xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors cursor-pointer"
                             >
-                              {p.company_name}
+                              {p.company_name.toUpperCase()}
                             </h3>
                             {p.user_type === "seller" ? (
                               <span className="bg-blue-100 text-blue-700 text-[10px] font-bold px-2 py-0.5 rounded uppercase">
@@ -339,6 +392,14 @@ useEffect(() => {
                             ) : (
                               <span className="bg-green-100 text-green-700 text-[10px] font-bold px-2 py-0.5 rounded uppercase">
                                 Buyer
+                              </span>
+                            )}
+                            {p.score && (
+                              <span className="bg-amber-50 text-amber-600 text-[9px] font-black px-1.5 py-0.5 rounded border border-amber-100 flex items-center gap-1">
+                                <svg className="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 20 20">
+                                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                </svg>
+                                {p.score} Match
                               </span>
                             )}
                           </div>
@@ -484,23 +545,28 @@ useEffect(() => {
                       >
                         {post.title}
                       </h3>
-                      <div className="flex items-center gap-2 mt-0.5">
-                        <span
-                          className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
-                            post.intentType === "demand"
-                              ? "bg-red-50 text-red-600"
-                              : "bg-green-50 text-green-600"
-                          }`}
-                        >
-                          {post.intentType}
-                        </span>
-                        <span className="text-[10px] text-gray-500 font-medium">
-                          {post.destinationCity} • {formatTime(post.createdAt)}
-                        </span>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <span
+                            className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
+                              post.intentType === "demand"
+                                ? "bg-red-50 text-red-600"
+                                : "bg-green-50 text-green-600"
+                            }`}
+                          >
+                            {post.intentType}
+                          </span>
+                          <span className="text-[10px] text-gray-500 font-medium">
+                            {post.destinationCity || "Anywhere"} • {formatTime(post.createdAt)}
+                          </span>
+                          {post.score && (
+                            <span className="bg-amber-50 text-amber-600 text-[9px] font-black px-1.5 py-0.5 rounded border border-amber-100 flex items-center gap-1">
+                              {post.score} Match
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
 
                 <div className="text-sm text-gray-700 leading-relaxed">
                   {post.content && Array.isArray(post.content) ? (
@@ -576,123 +642,102 @@ useEffect(() => {
 
         {/* Right Sidebar - User Profile Card */}
         <div className="space-y-4">
-          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm sticky top-20">
-            <div className="h-16 w-full bg-blue-600"></div>
-            <div className="px-5 pb-5">
-              <div
-                className="relative -mt-10 mb-3 cursor-pointer"
-                onClick={() => router.push("/profile")}
-              >
-                <div className="w-16 h-16 rounded-xl bg-white border-2 border-white shadow-md flex items-center justify-center text-blue-600 font-bold text-2xl overflow-hidden hover:scale-105 transition-transform">
-                  <div className="w-full h-full bg-blue-50 flex items-center justify-center">
-                    {profile?.company_name?.substring(0, 1).toUpperCase() ||
-                      user?.username?.substring(0, 1).toUpperCase()}
+          <div className="sticky top-20 space-y-4">
+            <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+              <div className="h-16 w-full bg-blue-600"></div>
+              <div className="px-5 pb-5">
+                <div
+                  className="relative -mt-10 mb-3 cursor-pointer"
+                  onClick={() => router.push("/profile")}
+                >
+                  <div className="w-16 h-16 rounded-xl bg-white border-2 border-white shadow-md flex items-center justify-center text-blue-600 font-bold text-2xl overflow-hidden hover:scale-105 transition-transform">
+                    <div className="w-full h-full bg-blue-50 flex items-center justify-center">
+                      {profile?.company_name?.substring(0, 1).toUpperCase() ||
+                        user?.username?.substring(0, 1).toUpperCase()}
+                    </div>
                   </div>
                 </div>
-              </div>
-              <div className="mb-4">
-                <h4
-                  className="font-bold text-gray-900 hover:text-blue-600 hover:underline cursor-pointer transition-colors"
-                  onClick={() => router.push("/profile")}
-                >
-                  {profile?.company_name || user?.username || "User"}
-                </h4>
-                <p className="text-gray-500 text-xs mt-0.5 font-medium">
-                   {profile?.category?.type || "Professional at Let's B2B"}
-                </p>
-              </div>
-
-              <div className="border-t border-gray-100 pt-3 space-y-2.5">
-                <div
-                  className="flex justify-between items-center group cursor-pointer"
-                  onClick={() => router.push("/profile")}
-                >
-                  <span className="text-[11px] font-bold text-gray-500 group-hover:text-blue-600 transition-colors">
-                    Profile views
-                  </span>
-                  <span className="text-[11px] font-bold text-blue-600">
-                    128
-                  </span>
-                </div>
-                <div
-                  className="flex justify-between items-center group cursor-pointer"
-                  onClick={() => router.push("/profile")}
-                >
-                  <span className="text-[11px] font-bold text-gray-500 group-hover:text-blue-600 transition-colors">
-                    Post impressions
-                  </span>
-                  <span className="text-[11px] font-bold text-blue-600">
-                    45
-                  </span>
-                </div>
-              </div>
-
-              <div className="border-t border-gray-100 mt-3 pt-3">
-                <button
-                  onClick={() => router.push("/profile")}
-                  className="w-full py-1.5 flex items-center justify-center gap-1.5 text-gray-700 hover:bg-gray-50 rounded transition-all text-xs font-bold border border-gray-100"
-                >
-                  <svg
-                    className="w-3.5 h-3.5 text-gray-400"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
+                <div className="mb-4">
+                  <h4
+                    className="font-bold text-gray-900 hover:text-blue-600 hover:underline cursor-pointer transition-colors"
+                    onClick={() => router.push("/profile")}
                   >
-                    <path
-                      fillRule="evenodd"
-                      d="M10 2a4 4 0 00-4 4v1H5a1 1 0 00-1 1v9a1 1 0 001 1h10a1 1 0 001-1V7a1 1 0 00-1-1h-1V6a4 4 0 00-4-4zM8 6a2 2 0 114 0v1H8V6zm-1 3a1 1 0 100 2h6a1 1 0 100-2H7z"
-                      clipRule="evenodd"
-                    ></path>
-                  </svg>
-                  My Network
-                </button>
+                    {(profile?.company_name || user?.username || "User").toUpperCase()}
+                  </h4>
+                  <p className="text-gray-500 text-xs mt-0.5 font-medium">
+                     {profile?.category?.type || "Professional at Let's B2B"}
+                  </p>
+                </div>
+
+                <div className="border-t border-gray-100 pt-3 space-y-2.5">
+                  <div
+                    className="flex justify-between items-center group cursor-pointer"
+                    onClick={() => router.push("/profile")}
+                  >
+                    <span className="text-[11px] font-bold text-gray-500 group-hover:text-blue-600 transition-colors">
+                      Profile views
+                    </span>
+                    <span className="text-[11px] font-bold text-blue-600">
+                      128
+                    </span>
+                  </div>
+                  <div
+                    className="flex justify-between items-center group cursor-pointer"
+                    onClick={() => router.push("/profile")}
+                  >
+                    <span className="text-[11px] font-bold text-gray-500 group-hover:text-blue-600 transition-colors">
+                      Post impressions
+                    </span>
+                    <span className="text-[11px] font-bold text-blue-600">
+                      45
+                    </span>
+                  </div>
+                </div>
+
+                <div className="border-t border-gray-100 mt-3 pt-3">
+                  <button
+                    onClick={() => router.push("/profile")}
+                    className="w-full py-1.5 flex items-center justify-center gap-1.5 text-gray-700 hover:bg-gray-50 rounded transition-all text-xs font-bold border border-gray-100"
+                  >
+                    <svg
+                      className="w-3.5 h-3.5 text-gray-400"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M10 2a4 4 0 00-4 4v1H5a1 1 0 00-1 1v9a1 1 0 001 1h10a1 1 0 001-1V7a1 1 0 00-1-1h-1V6a4 4 0 00-4-4zM8 6a2 2 0 114 0v1H8V6zm-1 3a1 1 0 100 2h6a1 1 0 100-2H7z"
+                        clipRule="evenodd"
+                      ></path>
+                    </svg>
+                    My Network
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
 
-          {/* Post Button below mini profile */}
-          <button
-            onClick={() => setIsPostModalOpen(true)}
-            className="w-full py-4 bg-indigo-600 text-white font-bold rounded-xl shadow-lg hover:bg-indigo-700 transition-all flex items-center justify-center gap-2 group"
-          >
-            <svg
-              className="w-5 h-5 group-hover:rotate-12 transition-transform"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+            {/* Post Button below mini profile */}
+            <button
+              onClick={() => setIsPostModalOpen(true)}
+              className="w-full py-4 bg-indigo-600 text-white font-bold rounded-xl shadow-lg hover:bg-indigo-700 transition-all flex items-center justify-center gap-2 group"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M12 4v16m8-8H4"
-              ></path>
-            </svg>
-            Create New Post
-          </button>
-
-          <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm sticky top-[420px]">
-            <h5 className="text-[11px] font-bold text-gray-900 mb-3 uppercase tracking-wider opacity-70">
-              Top Markets
-            </h5>
-            <div className="space-y-2">
-              {[
-                "Dubai DMC",
-                "Bali Packages",
-                "Europe Wholesaler",
-                "USA Tourism",
-              ].map((cat) => (
-                <div
-                  key={cat}
-                  className="flex items-center gap-2 group cursor-pointer"
-                >
-                  <span className="text-blue-600 font-bold text-sm">#</span>
-                  <span className="text-xs font-bold text-gray-600 group-hover:text-blue-600 transition-colors">
-                    {cat}
-                  </span>
-                </div>
-              ))}
-            </div>
+              <svg
+                className="w-5 h-5 group-hover:rotate-12 transition-transform"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M12 4v16m8-8H4"
+                ></path>
+              </svg>
+              Create New Post
+            </button>
           </div>
+
         </div>
       </div>
 

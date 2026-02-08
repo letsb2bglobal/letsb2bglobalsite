@@ -12,6 +12,8 @@ export interface Post {
   createdAt: string;
   updatedAt: string;
   publishedAt: string;
+  media?: any;
+  score?: number;
 }
 
 export interface CreatePostData {
@@ -107,6 +109,43 @@ export const getUserPosts = async (userId: number): Promise<PostResponse> => {
     return await response.json();
   } catch (error) {
     console.error('Error fetching user posts:', error);
+    throw error;
+  }
+};
+
+/**
+ * Search posts by text and location
+ */
+export const searchPosts = async (
+  text: string,
+  location: string
+): Promise<PostResponse> => {
+  const params = new URLSearchParams();
+  if (text) params.append("text", text);
+  if (location) params.append("location", location);
+
+  try {
+    const response = await fetch(`${apiUrl}/api/posts/search?${params.toString()}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to search posts");
+    }
+
+    const result = await response.json();
+    
+    // Handle both raw array and Strapi-style response { data: [] }
+    if (Array.isArray(result)) {
+      return { data: result };
+    }
+    
+    return result;
+  } catch (error) {
+    console.error("Error searching posts:", error);
     throw error;
   }
 };
