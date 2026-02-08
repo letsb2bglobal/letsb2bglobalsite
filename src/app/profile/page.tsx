@@ -7,10 +7,15 @@ import ProtectedRoute, { useAuth } from "@/components/ProtectedRoute";
 import {
   checkUserProfile,
   updateUserProfile,
+  uploadProfileMedia,
+  updateProfileImage,
+  updateHeaderImage,
   type UserProfile,
 } from "@/lib/profile";
 import { authenticatedFetch } from "@/lib/auth";
 import { getUserPosts, type Post } from "@/lib/posts";
+import MediaModal from "@/components/MediaModal";
+import { ImageSection } from "@/lib/profile";
 
 interface Enquiry {
   id: number;
@@ -63,6 +68,9 @@ export default function ProfilePage() {
   // Posts states
   const [userPosts, setUserPosts] = useState<Post[]>([]);
   const [loadingPosts, setLoadingPosts] = useState(false);
+
+  // New Media Modal state
+  const [showMediaModal, setShowMediaModal] = useState(false);
 
   const richTextToString = (blocks: any[] | null | undefined) => {
     if (!Array.isArray(blocks)) return "";
@@ -186,6 +194,50 @@ export default function ProfilePage() {
     await handleUpdateProfile(contactForm);
   };
 
+  const handleProfileImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !profile?.documentId) return;
+
+    setSaving(true);
+    try {
+      const uploadRes = await uploadProfileMedia([file]);
+      const imageUrl = uploadRes[0].url;
+      await updateProfileImage(profile.documentId, imageUrl);
+      
+      // Refresh profile data
+      const updatedProfile = await checkUserProfile(user!.id);
+      if (updatedProfile) setProfile(updatedProfile);
+      
+    } catch (error) {
+      console.error("Error uploading profile image:", error);
+      alert("Failed to upload profile image");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleHeaderImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !profile?.documentId) return;
+
+    setSaving(true);
+    try {
+      const uploadRes = await uploadProfileMedia([file]);
+      const imageUrl = uploadRes[0].url;
+      await updateHeaderImage(profile.documentId, imageUrl);
+      
+      // Refresh profile data
+      const updatedProfile = await checkUserProfile(user!.id);
+      if (updatedProfile) setProfile(updatedProfile);
+      
+    } catch (error) {
+      console.error("Error uploading header image:", error);
+      alert("Failed to upload header image");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#f3f2ef]">
@@ -237,6 +289,16 @@ export default function ProfilePage() {
           </div>
         </div>
 
+        <MediaModal 
+          isOpen={showMediaModal}
+          onClose={() => setShowMediaModal(false)}
+          onSave={async (newSections) => {
+            const success = await handleUpdateProfile({ image_sections: newSections });
+            if (success) setShowMediaModal(false);
+          }}
+          currentSections={profile?.image_sections || []}
+        />
+
         <div className="max-w-5xl mx-auto mt-6 px-4">
           {/* Profile Card */}
           <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden relative">
@@ -259,15 +321,16 @@ export default function ProfilePage() {
               )}
 
               {/* Action button stays on top */}
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  // open upload / edit logic here
-                }}
-                className="absolute top-4 right-4 p-2 bg-white/20 backdrop-blur-md rounded-full hover:bg-white/30 transition-all z-10"
-              >
+              <label className="absolute top-4 right-4 p-2 bg-white/20 backdrop-blur-md rounded-full hover:bg-white/30 transition-all z-10 cursor-pointer">
+                <input 
+                  type="file" 
+                  className="hidden" 
+                  accept="image/*"
+                  onChange={handleHeaderImageUpload}
+                  disabled={saving}
+                />
                 <svg
-                  className="w-5 h-5 text-white"
+                  className={`w-5 h-5 text-white ${saving ? 'animate-pulse' : ''}`}
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -285,7 +348,7 @@ export default function ProfilePage() {
                     d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
                   />
                 </svg>
-              </button>
+              </label>
 
               {previewImage && (
                 <div
@@ -317,12 +380,12 @@ export default function ProfilePage() {
 
             {/* Profile Image & Content Header */}
             <div className="px-6 pb-6">
-              <div className="relative -mt-24 mb-4 w-40">
+              <div className="relative -mt-24 mb-4 w-40 group">
                 <div
                   onClick={() =>
                     profile?.profileImageUrl && setShowImageModal(true)
                   }
-                  className="w-40 h-40 rounded-full border-4 border-white shadow-lg bg-gray-200 overflow-hidden group cursor-pointer"
+                  className="w-40 h-40 rounded-full border-4 border-white shadow-lg bg-gray-200 overflow-hidden relative cursor-pointer"
                 >
                   <div className="w-full h-full rounded-full overflow-hidden bg-blue-50 flex items-center justify-center">
                     {profile?.profileImageUrl ? (
@@ -337,6 +400,21 @@ export default function ProfilePage() {
                       </span>
                     )}
                   </div>
+                  
+                  {/* Overlay for upload */}
+                  <label className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+                    <input 
+                      type="file" 
+                      className="hidden" 
+                      accept="image/*"
+                      onChange={handleProfileImageUpload}
+                      disabled={saving}
+                    />
+                    <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                  </label>
                 </div>
               </div>
 
@@ -345,7 +423,7 @@ export default function ProfilePage() {
                   <div>
                     <div className="flex items-center gap-2">
                       <h1 className="text-3xl font-bold text-gray-900">
-                        {profile?.company_name}
+                        {profile?.company_name?.toUpperCase()}
                       </h1>
                       <span className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs font-semibold rounded uppercase">
                         {profile?.user_type}
@@ -562,49 +640,91 @@ export default function ProfilePage() {
               </div>
 
               {/* Company Details */}
-              <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-                <h2 className="text-xl font-bold text-gray-900 mb-6">
-                  Experience
+              <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 transition-all hover:shadow-md">
+                <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+                  <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                  </svg>
+                  Joined
                 </h2>
-                <div className="flex gap-4">
-                  <div className="w-12 h-12 bg-blue-50 flex items-center justify-center rounded border border-blue-100">
+                <div className="flex gap-6 items-start">
+                  <div className="w-16 h-16 bg-blue-50 flex items-center justify-center rounded-lg border border-blue-100 shadow-sm flex-shrink-0">
                     <svg
-                      className="w-6 h-6 text-blue-600"
+                      className="w-8 h-8 text-blue-600"
                       fill="currentColor"
                       viewBox="0 0 24 24"
                     >
                       <path d="M7 5V3a1 1 0 011-1h8a1 1 0 011 1v2h5a1 1 0 011 1v14a1 1 0 01-1 1H3a1 1 0 01-1-1V6a1 1 0 011-1h5zM8 4v1h8V4H8zm-3 3v12h14V7H5z" />
                     </svg>
                   </div>
-                  <div>
-                    <h3 className="font-bold text-gray-900">
-                      {profile?.company_name}
-                    </h3>
-                    <p className="text-gray-700 text-sm">
-                      Full-time • {profile?.category?.type || ""}
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between">
+                      <h3 className="font-bold text-xl text-gray-900">
+                        {profile?.company_name}
+                      </h3>
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase ${
+                        profile?.user_type === 'seller' ? 'bg-green-50 text-green-600' : 'bg-orange-50 text-orange-600'
+                      }`}>
+                        {profile?.user_type}
+                      </span>
+                    </div>
+                    <p className="text-gray-600 font-medium mt-1">
+                      Full-time • {profile?.category?.type || "General Business"}
                     </p>
-                    <p className="text-gray-500 text-sm mt-1">
-                      {profile?.city}, {profile?.country}
-                    </p>
-                    <p className="text-gray-500 text-sm mt-2">
-                      Active since{" "}
-                      {profile
-                        ? new Date(profile.createdAt).toLocaleDateString(
-                            "en-GB"
-                          )
-                        : "N/A"}
-                    </p>
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-sm text-gray-500">
+                      <div className="flex items-center gap-1">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                        {profile?.city}, {profile?.country}
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        Joined {profile ? new Date(profile.createdAt).toLocaleDateString("en-GB") : "N/A"}
+                      </div>
+                    </div>
+                    {profile?.profile_status && (
+                      <div className="mt-3 inline-flex items-center gap-1.5 px-2 py-1 bg-blue-50 text-blue-700 rounded text-xs font-semibold border border-blue-100">
+                        <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse" />
+                        Status: Active
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
 
-              {profile?.image_sections && profile.image_sections.length > 0 && (
-                <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-                  <h2 className="text-xl font-bold text-gray-900 mb-6">
-                    Media
+              {/* Media Section */}
+              <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+                <div className="flex justify-between items-center mb-6">
+                  <h2 className="text-xl font-bold text-gray-900">
+                    Media Gallery
                   </h2>
+                  <button 
+                    onClick={() => setShowMediaModal(true)}
+                    className="p-2 text-blue-600 hover:bg-blue-50 rounded-full transition-all flex items-center gap-2 group"
+                  >
+                    <svg className="w-5 h-5 group-hover:rotate-12 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                    </svg>
+                    <span className="text-sm font-bold">Manage Media</span>
+                  </button>
+                </div>
 
-                  <div className="space-y-8">
+                {!profile?.image_sections || profile.image_sections.length === 0 ? (
+                  <div className="text-center py-10 bg-gray-50 rounded-xl border border-dashed border-gray-200">
+                    <p className="text-gray-500 text-sm">No media sections added yet.</p>
+                    <button 
+                      onClick={() => setShowMediaModal(true)}
+                      className="mt-3 text-blue-600 font-bold text-sm hover:underline"
+                    >
+                      + Add images to showcase your services
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-12">
                     {profile.image_sections
                       .sort((a, b) => a.order - b.order)
                       .map((section) => (
@@ -619,25 +739,31 @@ export default function ProfilePage() {
                             </p>
                           )}
 
-                          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
                             {section.imageUrls.map((url, index) => (
                               <div
                                 key={index}
-                                className="relative aspect-square overflow-hidden rounded-lg border border-gray-200 bg-gray-50"
+                                className="relative aspect-video overflow-hidden rounded-xl border border-gray-100 bg-gray-50 shadow-sm group cursor-pointer"
+                                onClick={() => setPreviewImage(url)}
                               >
                                 <img
                                   src={url}
                                   alt={`${section.Title}-${index}`}
-                                  className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                                 />
+                                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all flex items-center justify-center">
+                                  <svg className="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
+                                  </svg>
+                                </div>
                               </div>
                             ))}
                           </div>
                         </div>
                       ))}
                   </div>
-                </div>
-              )}
+                )}
+              </div>
 
               {/* My Posts Section */}
               <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">

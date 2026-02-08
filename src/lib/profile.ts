@@ -58,6 +58,7 @@ export interface UserProfile {
   createdAt: string;
   updatedAt: string;
   publishedAt: string;
+  score?: number;
 }
 
 export interface ImageSection {
@@ -407,5 +408,111 @@ export const verifyUserProfile = async (userId: number): Promise<boolean> => {
   } catch (error) {
     console.error("Error verifying user profile:", error);
     return false;
+  }
+};
+
+/**
+ * Update profile image
+ */
+export const updateProfileImage = async (
+  documentId: string,
+  imageUrl: string
+): Promise<any> => {
+  const token = getToken();
+  if (!token) throw new Error("No authentication token found");
+
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://api.letsb2b.com";
+
+  const response = await fetch(
+    `${apiUrl}/api/user-profiles/${documentId}/profile-image`,
+    {
+      method: "PATCH",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ newImage: imageUrl }),
+    }
+  );
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData?.error?.message || "Failed to update profile image");
+  }
+
+  return await response.json();
+};
+
+/**
+ * Update header image (Uses DELETE as per backend requirement)
+ */
+export const updateHeaderImage = async (
+  documentId: string,
+  imageUrl: string
+): Promise<any> => {
+  const token = getToken();
+  if (!token) throw new Error("No authentication token found");
+
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://api.letsb2b.com";
+
+  const response = await fetch(
+    `${apiUrl}/api/user-profiles/${documentId}/header-image`,
+    {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ newImage: imageUrl }),
+    }
+  );
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData?.error?.message || "Failed to update header image");
+  }
+
+  return await response.json();
+};
+
+/**
+ * Search user profiles by text and location
+ */
+export const searchUserProfiles = async (
+  text: string,
+  location: string
+): Promise<ProfileResponse> => {
+  const token = getToken();
+  const baseUrl = process.env.NEXT_PUBLIC_API_URL || "https://api.letsb2b.com";
+  
+  // Clean up parameters
+  const params = new URLSearchParams();
+  if (text) params.append("text", text);
+  if (location) params.append("location", location);
+
+  try {
+    const response = await fetch(`${baseUrl}/api/user-profiles/search?${params.toString()}`, {
+      method: "GET",
+      headers: {
+        Authorization: token ? `Bearer ${token}` : "",
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to search user profiles");
+    }
+
+    const result = await response.json();
+    
+    // Handle both raw array and Strapi-style response { data: [] }
+    if (Array.isArray(result)) {
+      return { data: result };
+    }
+    
+    return result;
+  } catch (error) {
+    console.error("Error searching user profiles:", error);
+    throw error;
   }
 };
