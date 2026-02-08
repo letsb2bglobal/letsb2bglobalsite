@@ -31,6 +31,47 @@ export default function CompanyProfilePage() {
   const [headerImageUrl, setHeaderImageUrl] = useState<string | null>(null);
   const [headerImageUploading, setHeaderImageUploading] = useState(false);
 
+  const [socialTitle, setSocialTitle] = useState("");
+  const [socialDescription, setSocialDescription] = useState("");
+  const [socialOrder, setSocialOrder] = useState<number | "">("");
+
+  const [subcategory, setSubcategory] = useState("");
+  const [categoryDescription, setCategoryDescription] = useState("");
+  const [showSubSuggestions, setShowSubSuggestions] = useState(false);
+  const [showCategoryPopup, setShowCategoryPopup] = useState(false);
+
+  const [categoriesData, setCategoriesData] = useState<
+    { type: string; subtype?: string; description?: string }[]
+  >([]);
+
+  const [popupCategory, setPopupCategory] = useState({
+    type: "",
+    subtype: "",
+    description: "",
+  });
+
+  const savePrimaryCategory = () => {
+    if (!categories[0]) return;
+
+    const primary = {
+      type: categories[0],
+      subtype: subcategory || undefined,
+      description: categoryDescription || undefined,
+    };
+
+    setCategoriesData((prev) => {
+      // If primary already exists, replace only index 0
+      if (prev.length > 0) {
+        const updated = [...prev];
+        updated[0] = primary;
+        return updated;
+      }
+
+      // Otherwise add as first category
+      return [primary];
+    });
+  };
+
   const MAX_FILE_SIZE_MB = 5;
   const MAX_FILE_SIZE = MAX_FILE_SIZE_MB * 1024 * 1024;
 
@@ -94,7 +135,7 @@ export default function CompanyProfilePage() {
       const response = await uploadProfileMedia([file]);
       const uploaded = response[0];
 
-      setHeaderImageUrl(uploaded.url); // ✅ THIS WAS MISSING
+      setHeaderImageUrl(uploaded.url);
       setHeaderImageFile(file);
     } catch (err) {
       console.error("Header image upload failed", err);
@@ -147,12 +188,21 @@ export default function CompanyProfilePage() {
     try {
       const response = await uploadProfileMedia(socialFiles);
 
-      console.log("Uploaded media response:", response);
+      const newSection = {
+        Title: socialTitle || "Social Media",
+        description: socialDescription || "",
+        order:
+          socialOrder !== "" ? socialOrder : uploadedSocialMedia.length + 1,
+        imageUrls: response.map((file: any) => file.url),
+      };
 
-      setUploadedSocialMedia((prev) => [...prev, ...response]);
+      setUploadedSocialMedia((prev) => [...prev, newSection]);
 
-      // Later: save response URLs to profile if needed
+      // reset modal state
       setSocialFiles([]);
+      setSocialTitle("");
+      setSocialDescription("");
+      setSocialOrder("");
       setShowSocialModal(false);
     } catch (err: any) {
       setUploadError(err.message || "Upload failed");
@@ -190,6 +240,26 @@ export default function CompanyProfilePage() {
     "Technology",
     "Insurance",
   ];
+
+  const subcategorySuggestions = [
+    "North Indian",
+    "South Indian",
+    "Chinese",
+    "Continental",
+    "Luxury Hotel",
+    "Budget Hotel",
+    "Resort",
+    "Homestay",
+    "Villa",
+    "Travel Tech",
+    "B2B Services",
+  ];
+
+  const filteredSubcategorySuggestions = subcategorySuggestions.filter(
+    (item) =>
+      item.toLowerCase().includes(subcategory.toLowerCase()) &&
+      subcategory.length > 0
+  );
 
   const filteredSuggestions = categorySuggestions.filter(
     (category) =>
@@ -246,17 +316,12 @@ export default function CompanyProfilePage() {
     setError("");
 
     try {
-      const imageSections =
-        uploadedSocialMedia.length > 0
-          ? [
-              {
-                Title: "Social Media",
-                description: "Uploaded social media images",
-                order: 1,
-                imageUrls: uploadedSocialMedia.map((file) => `${file.url}`),
-              },
-            ]
-          : [];
+      const imageSections = uploadedSocialMedia.map((section) => ({
+        Title: section.Title,
+        description: section.description,
+        order: section.order,
+        imageUrls: section.imageUrls,
+      }));
 
       await createUserProfile({
         company_name: formData.companyName,
@@ -291,8 +356,18 @@ export default function CompanyProfilePage() {
         profileImageUrl: profileImageUrl || undefined,
         headerImageUrl: headerImageUrl || undefined,
 
-        category: {
+        // category: {
+        //   type: categories[0] || "General",
+        //   subtype: subcategory || undefined,
+        //   description: categoryDescription || undefined,
+        // },
+
+        // categories: categoriesData,
+
+        category: categoriesData[0] || {
           type: categories[0] || "General",
+          subtype: subcategory || undefined,
+          description: categoryDescription || undefined,
         },
 
         image_sections: imageSections,
@@ -440,6 +515,82 @@ export default function CompanyProfilePage() {
                   )}
                 </div>
 
+                {/* Subcategory Input */}
+                <div className="relative">
+                  <input
+                    className="input text-black"
+                    placeholder="Subcategory"
+                    value={subcategory}
+                    onChange={(e) => {
+                      setSubcategory(e.target.value);
+                      setShowSubSuggestions(true);
+                    }}
+                    onFocus={() => subcategory && setShowSubSuggestions(true)}
+                    onBlur={() =>
+                      setTimeout(() => setShowSubSuggestions(false), 150)
+                    }
+                  />
+
+                  {showSubSuggestions &&
+                    filteredSubcategorySuggestions.length > 0 && (
+                      <div className="absolute z-30 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-xl max-h-40 overflow-y-auto">
+                        {filteredSubcategorySuggestions.map((item, index) => (
+                          <div
+                            key={index}
+                            onClick={() => {
+                              setSubcategory(item);
+                              setShowSubSuggestions(false);
+                            }}
+                            className="px-3 py-2 text-sm text-black cursor-pointer hover:bg-blue-50 hover:text-blue-700 border-b border-gray-100 last:border-b-0"
+                          >
+                            {item}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                </div>
+
+                <textarea
+                  className="input h-20 resize-none text-black"
+                  placeholder="Category description"
+                  value={categoryDescription}
+                  onChange={(e) => setCategoryDescription(e.target.value)}
+                  style={{ paddingTop: "10px" }}
+                />
+
+                {categoriesData.slice(1).map((cat, index) => (
+                  <div
+                    key={index}
+                    className="mt-3 p-3 border border-gray-200 rounded-md bg-gray-50 text-sm"
+                  >
+                    <div className="font-semibold text-black">{cat.type}</div>
+
+                    {cat.subtype && (
+                      <div className="text-gray-700">
+                        <span className="font-medium">Subcategory:</span>{" "}
+                        {cat.subtype}
+                      </div>
+                    )}
+
+                    {cat.description && (
+                      <div className="text-gray-600">
+                        <span className="font-medium">Description:</span>{" "}
+                        {cat.description}
+                      </div>
+                    )}
+                  </div>
+                ))}
+
+                <div className="flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => setShowCategoryPopup(true)}
+                    className="text-sm text-black font-medium underline"
+                  >
+                    + Add More Category
+                  </button>
+                </div>
+
                 <textarea
                   className="input h-20 resize-none pt-3 text-black"
                   style={{
@@ -475,7 +626,11 @@ export default function CompanyProfilePage() {
 
                 <button
                   type="button"
-                  onClick={() => setStep(2)}
+                  // onClick={() => setStep(2)}
+                  onClick={() => {
+                    savePrimaryCategory();
+                    setStep(2);
+                  }}
                   className="w-full h-12 bg-blue-600 text-white rounded-md"
                 >
                   NEXT
@@ -641,38 +796,53 @@ export default function CompanyProfilePage() {
                 </div>
 
                 {uploadedSocialMedia.length > 0 && (
-                  <div className="mt-3 space-y-2">
-                    <p className="text-sm font-medium text-gray-700">
-                      Uploaded Social Media Images
-                    </p>
+                  <div className="mt-4 space-y-4">
+                    {uploadedSocialMedia.map((section, index) => (
+                      <div
+                        key={index}
+                        className="border rounded-md p-3 space-y-2"
+                      >
+                        <div className="flex justify-between items-center">
+                          <div>
+                            <p className="font-medium text-black">
+                              {section.Title}
+                            </p>
+                            {section.description && (
+                              <p className="text-sm text-gray-600">
+                                {section.description}
+                              </p>
+                            )}
+                            <p className="text-xs text-gray-400">
+                              Order: {section.order}
+                            </p>
+                          </div>
 
-                    <div className="flex flex-wrap gap-3">
-                      {uploadedSocialMedia.map((file, index) => (
-                        <div
-                          key={index}
-                          className="relative w-20 text-center text-xs text-gray-600 group"
-                        >
-                          {/* Remove button */}
                           <button
                             type="button"
-                            onClick={() => removeUploadedMedia(index)}
-                            className="absolute -top-2 -right-2 z-10 w-5 h-5 bg-black text-white rounded-full text-xs flex items-center justify-center shadow hover:bg-red-600 transition"
-                            title="Remove image"
+                            onClick={() =>
+                              setUploadedSocialMedia((prev) =>
+                                prev.filter((_, i) => i !== index)
+                              )
+                            }
+                            className="text-red-500 text-lg font-bold"
                           >
                             ×
                           </button>
-
-                          {/* Image */}
-                          <img
-                            src={getMediaUrl(file.url)}
-                            alt={file.name}
-                            className="w-20 h-20 object-cover rounded border"
-                          />
-
-                          <p className="truncate mt-1">{file.name}</p>
                         </div>
-                      ))}
-                    </div>
+
+                        <div className="flex gap-3 flex-wrap">
+                          {section.imageUrls.map(
+                            (url: string, imgIndex: number) => (
+                              <img
+                                key={imgIndex}
+                                src={getMediaUrl(url)}
+                                className="w-20 h-20 object-cover rounded border"
+                              />
+                            )
+                          )}
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 )}
 
@@ -726,6 +896,37 @@ export default function CompanyProfilePage() {
               <h2 className="text-lg font-semibold text-black mb-4">
                 Add Social Media Files
               </h2>
+
+              {/* Title */}
+              <input
+                type="text"
+                placeholder="Title"
+                value={socialTitle}
+                onChange={(e) => setSocialTitle(e.target.value)}
+                className="input text-black mb-2"
+              />
+
+              {/* Description */}
+              <textarea
+                placeholder="Description (optional)"
+                value={socialDescription}
+                onChange={(e) => setSocialDescription(e.target.value)}
+                className="input h-20 resize-none text-black mb-0"
+                style={{
+                  paddingTop: "10px",
+                }}
+              />
+
+              {/* Order */}
+              <input
+                type="number"
+                placeholder="Order (optional)"
+                value={socialOrder}
+                onChange={(e) =>
+                  setSocialOrder(e.target.value ? Number(e.target.value) : "")
+                }
+                className="input text-black mb-2"
+              />
 
               {/* File upload */}
               <label className="block border border-dashed border-gray-300 rounded-md p-6 text-center cursor-pointer hover:border-blue-500 transition">
@@ -795,6 +996,94 @@ export default function CompanyProfilePage() {
                     {uploadError}
                   </div>
                 )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {showCategoryPopup && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+            <div className="bg-white w-full max-w-md rounded-lg shadow-lg p-6">
+              <h2 className="text-lg font-semibold text-black mb-4">
+                Category {categoriesData.length + 1}
+              </h2>
+
+              {/* Category */}
+              <input
+                className="input text-black mb-2"
+                placeholder="Category"
+                value={popupCategory.type}
+                onChange={(e) =>
+                  setPopupCategory({ ...popupCategory, type: e.target.value })
+                }
+              />
+
+              {/* Subcategory */}
+              <input
+                className="input text-black mb-2"
+                placeholder="Subcategory"
+                value={popupCategory.subtype}
+                onChange={(e) =>
+                  setPopupCategory({
+                    ...popupCategory,
+                    subtype: e.target.value,
+                  })
+                }
+              />
+
+              {/* Description */}
+              <textarea
+                className="input h-20 resize-none text-black"
+                placeholder="Description"
+                value={popupCategory.description}
+                onChange={(e) =>
+                  setPopupCategory({
+                    ...popupCategory,
+                    description: e.target.value,
+                  })
+                }
+                style={{ paddingTop: "10px" }}
+              />
+
+              <div className="flex justify-end gap-3 mt-4">
+                <button
+                  onClick={() => setShowCategoryPopup(false)}
+                  className="px-4 py-2 text-black border rounded-md"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  onClick={() => {
+                    if (!popupCategory.type) return;
+
+                    setCategoriesData((prev) => {
+                      // If primary category not saved yet, create it at index 0
+                      if (prev.length === 0) {
+                        return [
+                          {
+                            type: categories[0] || "General",
+                            subtype: subcategory || undefined,
+                            description: categoryDescription || undefined,
+                          },
+                          popupCategory, // Category 2
+                        ];
+                      }
+
+                      return [...prev, popupCategory];
+                    });
+
+                    setPopupCategory({
+                      type: "",
+                      subtype: "",
+                      description: "",
+                    });
+                    setShowCategoryPopup(false);
+                  }}
+                  className="px-4 py-2 bg-black text-white rounded-md"
+                >
+                  Save
+                </button>
               </div>
             </div>
           </div>
