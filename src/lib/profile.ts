@@ -307,6 +307,23 @@ export const updateUserProfile = async (
 
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://api.letsb2b.com";
 
+  // Sanitize profileData to remove invalid fields for Strapi update
+  const sanitizedData = { ...profileData };
+
+  // 1. Remove root ID if present
+  if ((sanitizedData as any).id) {
+    delete (sanitizedData as any).id;
+  }
+
+  // 2. Sanitize image_sections (remove id and order to prevent Validation Error)
+  if (sanitizedData.image_sections && Array.isArray(sanitizedData.image_sections)) {
+    sanitizedData.image_sections = sanitizedData.image_sections.map((section: any) => {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { id, order, ...rest } = section;
+      return rest;
+    });
+  }
+
   try {
     const response = await fetch(`${apiUrl}/api/user-profiles/${documentId}`, {
       method: "PUT",
@@ -315,7 +332,7 @@ export const updateUserProfile = async (
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        data: profileData,
+        data: sanitizedData, 
       }),
     });
 
