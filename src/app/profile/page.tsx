@@ -15,6 +15,7 @@ import {
 import { authenticatedFetch } from "@/lib/auth";
 import { getUserPosts, type Post } from "@/lib/posts";
 import MediaModal from "@/components/MediaModal";
+import ProfilePhotoModal from "@/components/ProfilePhotoModal";
 import { ImageSection } from "@/lib/profile";
 
 interface Enquiry {
@@ -71,6 +72,10 @@ export default function ProfilePage() {
 
   // New Media Modal state
   const [showMediaModal, setShowMediaModal] = useState(false);
+
+  // Profile Photo Modal state
+  const [showProfilePhotoModal, setShowProfilePhotoModal] = useState(false);
+  const [profilePhotoUploading, setProfilePhotoUploading] = useState(false);
 
   const richTextToString = (blocks: any[] | null | undefined) => {
     if (!Array.isArray(blocks)) return "";
@@ -238,6 +243,52 @@ export default function ProfilePage() {
     }
   };
 
+  // Profile Photo Modal handlers
+  const handleViewPhoto = () => {
+    if (profile?.profileImageUrl) {
+      setPreviewImage(profile.profileImageUrl);
+    }
+  };
+
+  const handleUploadPhoto = async (file: File) => {
+    if (!profile?.documentId) return;
+
+    setProfilePhotoUploading(true);
+    try {
+      const uploadRes = await uploadProfileMedia([file]);
+      const imageUrl = uploadRes[0].url;
+      await updateProfileImage(profile.documentId, imageUrl);
+      
+      // Refresh profile data
+      const updatedProfile = await checkUserProfile(user!.id);
+      if (updatedProfile) setProfile(updatedProfile);
+      
+      setShowProfilePhotoModal(false);
+    } catch (error) {
+      console.error("Error uploading profile photo:", error);
+      alert("Failed to upload profile photo");
+    } finally {
+      setProfilePhotoUploading(false);
+    }
+  };
+
+  const handleDeletePhoto = async () => {
+    if (!profile?.documentId) return;
+
+    try {
+      await updateProfileImage(profile.documentId, "");
+      
+      // Refresh profile data
+      const updatedProfile = await checkUserProfile(user!.id);
+      if (updatedProfile) setProfile(updatedProfile);
+      
+      setShowProfilePhotoModal(false);
+    } catch (error) {
+      console.error("Error deleting profile photo:", error);
+      alert("Failed to delete profile photo");
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#f3f2ef]">
@@ -297,6 +348,17 @@ export default function ProfilePage() {
             if (success) setShowMediaModal(false);
           }}
           currentSections={profile?.image_sections || []}
+        />
+
+        <ProfilePhotoModal
+          isOpen={showProfilePhotoModal}
+          onClose={() => setShowProfilePhotoModal(false)}
+          currentPhotoUrl={profile?.profileImageUrl}
+          companyName={profile?.company_name}
+          onViewPhoto={handleViewPhoto}
+          onUploadPhoto={handleUploadPhoto}
+          onDeletePhoto={handleDeletePhoto}
+          uploading={profilePhotoUploading}
         />
 
         <div className="max-w-5xl mx-auto mt-6 px-4">
@@ -382,9 +444,7 @@ export default function ProfilePage() {
             <div className="px-6 pb-6">
               <div className="relative -mt-24 mb-4 w-40 group">
                 <div
-                  onClick={() =>
-                    profile?.profileImageUrl && setShowImageModal(true)
-                  }
+                  onClick={() => setShowProfilePhotoModal(true)}
                   className="w-40 h-40 rounded-full border-4 border-white shadow-lg bg-gray-200 overflow-hidden relative cursor-pointer"
                 >
                   <div className="w-full h-full rounded-full overflow-hidden bg-blue-50 flex items-center justify-center">
@@ -400,21 +460,6 @@ export default function ProfilePage() {
                       </span>
                     )}
                   </div>
-                  
-                  {/* Overlay for upload */}
-                  <label className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
-                    <input 
-                      type="file" 
-                      className="hidden" 
-                      accept="image/*"
-                      onChange={handleProfileImageUpload}
-                      disabled={saving}
-                    />
-                    <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                  </label>
                 </div>
               </div>
 
