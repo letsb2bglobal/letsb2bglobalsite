@@ -84,6 +84,18 @@ export default function ProfilePhotoModal({
     setIsViewingPhoto(false);
   };
 
+  const handleDeletePhoto = () => {
+    // Clear local state first
+    setSelectedImageFile(null);
+    if (selectedImagePreview && selectedImagePreview.startsWith('blob:')) {
+      URL.revokeObjectURL(selectedImagePreview);
+    }
+    setSelectedImagePreview(null);
+    
+    // Then call parent handler to delete the actual photo
+    onDeletePhoto();
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -189,7 +201,7 @@ export default function ProfilePhotoModal({
 
               {/* Delete Photo Button */}
               <button
-                onClick={onDeletePhoto}
+                onClick={handleDeletePhoto}
                 disabled={!currentPhotoUrl && !selectedImageFile}
                 className="w-full py-3 px-4 bg-red-600 text-white font-semibold rounded-xl hover:bg-red-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
