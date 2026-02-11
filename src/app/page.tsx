@@ -15,6 +15,8 @@ import EnquiryModal from "@/components/EnquiryModal";
 import PostModal from "@/components/PostModal";
 import { getOrCreateConversation } from "@/lib/messages";
 import { searchPosts, getAllPosts, type Post } from "@/lib/posts";
+import WorkspaceSwitcher from "@/components/WorkspaceSwitcher";
+import { useTeam } from "@/context/TeamContext";
 
 export default function Home() {
   const router = useRouter();
@@ -23,6 +25,7 @@ export default function Home() {
   const [allProfiles, setAllProfiles] = useState<UserProfile[]>([]);
   const [allProfilesList, setAllProfilesList] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
+  const { activeWorkspace, permissions } = useTeam();
   const [allLoading, setAllLoading] = useState(true);
   const [mounted, setMounted] = useState(false);
 
@@ -267,6 +270,7 @@ useEffect(() => {
           )}
         </div>
         <div className="flex items-center gap-6">
+          <WorkspaceSwitcher />
           <button
             onClick={() => router.push("/")}
             className="flex flex-col items-center text-blue-600 transition-colors"
@@ -287,6 +291,21 @@ useEffect(() => {
               Messaging
             </span>
           </button>
+          
+          {(permissions?.isOwner || profile) && (
+            <button
+              onClick={() => router.push("/profile?action=add-member")}
+              className="group flex flex-col items-center text-gray-500 hover:text-green-600 transition-colors"
+            >
+              <div className="p-1 rounded-lg group-hover:bg-green-50 transition-colors">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                </svg>
+              </div>
+              <span className="text-[10px] font-medium hidden md:block">Add Team</span>
+            </button>
+          )}
+
           <button
             onClick={() => router.push("/profile")}
             className="flex flex-col items-center text-gray-500 hover:text-blue-600 transition-colors"
@@ -662,10 +681,10 @@ useEffect(() => {
                     className="font-bold text-gray-900 hover:text-blue-600 hover:underline cursor-pointer transition-colors"
                     onClick={() => router.push("/profile")}
                   >
-                    {(profile?.company_name || user?.username || "User").toUpperCase()}
+                    {(activeWorkspace?.data.company_name || profile?.company_name || user?.username || "User").toUpperCase()}
                   </h4>
                   <p className="text-gray-500 text-xs mt-0.5 font-medium">
-                     {profile?.category?.type || "Professional at Let's B2B"}
+                     {activeWorkspace?.data.category?.type || profile?.category?.type || "Professional at Let's B2B"}
                   </p>
                 </div>
 

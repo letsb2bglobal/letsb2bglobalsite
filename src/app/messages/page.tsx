@@ -5,10 +5,13 @@ import { useRouter } from 'next/navigation';
 import ProtectedRoute, { useAuth } from '@/components/ProtectedRoute';
 import { fetchUserConversations, fetchMessages, sendMessage, type Conversation, type Message } from '@/lib/messages';
 import { getAllUserProfiles, type UserProfile } from '@/lib/profile';
+import { useTeam } from '@/context/TeamContext';
+import WorkspaceSwitcher from '@/components/WorkspaceSwitcher';
 
 export default function MessagesPage() {
   const router = useRouter();
   const user = useAuth();
+  const { permissions, activeWorkspace } = useTeam();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [profiles, setProfiles] = useState<Record<number, UserProfile>>({});
   const [activeConv, setActiveConv] = useState<Conversation | null>(null);
@@ -107,7 +110,25 @@ export default function MessagesPage() {
             <span className="font-bold text-gray-800">LET'S B2B</span>
           </div>
           <h1 className="text-lg font-bold text-gray-800 hidden md:block">Messaging</h1>
-          <button onClick={() => router.push('/')} className="text-gray-600 hover:text-gray-900 text-sm font-medium">Home</button>
+          <div className="flex items-center gap-6">
+            <WorkspaceSwitcher />
+            <button onClick={() => router.push('/')} className="text-gray-500 hover:text-blue-600 transition-colors flex flex-col items-center">
+              <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" /></svg>
+              <span className="text-[10px] font-medium hidden md:block">Home</span>
+            </button>
+            {permissions?.isOwner && (
+              <button onClick={() => router.push('/profile?action=add-member')} className="text-gray-500 hover:text-green-600 transition-colors flex flex-col items-center">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" /></svg>
+                <span className="text-[10px] font-medium hidden md:block">Add Team</span>
+              </button>
+            )}
+            <button onClick={() => router.push('/profile')} className="text-gray-500 hover:text-blue-600 transition-colors flex flex-col items-center">
+              <div className="h-6 w-6 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-[8px] border border-blue-200">
+                {user?.username?.substring(0, 2).toUpperCase()}
+              </div>
+              <span className="text-[10px] font-medium hidden md:block">Me</span>
+            </button>
+          </div>
         </div>
 
         <div className="max-w-6xl mx-auto mt-6 px-4 grid grid-cols-1 md:grid-cols-3 gap-0 h-[calc(100vh-100px)] bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">

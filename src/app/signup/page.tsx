@@ -85,7 +85,7 @@ export default function SignUpPage() {
       const data = await verifyEmailOtp(formData.email, parseInt(formData.otp));
       
       setAuthData(data.jwt, data.user);
-      router.push('/company-profile');
+      router.push('/complete-profile');
     } catch (error: any) {
       console.error('Verification error:', error);
       setSubmitError(error.message || 'Invalid OTP. Please try again.');

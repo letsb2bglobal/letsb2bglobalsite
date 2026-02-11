@@ -34,9 +34,26 @@ export default function MediaModal({
       description: "",
       order: sections.length + 1,
       imageUrls: [],
+      media_type: "image",
+      section_category: "team",
+      visible_for_tier: "all"
     };
     setSections([...sections, newSection]);
     setActiveSectionIndex(sections.length);
+  };
+
+  const validateFile = (file: File, type: "image" | "video") => {
+      const allowed = file.type.startsWith(type + "/");
+      const maxSize = type === "image" ? 2 * 1024 * 1024 : 10 * 1024 * 1024;
+      if (!allowed) {
+          alert(`File must be a ${type}`);
+          return false;
+      }
+      if (file.size > maxSize) {
+          alert(`${type === 'image' ? 'Image' : 'Video'} must be smaller than ${type === 'image' ? '2MB' : '10MB'}`);
+          return false;
+      }
+      return true;
   };
 
   const handleRemoveSection = (index: number) => {
@@ -51,14 +68,17 @@ export default function MediaModal({
     setSections(newSections);
   };
 
-  const handleImageUpload = async (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleMediaUpload = async (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
 
+    const type = sections[index].media_type || "image";
+    const validFiles = files.filter(f => validateFile(f, type));
+    if (validFiles.length === 0) return;
+
     setIsUploading(true);
     try {
-      const uploadRes = await uploadProfileMedia(files);
-      // uploadRes is an array of objects with 'url' property
+      const uploadRes = await uploadProfileMedia(validFiles);
       const newUrls = uploadRes.map((res: any) => res.url);
       
       const newSections = [...sections];
@@ -69,10 +89,20 @@ export default function MediaModal({
       setSections(newSections);
     } catch (error) {
       console.error("Upload failed:", error);
-      alert("Failed to upload images. Please try again.");
+      alert("Failed to upload media. Please try again.");
     } finally {
       setIsUploading(false);
     }
+  };
+
+  const handleAddUrl = (index: number, url: string) => {
+      if (!url.trim()) return;
+      const newSections = [...sections];
+      newSections[index] = {
+          ...newSections[index],
+          imageUrls: [...newSections[index].imageUrls, url.trim()]
+      };
+      setSections(newSections);
   };
 
   const handleRemoveImage = (sectionIndex: number, imageIndex: number) => {
@@ -178,15 +208,51 @@ export default function MediaModal({
                       </div>
                     </div>
 
+                    {/* Media Type Selection */}
+                    <div className="flex gap-4 items-center pl-[56px]">
+                        <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">Media Type:</span>
+                        <div className="flex gap-2">
+                             {(['image', 'video'] as const).map(type => (
+                                 <button
+                                    key={type}
+                                    onClick={(e) => { e.stopPropagation(); handleUpdateSection(idx, 'media_type', type); }}
+                                    className={`px-3 py-1 rounded-lg text-xs font-bold border transition-all ${
+                                        (section.media_type || 'image') === type 
+                                        ? 'bg-blue-600 text-white border-blue-600'
+                                        : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+                                    }`}
+                                 >
+                                     {type.charAt(0).toUpperCase() + type.slice(1)}
+                                 </button>
+                             ))}
+                        </div>
+                        <span className="text-[10px] text-gray-400 ml-2 italic">
+                            {section.media_type === 'video' ? 'Max 10MB per video (Upload or Link)' : 'Max 2MB per image (Upload or Link)'}
+                        </span>
+                    </div>
+
                     {/* Image Grid */}
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
                       {section.imageUrls.map((url, imgIdx) => (
                         <div key={imgIdx} className="relative aspect-square group/img rounded-xl overflow-hidden border border-gray-200 bg-white shadow-sm">
-                          <img src={url} alt={`Preview ${imgIdx}`} className="w-full h-full object-cover group-hover/img:scale-110 transition-transform duration-500" />
-                          <div className="absolute inset-0 bg-black/0 group-hover/img:bg-black/20 transition-all" />
+                          {section.media_type === 'video' ? (
+                            <div className="w-full h-full bg-gray-900 flex flex-col items-center justify-center relative group-hover/img:scale-105 transition-transform duration-500">
+                                <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center backdrop-blur-sm">
+                                  <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20"><path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" /></svg>
+                                </div>
+                                <div className="absolute bottom-0 inset-x-0 p-2 bg-gradient-to-t from-black/80 to-transparent">
+                                    <p className="text-[10px] text-white truncate px-1">{url}</p>
+                                </div>
+                            </div>
+                          ) : (
+                            <img src={url} alt={`Preview ${imgIdx}`} className="w-full h-full object-cover group-hover/img:scale-110 transition-transform duration-500" />
+                          )}
+                          
+                          <div className="absolute inset-0 bg-black/0 group-hover/img:bg-black/10 transition-all pointer-events-none" />
+                          
                           <button 
                             onClick={(e) => { e.stopPropagation(); handleRemoveImage(idx, imgIdx); }}
-                            className="absolute top-2 right-2 w-7 h-7 bg-white text-red-500 rounded-full flex items-center justify-center shadow-lg opacity-0 group-hover/img:opacity-100 hover:bg-red-500 hover:text-white transition-all transform hover:scale-110"
+                            className="absolute top-2 right-2 w-7 h-7 bg-white text-red-500 rounded-full flex items-center justify-center shadow-lg opacity-0 group-hover/img:opacity-100 hover:bg-red-500 hover:text-white transition-all transform hover:scale-110 z-10 pointer-events-auto"
                           >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M6 18L18 6M6 6l12 12" />
@@ -195,37 +261,50 @@ export default function MediaModal({
                         </div>
                       ))}
                       
-                      {/* Upload Button */}
-                      <label 
-                        className={`aspect-square border-2 border-dashed border-gray-300 rounded-xl flex flex-col items-center justify-center cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition-all group/upload relative bg-gray-50/50 ${
-                          isUploading && activeSectionIndex === idx ? 'pointer-events-none' : ''
-                        }`}
+                      {/* Add Media Card */}
+                      <div 
+                        className="aspect-square border-2 border-dashed border-gray-300 rounded-xl flex flex-col items-center justify-center bg-gray-50/50 p-3 gap-2 hover:border-blue-300 transition-colors"
                         onClick={(e) => e.stopPropagation()}
                       >
-                        <input 
-                          type="file" 
-                          multiple 
-                          className="hidden" 
-                          accept="image/*"
-                          disabled={isUploading}
-                          onChange={(e) => handleImageUpload(idx, e)}
-                        />
-                        {isUploading && activeSectionIndex === idx ? (
-                          <div className="flex flex-col items-center">
-                            <div className="animate-spin rounded-full h-8 w-8 border-2 border-blue-500 border-t-transparent mb-2" />
-                            <span className="text-[10px] font-bold text-gray-500 uppercase">Uploading...</span>
-                          </div>
-                        ) : (
-                          <>
-                            <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center mb-2 shadow-sm group-hover/upload:bg-blue-100 transition-colors border border-gray-100">
-                              <svg className="w-6 h-6 text-gray-400 group-hover/upload:text-blue-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
-                              </svg>
-                            </div>
-                            <span className="text-[11px] font-bold text-gray-500 uppercase tracking-widest">Add Item</span>
-                          </>
-                        )}
-                      </label>
+                         {isUploading && activeSectionIndex === idx ? (
+                           <div className="flex flex-col items-center">
+                             <div className="animate-spin rounded-full h-6 w-6 border-2 border-blue-500 border-t-transparent mb-2" />
+                             <span className="text-[10px] font-bold text-gray-500 uppercase">Uploading...</span>
+                           </div>
+                         ) : (
+                           <>
+                              <label className="flex-1 w-full flex flex-col items-center justify-center cursor-pointer hover:bg-white rounded-lg transition-all border border-transparent hover:border-gray-200 hover:shadow-sm">
+                                <input 
+                                  type="file" 
+                                  multiple 
+                                  className="hidden" 
+                                  accept={section.media_type === 'video' ? "video/*" : "image/*"}
+                                  onChange={(e) => handleMediaUpload(idx, e)}
+                                />
+                                <div className="w-8 h-8 bg-blue-50 text-blue-500 rounded-full flex items-center justify-center mb-1">
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                                </div>
+                                <span className="text-[10px] font-bold text-gray-600 uppercase">Upload</span>
+                              </label> 
+
+                              <div className="w-full h-px bg-gray-200/60"></div>
+
+                              <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    const url = prompt("Enter Media URL (e.g. YouTube, Vimeo, or direct link):");
+                                    if (url) handleAddUrl(idx, url);
+                                }}
+                                className="flex-1 w-full flex flex-col items-center justify-center cursor-pointer hover:bg-white rounded-lg transition-all border border-transparent hover:border-gray-200 hover:shadow-sm"
+                              >
+                                <div className="w-8 h-8 bg-purple-50 text-purple-500 rounded-full flex items-center justify-center mb-1">
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
+                                </div>
+                                <span className="text-[10px] font-bold text-gray-600 uppercase">Link URL</span>
+                              </button>
+                           </>
+                         )}
+                      </div>
                     </div>
                   </div>
                 </div>

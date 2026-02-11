@@ -4,8 +4,8 @@ import React, { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import ProtectedRoute, { useAuth } from "@/components/ProtectedRoute";
 import { getProfileByDocumentId, type UserProfile } from "@/lib/profile";
-import Cookies from "js-cookie";
 import EnquiryModal from "@/components/EnquiryModal";
+import ContactInfoModal from "@/components/ContactInfoModal";
 import { getOrCreateConversation } from "@/lib/messages";
 import { getUserPosts, type Post } from "@/lib/posts";
 
@@ -20,6 +20,10 @@ export default function PublicProfilePage() {
 
   // Enquiry Modal States
   const [isInquiryModalOpen, setIsInquiryModalOpen] = useState(false);
+  const [isContactModalOpen, setIsContactModalOpen] = useState(false);
+
+  // Preview Image State
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
 
   // Posts states
   const [userPosts, setUserPosts] = useState<Post[]>([]);
@@ -115,7 +119,7 @@ export default function PublicProfilePage() {
             onClick={() => router.push("/")}
           >
             <span className="text-blue-600 font-bold text-2xl italic">L</span>
-            <span className="font-bold text-gray-800">LET'S B2B</span>
+            <span className="font-bold text-gray-800 hidden md:block">LET'S B2B</span>
           </div>
           <button
             onClick={() => router.back()}
@@ -140,35 +144,90 @@ export default function PublicProfilePage() {
 
         <div className="max-w-5xl mx-auto mt-6 px-4">
           <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden relative">
-            <div className="h-48 w-full bg-gradient-to-r from-blue-400 to-indigo-600 relative"></div>
+            {/* Header Image */}
+            <div
+              onClick={() =>
+                profile?.headerImageUrl &&
+                setPreviewImage(profile.headerImageUrl)
+              }
+              className={`h-48 w-full relative overflow-hidden ${profile?.headerImageUrl ? "cursor-pointer" : ""}`}
+            >
+               {profile?.headerImageUrl ? (
+                <img
+                  src={profile.headerImageUrl}
+                  alt={`${profile.company_name} header`}
+                  className="absolute inset-0 w-full h-full object-cover"
+                />
+              ) : (
+                <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-indigo-600" />
+              )}
+            </div>
 
             <div className="px-6 pb-6">
-              <div className="relative -mt-24 mb-4">
-                <div className="w-40 h-40 rounded-full border-4 border-white shadow-lg bg-gray-200 overflow-hidden">
-                  <div className="w-full h-full bg-blue-50 flex items-center justify-center text-blue-500 font-bold text-4xl">
-                    {profile?.company_name.substring(0, 1).toUpperCase()}
+              <div className="relative -mt-24 mb-4 max-w-fit">
+                <div
+                    onClick={() =>
+                      profile?.profileImageUrl && setPreviewImage(profile.profileImageUrl)
+                    }
+                    className={`w-40 h-40 rounded-full border-4 border-white shadow-lg bg-gray-200 overflow-hidden relative ${profile?.profileImageUrl ? "cursor-pointer" : ""}`}
+                  >
+                  <div className="w-full h-full rounded-full overflow-hidden bg-blue-50 flex items-center justify-center">
+                    {profile?.profileImageUrl ? (
+                      <img
+                        src={profile.profileImageUrl}
+                        alt={profile.company_name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <span className="text-blue-500 font-bold text-4xl">
+                        {profile?.company_name?.charAt(0).toUpperCase()}
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>
 
-              <div className="flex flex-col md:flex-row md:justify-between md:items-start">
+              <div className="flex flex-col md:flex-row md:justify-between md:items-start transition-all duration-300">
                 <div>
                   <div className="flex items-center gap-2">
                     <h1 className="text-3xl font-bold text-gray-900">
-                      {profile?.company_name}
+                      {profile?.company_name?.toUpperCase()}
                     </h1>
-                    <span className="px-2 py-0.5 bg-gray-100 text-gray-600 text-[10px] font-bold rounded uppercase tracking-wider">
-                      {profile?.user_type}
-                    </span>
-                    <span className="px-2 py-0.5 bg-blue-50 text-blue-600 text-[10px] font-bold rounded border border-blue-100 uppercase">
+                     <span className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs font-semibold rounded uppercase">
+                       {(profile as any)?.profile_type || profile?.user_type}
+                     </span>
+                    <span className="px-2 py-0.5 bg-blue-50 text-blue-600 text-[10px] font-bold rounded border border-blue-100 ml-2 uppercase">
                       ID: {profile?.userId}
                     </span>
                   </div>
-                  <p className="text-lg text-gray-600 mt-1">
-                    {profile?.category?.type || ""}
+                  {profile && (profile as any).brand_tagline && (
+                    <p className="text-gray-500 italic text-sm mt-0.5">"{ (profile as any).brand_tagline }"</p>
+                  )}
+                  <p className="text-lg text-gray-600 mt-1 font-medium">
+                    {/* Display primary business type */}
+                    {profile?.business_type}
+                    
+                    {/* Display detailed categories if available */}
+                    {profile?.category_items && profile.category_items.length > 0 && (
+                      <span className="text-gray-400 text-sm ml-2 font-normal">
+                        • {profile.category_items.map((cat, idx) => (
+                            <span key={idx}>
+                              {cat.category}
+                              {cat.sub_categories && cat.sub_categories.length > 0 && ` (${cat.sub_categories.join(', ')})`}
+                              {idx < (profile.category_items?.length || 0) - 1 ? ", " : ""}
+                            </span>
+                          ))}
+                      </span>
+                    )}
                   </p>
                   <p className="text-gray-500 text-sm mt-1">
-                    {profile?.city}, {profile?.country}
+                    {profile?.city}, {profile?.country} •{" "}
+                    <span 
+                      onClick={() => setIsContactModalOpen(true)}
+                      className="text-blue-600 font-semibold hover:underline cursor-pointer"
+                    >
+                      Contact info
+                    </span>
                   </p>
                 </div>
                 <div className="mt-4 md:mt-0 flex gap-2">
@@ -217,49 +276,111 @@ export default function PublicProfilePage() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
             <div className="md:col-span-2 space-y-6">
+              {/* About Section */}
               <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
                 <h2 className="text-xl font-bold text-gray-900 mb-4">About</h2>
                 <p className="text-gray-700 whitespace-pre-wrap leading-relaxed">
                   {profile.about?.length
                     ? richTextToString(profile.about)
                     : `${profile.company_name} is a leading ${
-                        profile.category?.type || ""
+                        profile.category?.type || "business"
                       } based in ${
                         profile.city
                       }. Connect with us for premium B2B services.`}
                 </p>
               </div>
 
+               {/* Media Section */}
               <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-                <h2 className="text-xl font-bold text-gray-900 mb-6">
-                  Experience
-                </h2>
-                <div className="flex gap-4">
-                  <div className="w-12 h-12 bg-blue-50 flex items-center justify-center rounded border border-blue-100">
-                    <svg
-                      className="w-6 h-6 text-blue-600"
-                      fill="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path d="M7 5V3a1 1 0 011-1h8a1 1 0 011 1v2h5a1 1 0 011 1v14a1 1 0 01-1 1H3a1 1 0 01-1-1V6a1 1 0 011-1h5zM8 4v1h8V4H8zm-3 3v12h14V7H5z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-gray-900">
-                      {profile?.company_name}
-                    </h3>
-                    <p className="text-gray-700 text-sm">
-                      Full-time • {profile?.category?.type || ""}
-                    </p>
-                    <p className="text-gray-500 text-sm mt-1">
-                      {profile?.city}, {profile?.country}
-                    </p>
-                    <p className="text-gray-500 text-sm mt-2">
-                      Active on Let's B2B since{" "}
-                      {new Date(profile.createdAt).toLocaleDateString("en-GB")}
-                    </p>
-                  </div>
+                <div className="flex justify-between items-center mb-6">
+                  <h2 className="text-xl font-bold text-gray-900">
+                    Media Gallery
+                  </h2>
                 </div>
+
+                {!profile?.image_sections || profile.image_sections.length === 0 ? (
+                  <div className="text-center py-10 bg-gray-50 rounded-xl border border-dashed border-gray-200">
+                    <p className="text-gray-500 text-sm">No media sections added yet.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-12">
+                    {profile.image_sections
+                      .sort((a, b) => a.order - b.order)
+                      .map((section) => (
+                        <div key={section.id}>
+                          <h3 className="text-lg font-semibold text-gray-800 mb-1">
+                            {section.Title}
+                          </h3>
+
+                          {section.description && (
+                            <p className="text-sm text-gray-500 mb-4">
+                              {section.description}
+                            </p>
+                          )}
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                            {section.imageUrls.map((url, index) => {
+                                const isVideo = section.media_type === 'video';
+                                let videoContent = null;
+
+                                if (isVideo) {
+                                    // Check if YouTube
+                                    const ytMatch = url.match(/(?:youtube\.com\/(?:[^\/"\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+                                    if (ytMatch) {
+                                        const videoId = ytMatch[1];
+                                        videoContent = (
+                                            <iframe 
+                                                src={`https://www.youtube.com/embed/${videoId}`} 
+                                                className="w-full h-full object-cover"
+                                                title="YouTube video player"
+                                                frameBorder="0"
+                                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                                                allowFullScreen
+                                            />
+                                        );
+                                    } else {
+                                        // Assume direct video or other
+                                        videoContent = (
+                                            <video controls className="w-full h-full object-cover bg-black">
+                                                <source src={url} />
+                                                Your browser does not support the video tag.
+                                            </video>
+                                        );
+                                    }
+                                }
+
+                                return (
+                                  <div
+                                    key={index}
+                                    className="relative aspect-video overflow-hidden rounded-xl border border-gray-100 bg-gray-50 shadow-sm group"
+                                  >
+                                    {isVideo ? (
+                                        videoContent
+                                    ) : (
+                                        <div 
+                                            className="w-full h-full relative cursor-pointer"
+                                            onClick={() => setPreviewImage(url)}
+                                        >
+                                            <img
+                                              src={url}
+                                              alt={`${section.Title}-${index}`}
+                                              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                                            />
+                                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all flex items-center justify-center pointer-events-none">
+                                              <svg className="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
+                                              </svg>
+                                            </div>
+                                        </div>
+                                    )}
+                                  </div>
+                                );
+                            })}
+                          </div>
+                        </div>
+                      ))}
+                  </div>
+                )}
               </div>
 
               {/* Tradewall Posts Section */}
@@ -303,7 +424,7 @@ export default function PublicProfilePage() {
                             {post.intentType}
                           </span>
                         </div>
-                        <p className="text-xs text-gray-500 mb-2">
+                        <p className="text-xs text-gray-500 mb-2 truncate">
                           {post.destinationCity} •{" "}
                           {new Date(post.createdAt).toLocaleDateString()}
                         </p>
@@ -334,10 +455,12 @@ export default function PublicProfilePage() {
               </div>
             </div>
 
+            {/* Right Column (Sidebar) */}
             <div className="space-y-6">
+              {/* Contact Information */}
               <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
                 <h2 className="text-lg font-bold text-gray-900 mb-4">
-                  Company Details
+                  Contact Details
                 </h2>
                 <div className="space-y-4">
                   <div className="flex items-center gap-3">
@@ -360,7 +483,7 @@ export default function PublicProfilePage() {
                       </p>
                       {profile?.website ? (
                         <a
-                          href={profile.website}
+                          href={profile.website.startsWith('http') ? profile.website : `https://${profile.website}`}
                           target="_blank"
                           className="text-blue-600 font-semibold text-sm hover:underline"
                         >
@@ -396,6 +519,58 @@ export default function PublicProfilePage() {
                       </p>
                     </div>
                   </div>
+                   <div className="flex items-center gap-3">
+                    <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.828a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                    </svg>
+                    <div>
+                      <p className="text-xs text-gray-500">Social Links</p>
+                      <div className="flex gap-2 mt-1">
+                        {(profile as any).social_links?.linkedin ? <a href={(profile as any).social_links.linkedin} target="_blank" className="text-blue-600 hover:scale-110 transition">LI</a> : <span className="text-gray-400 text-xs">-</span>}
+                        {(profile as any).social_links?.twitter ? <a href={(profile as any).social_links.twitter} target="_blank" className="text-blue-400 hover:scale-110 transition">TW</a> : <span className="text-gray-400 text-xs">-</span>}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+               {/* Market Reach */}
+              <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 relative group">
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-lg font-bold text-gray-900">
+                    Market Reach
+                  </h2>
+                </div>
+                <div className="space-y-4">
+                  <div>
+                    <p className="text-xs text-gray-500 uppercase font-bold">Years of Experience</p>
+                    <p className="text-gray-900 font-semibold">{profile?.experience_years || 0} years</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500 uppercase font-bold">Market Focus</p>
+                    <p className="text-gray-900 font-semibold">{profile?.market_focus || "N/A"}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Operating Footprint */}
+              <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 relative group">
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-lg font-bold text-gray-900">
+                    Operating Footprint
+                  </h2>
+                </div>
+                <div className="space-y-3">
+                   { (profile as any)?.operating_locations && (profile as any).operating_locations.length > 0 ? (
+                     (profile as any).operating_locations.map((loc: any, i: number) => (
+                        <div key={i} className="flex items-center gap-2 text-sm text-gray-600">
+                          <svg className="w-3 h-3 text-blue-500" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" /></svg>
+                          {loc.city}, {loc.country}
+                        </div>
+                     ))
+                   ) : (
+                     <p className="text-sm text-gray-400 italic">No operating locations added.</p>
+                   )}
                 </div>
               </div>
             </div>
@@ -409,6 +584,39 @@ export default function PublicProfilePage() {
             onClose={() => setIsInquiryModalOpen(false)}
             targetProfile={profile}
           />
+        )}
+        
+        <ContactInfoModal
+            isOpen={isContactModalOpen}
+            onClose={() => setIsContactModalOpen(false)}
+            profile={profile}
+        />
+
+        {previewImage && (
+            <div
+              className="fixed inset-0 z-50 flex items-center justify-center bg-black/80"
+              onClick={() => setPreviewImage(null)}
+            >
+              <div
+                className="relative max-w-5xl w-full px-4"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {/* Close button */}
+                <button
+                  onClick={() => setPreviewImage(null)}
+                  className="absolute -top-10 right-2 text-white text-3xl hover:scale-110 transition"
+                >
+                  ×
+                </button>
+
+                {/* Large Image */}
+                <img
+                  src={previewImage}
+                  alt="Preview"
+                  className="w-full max-h-[85vh] object-contain rounded-lg shadow-2xl bg-black"
+                />
+              </div>
+            </div>
         )}
       </div>
     </ProtectedRoute>
