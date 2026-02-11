@@ -14,28 +14,48 @@ export interface RichTextBlock {
 }
 
 export interface CategoryItem {
-  type: string;
-  subtype?: string;
+  category: string;
+  sub_categories: string[];
   description?: string;
 }
-
 
 export interface UserProfile {
   id: number;
   documentId: string;
   company_name: string;
-  user_type: "seller" | "buyer";
-
-  category: {
-    type: string;
-  } | null;
+  user_type: "agent" | "service_provider" | "seller" | "buyer" | "both";
+  profile_type?: "Individual" | "Company" | "Association";
+  email: string;
 
   country: string;
   city: string;
+  state?: string;
+  address_text?: string;
+  google_map_link?: string;
+  pincode?: string;
+
+  // Agent fields
+  full_name?: string;
+  agency_name?: string;
+  designation?: string;
+  experience_years?: number;
+  specialisation?: string;
+  operating_markets?: string[];
+
+  // Organization fields
+  legal_entity_name?: string;
+  business_type?: string;
+  category_items?: CategoryItem[];
+  market_focus?: string;
+  languages_supported?: string[];
+  certifications?: string[];
 
   about?: RichTextBlock[] | null;
+  vision_mission?: RichTextBlock[] | null;
   website?: string;
   whatsapp?: string;
+  social_links?: any;
+  brand_tagline?: string;
 
   slug?: string;
   verified_badge?: boolean;
@@ -52,7 +72,6 @@ export interface UserProfile {
 
   amenities?: string[] | null;
 
-  /** ✅ ADD THIS */
   image_sections?: ImageSection[];
 
   createdAt: string;
@@ -67,15 +86,43 @@ export interface ImageSection {
   description?: string;
   order: number;
   imageUrls: string[];
+  media_type?: "image" | "video";
+  section_category?: string;
+  visible_for_tier?: string;
 }
 
 export interface CreateProfileData {
-  company_name: string;
-  user_type: "seller" | "buyer";
+  company_name?: string;
+  user_type: "agent" | "service_provider" | "seller" | "buyer" | "both";
+  profile_type?: "Individual" | "Company" | "Association";
+  email: string;
   country: string;
   city: string;
+  state?: string;
+  address_text?: string;
+  google_map_link?: string;
+  pincode?: string;
 
-  about?: RichTextBlock[];
+  // Agent fields
+  full_name?: string;
+  agency_name?: string;
+  designation?: string;
+  experience_years?: number;
+  specialisation?: string;
+  operating_markets?: string[];
+
+  // Organization fields
+  legal_entity_name?: string;
+  business_type?: string;
+  category_items?: CategoryItem[];
+  market_focus?: string;
+  languages_supported?: string[];
+  certifications?: string[];
+  social_links?: any;
+  brand_tagline?: string;
+  vision_mission?: RichTextBlock[] | null;
+
+  about?: RichTextBlock[] | null;
 
   website?: string;
   whatsapp?: string;
@@ -89,21 +136,6 @@ export interface CreateProfileData {
 
   profileImageUrl?: string;
   headerImageUrl?: string;
-
-  // category?: {
-  //   type: string;
-  //   subtype?: string;
-  //   description?: string;
-  // };
-
-    // categories?: CategoryItem[];
-
-    
-  category?: {
-    type: string;
-    subtype?: string;
-    description?: string;
-  };
 
   latitude?: number;
   longitude?: number;
@@ -172,9 +204,14 @@ export const uploadProfileMedia = async (files: File[]): Promise<any> => {
 
 /**
  * Check if user profile exists for the given userId
+ * URL: /api/user-profiles?filters[userId][$eq]=ID&populate=*
  */
 export const checkUserProfile = async (
-  userId: number
+  userId: number,
+  options: { 
+    status?: string | null,
+    populate?: string 
+  } = {}
 ): Promise<UserProfile | null> => {
   const token = getToken();
 
@@ -185,28 +222,105 @@ export const checkUserProfile = async (
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://api.letsb2b.com";
 
   try {
-    const response = await fetch(
-      `${apiUrl}/api/user-profiles?filters[userId]=${userId}&populate=image_sections`,
-      {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      }
-    );
+    // Default populate to wildcard if not specified
+    const populateQuery = options.populate ? `populate=${options.populate}` : 'populate=*';
+    const statusQuery = options.status ? `&status=${options.status}` : '';
+
+    const url = `${apiUrl}/api/user-profiles/by-user/${userId}?${populateQuery}${statusQuery}`;
+    
+    const response = await fetch(url, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    });
 
     if (!response.ok) {
+      if (response.status === 404) return null;
       throw new Error("Failed to check user profile");
     }
 
-    const data: ProfileResponse = await response.json();
-
-    // Return the first profile if it exists, otherwise null
-    return data.data && data.data.length > 0 ? data.data[0] : null;
+    const result = await response.json();
+    const data = result.data || result;
+    return data;
   } catch (error) {
     console.error("Error checking user profile:", error);
     throw error;
+  }
+};
+
+/**
+ * Get all contexts for the current user (own profile + memberships)
+ * URL: /api/user-profiles/me
+ */
+export const getMyContexts = async (): Promise<{
+  exists: boolean;
+  ownProfile: UserProfile | null;
+  memberships: Array<{
+    role: string;
+    permission_level: string;
+    company_profile: UserProfile;
+  }>;
+}> => {
+  const token = getToken();
+  if (!token) return { exists: false, ownProfile: null, memberships: [] };
+
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://api.letsb2b.com";
+
+  try {
+    const response = await fetch(`${apiUrl}/api/user-profiles/me`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (!response.ok) {
+      if (response.status === 404) return { exists: false, ownProfile: null, memberships: [] };
+      throw new Error("Failed to fetch user contexts");
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Error fetching user contexts:", error);
+    return { exists: false, ownProfile: null, memberships: [] };
+  }
+};
+
+/**
+ * Get current user's profile
+ * URL: /api/user-profiles/me
+ */
+export const getMyProfile = async (
+  userId: number
+): Promise<{ exists: boolean; profile?: UserProfile }> => {
+  const token = getToken();
+  if (!token) return { exists: false };
+
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://api.letsb2b.com";
+
+  try {
+    const response = await fetch(`${apiUrl}/api/user-profiles/by-user/${userId}`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (!response.ok) {
+      if (response.status === 404) return { exists: false };
+      throw new Error("Failed to fetch my profile");
+    }
+
+    const result = await response.json();
+    const profile = result.data || result;
+    return { exists: !!profile, profile };
+  } catch (error) {
+    console.error("Error fetching my profile:", error);
+    return { exists: false };
   }
 };
 
@@ -308,11 +422,19 @@ export const updateUserProfile = async (
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://api.letsb2b.com";
 
   // Sanitize profileData to remove invalid fields for Strapi update
-  const sanitizedData = { ...profileData };
+  const sanitizedData: any = {};
+  
+  // Only include defined and non-null values to avoid ValidationError for required fields
+  Object.keys(profileData).forEach(key => {
+    const val = (profileData as any)[key];
+    if (val !== undefined && val !== null) {
+      sanitizedData[key] = val;
+    }
+  });
 
   // 1. Remove root ID if present
-  if ((sanitizedData as any).id) {
-    delete (sanitizedData as any).id;
+  if (sanitizedData.id) {
+    delete sanitizedData.id;
   }
 
   // 2. Sanitize image_sections (remove id and order to prevent Validation Error)
@@ -325,7 +447,7 @@ export const updateUserProfile = async (
   }
 
   try {
-    const response = await fetch(`${apiUrl}/api/user-profiles/${documentId}`, {
+    const response = await fetch(`${apiUrl}/api/user-profiles/${documentId}?populate=*`, {
       method: "PUT",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -461,7 +583,36 @@ export const updateProfileImage = async (
 };
 
 /**
- * Update header image (Uses DELETE as per backend requirement)
+ * Delete profile image
+ */
+export const deleteProfileImage = async (
+  documentId: string
+): Promise<any> => {
+  const token = getToken();
+  if (!token) throw new Error("No authentication token found");
+
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://api.letsb2b.com";
+
+  const response = await fetch(
+    `${apiUrl}/api/user-profiles/${documentId}/profile-image`,
+    {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData?.error?.message || "Failed to delete profile image");
+  }
+
+  return await response.json();
+};
+
+/**
+ * Update header image
  */
 export const updateHeaderImage = async (
   documentId: string,
@@ -475,7 +626,7 @@ export const updateHeaderImage = async (
   const response = await fetch(
     `${apiUrl}/api/user-profiles/${documentId}/header-image`,
     {
-      method: "DELETE",
+      method: "PATCH",
       headers: {
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
@@ -487,6 +638,67 @@ export const updateHeaderImage = async (
   if (!response.ok) {
     const errorData = await response.json();
     throw new Error(errorData?.error?.message || "Failed to update header image");
+  }
+
+  return await response.json();
+};
+
+/**
+ * Delete header image
+ */
+export const deleteHeaderImage = async (
+  documentId: string
+): Promise<any> => {
+  const token = getToken();
+  if (!token) throw new Error("No authentication token found");
+
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://api.letsb2b.com";
+
+  const response = await fetch(
+    `${apiUrl}/api/user-profiles/${documentId}/header-image`,
+    {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData?.error?.message || "Failed to delete header image");
+  }
+
+  return await response.json();
+};
+
+/**
+ * Update image sections (Gallery)
+ */
+export const updateImageSections = async (
+  documentId: string,
+  imageSections: ImageSection[]
+): Promise<any> => {
+  const token = getToken();
+  if (!token) throw new Error("No authentication token found");
+
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://api.letsb2b.com";
+
+  const response = await fetch(
+    `${apiUrl}/api/user-profiles/${documentId}/image-sections`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ image_sections: imageSections }),
+    }
+  );
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData?.error?.message || "Failed to update image sections");
   }
 
   return await response.json();
@@ -530,6 +742,81 @@ export const searchUserProfiles = async (
     return result;
   } catch (error) {
     console.error("Error searching user profiles:", error);
+    throw error;
+  }
+};
+/**
+ * Complete a profile step using the new 3-part flow API
+ */
+export const completeProfileStep = async (
+  step: number,
+  data: any
+): Promise<{ success: boolean; data: any; nextStep?: number; userType?: string }> => {
+  const token = getToken();
+  if (!token) throw new Error("No authentication token found");
+
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://api.letsb2b.com";
+
+  try {
+    const response = await fetch(`${apiUrl}/api/user-profiles/complete-step`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ step, data }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData?.error?.message || `Failed to complete step ${step}`);
+    }
+
+    const result = await response.json();
+    return result;
+  } catch (error) {
+    console.error(`Error completing step ${step}:`, error);
+    throw error;
+  }
+};
+
+/**
+ * Get profile by document ID using custom endpoint provided by user
+ */
+export const getProfileByDocumentIdCustom = async (
+  documentId: string
+): Promise<UserProfile | null> => {
+  const token = getToken();
+
+  if (!token) {
+    // throw new Error("No authentication token found");
+    return null;
+  }
+
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://api.letsb2b.com";
+
+  try {
+    const response = await fetch(
+      `${apiUrl}/api/user-profiles/by-document/${documentId}`,
+      {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    if (!response.ok) {
+      if (response.status === 404) return null;
+      // throw new Error("Failed to fetch user profile by document ID");
+      return null;
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error("Error fetching user profile by document ID:", error);
     throw error;
   }
 };

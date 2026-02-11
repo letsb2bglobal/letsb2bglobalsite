@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import ProtectedRoute, { useAuth } from "@/components/ProtectedRoute";
 import {
   checkUserProfile,
@@ -10,12 +10,20 @@ import {
   uploadProfileMedia,
   updateProfileImage,
   updateHeaderImage,
+  deleteProfileImage,
+  deleteHeaderImage,
+  updateImageSections,
   type UserProfile,
 } from "@/lib/profile";
 import { authenticatedFetch } from "@/lib/auth";
 import { getUserPosts, type Post } from "@/lib/posts";
 import MediaModal from "@/components/MediaModal";
+import ProfileEditModal from "@/components/ProfileEditModal";
+import ContactInfoModal from "@/components/ContactInfoModal";
 import { ImageSection } from "@/lib/profile";
+import TeamManagement from "@/components/TeamManagement";
+import WorkspaceSwitcher from "@/components/WorkspaceSwitcher";
+import { useTeam } from "@/context/TeamContext";
 
 interface Enquiry {
   id: number;
@@ -34,30 +42,57 @@ interface Enquiry {
 export default function ProfilePage() {
   const router = useRouter();
   const user = useAuth();
+  const searchParams = useSearchParams();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
+  // Tabs
+  const [activeProfileTab, setActiveProfileTab] = useState<"overview" | "team">("overview");
+  const [autoOpenInvite, setAutoOpenInvite] = useState(false);
+  const { permissions, activeWorkspace } = useTeam();
+
   // Edit states
-  const [isEditingHeader, setIsEditingHeader] = useState(false);
-  const [isEditingAbout, setIsEditingAbout] = useState(false);
 
   const [showImageModal, setShowImageModal] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
 
   // Form states
-  const [headerForm, setHeaderForm] = useState({
+  const [headerForm, setHeaderForm] = useState<{
+    company_name: string;
+    profile_type: "Individual" | "Company" | "Association";
+    business_type: string;
+    category_items: any[];
+    country: string;
+    state: string;
+    city: string;
+    address_text: string;
+    google_map_link: string;
+  }>({
     company_name: "",
-    category: "",
+    profile_type: "Individual",
+    business_type: "",
+    category_items: [],
     country: "",
+    state: "",
     city: "",
-    user_type: "seller" as "seller" | "buyer",
+    address_text: "",
+    google_map_link: "",
   });
 
   const [aboutText, setAboutText] = useState("");
   const [contactForm, setContactForm] = useState({
     website: "",
     whatsapp: "",
+    social_links: {} as any,
+  });
+
+  const [businessForm, setBusinessForm] = useState({
+    brand_tagline: "",
+    designation: "",
+    legal_entity_name: "",
+    experience_years: 0,
+    market_focus: "",
   });
 
   // Enquiry states
@@ -71,6 +106,14 @@ export default function ProfilePage() {
 
   // New Media Modal state
   const [showMediaModal, setShowMediaModal] = useState(false);
+
+  // New Profile Edit Modal state
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isContactModalOpen, setIsContactModalOpen] = useState(false);
+  const [modalTitle, setModalTitle] = useState("");
+  const [modalFields, setModalFields] = useState<any[]>([]);
+  const [modalInitialData, setModalInitialData] = useState<any>({});
+  const [onModalSave, setOnModalSave] = useState<(data: any) => Promise<void>>(() => async () => {});
 
   const richTextToString = (blocks: any[] | null | undefined) => {
     if (!Array.isArray(blocks)) return "";
@@ -132,42 +175,68 @@ export default function ProfilePage() {
 
   useEffect(() => {
     const fetchProfile = async () => {
-      if (user?.id) {
+      // Use activeWorkspace data if available, otherwise fallback to checkUserProfile
+      let data = activeWorkspace?.data || null;
+      
+      if (!data && user?.id) {
         try {
-          const data = await checkUserProfile(user.id);
-          if (data) {
-            setProfile(data);
-            setHeaderForm({
-              company_name: data.company_name,
-              category: data.category?.type || "",
-              country: data.country,
-              city: data.city,
-              user_type: data.user_type,
-            });
-
-            setAboutText(
-              data.about?.length
-                ? richTextToString(data.about)
-                : `${data.company_name} is a leading ${data.category?.type} based in ${data.city}.`
-            );
-
-            setContactForm({
-              website: data.website || "",
-              whatsapp: data.whatsapp || "",
-            });
-            fetchUserPosts(user.id);
-          } else {
-            router.push("/company-profile");
-          }
+          data = await checkUserProfile(user.id);
         } catch (error) {
-          console.error("Error fetching profile:", error);
-        } finally {
-          setLoading(false);
+          console.error("Error fetching profile fallback:", error);
         }
+      }
+
+      if (data) {
+        setProfile(data);
+        setHeaderForm({
+          company_name: data.company_name,
+          profile_type: (data as any).profile_type || "Individual",
+          business_type: data.business_type || "",
+          category_items: data.category_items || [],
+          country: data.country,
+          state: (data as any).state || "",
+          city: data.city,
+          address_text: (data as any).address_text || "",
+          google_map_link: (data as any).google_map_link || "",
+        });
+
+        setAboutText(
+          data.about?.length
+            ? richTextToString(data.about)
+            : `${data.company_name} is a leading ${data.category?.type} based in ${data.city}.`
+        );
+
+        setContactForm({
+          website: data.website || "",
+          whatsapp: data.whatsapp || "",
+          social_links: (data as any).social_links || {},
+        });
+
+        setBusinessForm({
+          brand_tagline: (data as any).brand_tagline || "",
+          designation: data.designation || "",
+          legal_entity_name: data.legal_entity_name || "",
+          experience_years: data.experience_years || 0,
+          market_focus: data.market_focus || "",
+        });
+        
+        // Use the userId from the actual profile data for posts
+        fetchUserPosts(data.userId);
+        setLoading(false);
+      } else if (user?.id && !activeWorkspace) {
+        // Only redirect if we definitely don't have a profile and workspace isn't loading
+        router.push("/complete-profile");
       }
     };
     fetchProfile();
-  }, [user, router]);
+  }, [user, router, activeWorkspace]);
+  
+  useEffect(() => {
+    if (searchParams.get("action") === "add-member") {
+      setActiveProfileTab("team");
+      setAutoOpenInvite(true);
+    }
+  }, [searchParams]);
 
   const handleUpdateProfile = async (updates: any) => {
     if (!profile?.documentId) return;
@@ -185,10 +254,7 @@ export default function ProfilePage() {
     }
   };
 
-  const saveHeader = async () => {
-    const success = await handleUpdateProfile(headerForm);
-    if (success) setIsEditingHeader(false);
-  };
+  // Placeholder for header updates (now handled by modal)
 
   const saveContact = async () => {
     await handleUpdateProfile(contactForm);
@@ -238,6 +304,40 @@ export default function ProfilePage() {
     }
   };
 
+  const handleProfileImageDelete = async () => {
+    if (!profile?.documentId) return;
+    if (!confirm("Are you sure you want to remove your profile picture?")) return;
+
+    setSaving(true);
+    try {
+      await deleteProfileImage(profile.documentId);
+      const updatedProfile = await checkUserProfile(user!.id);
+      if (updatedProfile) setProfile(updatedProfile);
+    } catch (error) {
+      console.error("Error deleting profile image:", error);
+      alert("Failed to delete profile image");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleHeaderImageDelete = async () => {
+    if (!profile?.documentId) return;
+    if (!confirm("Are you sure you want to remove your cover photo?")) return;
+
+    setSaving(true);
+    try {
+      await deleteHeaderImage(profile.documentId);
+      const updatedProfile = await checkUserProfile(user!.id);
+      if (updatedProfile) setProfile(updatedProfile);
+    } catch (error) {
+      console.error("Error deleting header image:", error);
+      alert("Failed to delete header image");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#f3f2ef]">
@@ -260,32 +360,65 @@ export default function ProfilePage() {
               LET'S B2B
             </span>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-6">
+            <WorkspaceSwitcher />
             <button
               onClick={() => router.push("/")}
-              className="text-gray-600 hover:text-gray-900 text-sm font-medium cursor-pointer"
+              className="flex flex-col items-center text-gray-500 hover:text-blue-600 transition-colors"
             >
-              Home
+              <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" />
+              </svg>
+              <span className="text-[10px] font-medium hidden md:block">Home</span>
             </button>
             <button
               onClick={() => router.push("/messages")}
-              className="text-gray-600 hover:text-gray-900 text-sm font-medium cursor-pointers"
+              className="flex flex-col items-center text-gray-500 hover:text-blue-600 transition-colors"
             >
-              Messages
+              <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 9h12v2H6V9zm8 5H6v-2h8v2zm4-6H6V6h12v2z" />
+              </svg>
+              <span className="text-[10px] font-medium hidden md:block">
+                Messaging
+              </span>
             </button>
-            <div className="h-8 w-8 rounded-full bg-gray-200 overflow-hidden border border-gray-300 cursor-pointer">
-              {profile?.profileImageUrl ? (
-                <img
-                  src={profile.profileImageUrl}
-                  alt={profile.company_name || "Profile"}
-                  className="w-full h-full object-cover cursor-pointer"
-                />
-              ) : (
+
+            {(permissions?.isOwner || (profile && user && profile.userId === user.id)) && (
+              <button
+                onClick={() => {
+                   setActiveProfileTab("team");
+                   setAutoOpenInvite(true);
+                }}
+                className="group flex flex-col items-center text-gray-500 hover:text-green-600 transition-colors"
+              >
+                <div className="p-1 rounded-lg group-hover:bg-green-50 transition-colors">
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                  </svg>
+                </div>
+                <span className="text-[10px] font-medium hidden md:block">Add Team</span>
+              </button>
+            )}
+
+            <button
+              onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+              className="flex flex-col items-center text-blue-600 transition-colors"
+            >
+              <div className="h-6 w-6 rounded-full bg-gray-200 overflow-hidden border border-blue-600 cursor-pointer">
+                {profile?.profileImageUrl ? (
+                  <img
+                    src={profile.profileImageUrl}
+                    alt={profile.company_name || "Profile"}
+                    className="w-full h-full object-cover cursor-pointer"
+                  />
+                ) : (
                 <div className="w-full h-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-xs select-none">
                   {user?.username?.substring(0, 2).toUpperCase()}
                 </div>
               )}
-            </div>
+              </div>
+              <span className="text-[10px] font-medium hidden md:block">Me</span>
+            </button>
           </div>
         </div>
 
@@ -293,10 +426,30 @@ export default function ProfilePage() {
           isOpen={showMediaModal}
           onClose={() => setShowMediaModal(false)}
           onSave={async (newSections) => {
-            const success = await handleUpdateProfile({ image_sections: newSections });
-            if (success) setShowMediaModal(false);
+            if (!profile?.documentId) return;
+            setSaving(true);
+            try {
+              await updateImageSections(profile.documentId, newSections);
+              const updatedProfile = await checkUserProfile(user!.id);
+              if (updatedProfile) setProfile(updatedProfile);
+              setShowMediaModal(false);
+            } catch (error) {
+              console.error("Error updating gallery:", error);
+              alert("Failed to update gallery");
+            } finally {
+              setSaving(false);
+            }
           }}
           currentSections={profile?.image_sections || []}
+        />
+
+        <ProfileEditModal
+          isOpen={isEditModalOpen}
+          onClose={() => setIsEditModalOpen(false)}
+          title={modalTitle}
+          fields={modalFields}
+          initialData={modalInitialData}
+          onSave={onModalSave}
         />
 
         <div className="max-w-5xl mx-auto mt-6 px-4">
@@ -320,35 +473,52 @@ export default function ProfilePage() {
                 <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-indigo-600 " />
               )}
 
-              {/* Action button stays on top */}
-              <label className="absolute top-4 right-4 p-2 bg-white/20 backdrop-blur-md rounded-full hover:bg-white/30 transition-all z-10 cursor-pointer">
-                <input 
-                  type="file" 
-                  className="hidden" 
-                  accept="image/*"
-                  onChange={handleHeaderImageUpload}
-                  disabled={saving}
-                />
-                <svg
-                  className={`w-5 h-5 text-white ${saving ? 'animate-pulse' : ''}`}
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
+              {/* Header Actions */}
+              <div className="absolute top-4 right-4 flex gap-2 z-10">
+                {profile?.headerImageUrl && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleHeaderImageDelete();
+                    }}
+                    className="p-2 bg-white/20 backdrop-blur-md rounded-full hover:bg-red-500/80 hover:text-white text-white/90 transition-all shadow-sm"
+                    title="Remove cover photo"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </button>
+                )}
+                
+                <label className="p-2 bg-white/20 backdrop-blur-md rounded-full hover:bg-white/30 transition-all cursor-pointer text-white shadow-sm">
+                  <input 
+                    type="file" 
+                    className="hidden" 
+                    accept="image/*"
+                    onChange={handleHeaderImageUpload}
+                    disabled={saving}
                   />
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
-                  />
-                </svg>
-              </label>
+                  <svg
+                    className={`w-5 h-5 ${saving ? 'animate-pulse' : ''}`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
+                    />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
+                    />
+                  </svg>
+                </label>
+              </div>
 
               {previewImage && (
                 <div
@@ -401,153 +571,186 @@ export default function ProfilePage() {
                     )}
                   </div>
                   
-                  {/* Overlay for upload */}
-                  <label className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
-                    <input 
-                      type="file" 
-                      className="hidden" 
-                      accept="image/*"
-                      onChange={handleProfileImageUpload}
-                      disabled={saving}
-                    />
-                    <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                  </label>
+                  {/* Overlay for actions */}
+                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <label className="p-2 bg-white/20 backdrop-blur-sm rounded-full hover:bg-white/40 cursor-pointer text-white transition-all">
+                      <input 
+                        type="file" 
+                        className="hidden" 
+                        accept="image/*"
+                        onChange={handleProfileImageUpload}
+                        disabled={saving}
+                      />
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                    </label>
+                    
+                    {profile?.profileImageUrl && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleProfileImageDelete();
+                        }}
+                        className="p-2 bg-white/20 backdrop-blur-sm rounded-full hover:bg-red-500/80 text-white transition-all"
+                        title="Remove profile picture"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
 
-              {!isEditingHeader ? (
-                <div className="flex flex-col md:flex-row md:justify-between md:items-start transition-all duration-300">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h1 className="text-3xl font-bold text-gray-900">
-                        {profile?.company_name?.toUpperCase()}
-                      </h1>
-                      <span className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs font-semibold rounded uppercase">
-                        {profile?.user_type}
-                      </span>
-                      <span className="px-2 py-0.5 bg-blue-50 text-blue-600 text-[10px] font-bold rounded border border-blue-100 ml-2 uppercase">
-                        ID: {profile?.userId}
-                      </span>
-                    </div>
-                    <p className="text-lg text-gray-600 mt-1">
-                      {profile?.category?.type || ""}
-                    </p>
-                    <p className="text-gray-500 text-sm mt-1">
-                      {profile?.city}, {profile?.country} •{" "}
-                      <span className="text-blue-600 font-semibold hover:underline cursor-pointer">
-                        Contact info
-                      </span>
-                    </p>
+              <div className="flex flex-col md:flex-row md:justify-between md:items-start transition-all duration-300">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h1 className="text-3xl font-bold text-gray-900">
+                      {profile?.company_name?.toUpperCase()}
+                    </h1>
+                    <span className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs font-semibold rounded uppercase">
+                      {(profile as any)?.profile_type || profile?.user_type}
+                    </span>
+                    <span className="px-2 py-0.5 bg-blue-50 text-blue-600 text-[10px] font-bold rounded border border-blue-100 ml-2 uppercase">
+                      ID: {profile?.userId}
+                    </span>
                   </div>
-                  <div className="mt-4 md:mt-0 flex gap-2">
-                    <button
-                      onClick={() => setIsEditingHeader(true)}
-                      className="px-4 py-1.5 bg-blue-600 text-white font-semibold rounded-full hover:bg-blue-700 transition-colors flex items-center gap-2 cursor-pointer"
+                  {profile && (profile as any).brand_tagline && (
+                    <p className="text-gray-500 italic text-sm mt-0.5">"{ (profile as any).brand_tagline }"</p>
+                  )}
+                  <p className="text-lg text-gray-600 mt-1 font-medium">
+                    {/* Display primary business type */}
+                    {profile?.business_type}
+                    
+                    {/* Display detailed categories if available */}
+                    {profile?.category_items && profile.category_items.length > 0 && (
+                      <span className="text-gray-400 text-sm ml-2 font-normal">
+                        • {profile.category_items.map((cat, idx) => (
+                            <span key={idx}>
+                              {cat.category}
+                              {cat.sub_categories && cat.sub_categories.length > 0 && ` (${cat.sub_categories.join(', ')})`}
+                              {idx < (profile.category_items?.length || 0) - 1 ? ", " : ""}
+                            </span>
+                          ))}
+                      </span>
+                    )}
+                  </p>
+                  <p className="text-gray-500 text-sm mt-1">
+                    {profile?.city}, {profile?.country} •{" "}
+                    <span 
+                      onClick={() => setIsContactModalOpen(true)}
+                      className="text-blue-600 font-semibold hover:underline cursor-pointer"
                     >
-                      <svg
-                        className="w-4 h-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
-                        ></path>
-                      </svg>
-                      Edit Profile
-                    </button>
-                    <button
-                      onClick={fetchEnquiries}
-                      className="px-4 py-1.5 bg-indigo-600 text-white font-semibold rounded-full hover:bg-indigo-700 transition-all shadow-md hover:shadow-lg flex items-center gap-2 cursor-pointer"
-                    >
-                      <svg
-                        className="w-4 h-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"
-                        ></path>
-                      </svg>
-                      Enquiries
-                    </button>
-                    <button className="px-4 py-1.5 border border-blue-600 text-blue-600 font-semibold rounded-full hover:bg-blue-50 transition-colors cursor-pointer">
-                      Resources
-                    </button>
-                  </div>
+                      Contact info
+                    </span>
+                  </p>
                 </div>
-              ) : (
-                <div className="space-y-4 animate-in fade-in duration-300">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <input
-                      className="w-full px-4 py-2 text-black border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                      placeholder="Company Name"
-                      value={headerForm.company_name}
-                      onChange={(e) =>
-                        setHeaderForm({
-                          ...headerForm,
-                          company_name: e.target.value,
-                        })
-                      }
-                    />
-                    <input
-                      className="w-full px-4 py-2 text-black border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                      placeholder="Category"
-                      value={headerForm.category}
-                      onChange={(e) =>
-                        setHeaderForm({
-                          ...headerForm,
-                          category: e.target.value,
-                        })
-                      }
-                    />
-                    <input
-                      className="w-full px-4 py-2 text-black border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                      placeholder="Country"
-                      value={headerForm.country}
-                      onChange={(e) =>
-                        setHeaderForm({
-                          ...headerForm,
-                          country: e.target.value,
-                        })
-                      }
-                    />
-                    <input
-                      className="w-full px-4 py-2 text-black border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                      placeholder="City"
-                      value={headerForm.city}
-                      onChange={(e) =>
-                        setHeaderForm({ ...headerForm, city: e.target.value })
-                      }
-                    />
-                  </div>
-                  <div className="flex justify-end gap-2">
+                <div className="mt-4 md:mt-0 flex gap-2">
+                  <button
+                    onClick={() => {
+                      setModalTitle("Edit Header Information");
+                     
+                      setModalTitle("Edit Header Information");
+                      setModalFields([
+                        { key: "company_name", label: "Business Name", type: "text" },
+                        { key: "profile_type", label: "Profile Type", type: "select", options: [
+                          { label: "Individual", value: "Individual" },
+                          { label: "Company", value: "Company" },
+                          { label: "Association", value: "Association" },
+                        ]},
+                        { key: "business_type", label: "Business Type", type: "select", options: [
+                          { label: "Travel Agent", value: "Travel Agent" },
+                          { label: "Tour Operator", value: "Tour Operator" },
+                          { label: "Destination Management Company (DMC)", value: "Destination Management Company (DMC)" },
+                          { label: "Handling Partner", value: "Handling Partner" },
+                          { label: "Hotel", value: "Hotel" },
+                          { label: "Resort", value: "Resort" },
+                          { label: "Homestay", value: "Homestay" },
+                          { label: "Service Villas", value: "Service Villas" },
+                          { label: "Apartments", value: "Apartments" },
+                          { label: "Houseboats", value: "Houseboats" },
+                          { label: "Cruise Liners", value: "Cruise Liners" },
+                          { label: "Transport Provider", value: "Transport Provider" },
+                          { label: "Activity / Experience Provider", value: "Activity / Experience Provider" },
+                          { label: "Wellness Centres", value: "Wellness Centres" },
+                          { label: "Ayurveda Centres", value: "Ayurveda Centres" },
+                          { label: "Medical Tourism Facilitators", value: "Medical Tourism Facilitators" },
+                          { label: "Tourism Associations", value: "Tourism Associations" },
+                          { label: "Hospitality Institutions", value: "Hospitality Institutions" },
+                          { label: "Training Organisations", value: "Training Organisations" },
+                        ]},
+                        { key: "category_items", label: "Business Categories", type: "categories", options: [
+                          { label: "Travel Agent", value: "Travel Agent" },
+                          { label: "Tour Operator", value: "Tour Operator" },
+                          { label: "Destination Management Company (DMC)", value: "Destination Management Company (DMC)" },
+                          { label: "Handling Partner", value: "Handling Partner" },
+                          { label: "Hotel", value: "Hotel" },
+                          { label: "Resort", value: "Resort" },
+                          { label: "Homestay", value: "Homestay" },
+                          { label: "Service Villas", value: "Service Villas" },
+                          { label: "Apartments", value: "Apartments" },
+                          { label: "Houseboats", value: "Houseboats" },
+                          { label: "Cruise Liners", value: "Cruise Liners" },
+                          { label: "Transport Provider", value: "Transport Provider" },
+                          { label: "Activity / Experience Provider", value: "Activity / Experience Provider" },
+                          { label: "Wellness Centres", value: "Wellness Centres" },
+                          { label: "Ayurveda Centres", value: "Ayurveda Centres" },
+                          { label: "Medical Tourism Facilitators", value: "Medical Tourism Facilitators" },
+                          { label: "Tourism Associations", value: "Tourism Associations" },
+                          { label: "Hospitality Institutions", value: "Hospitality Institutions" },
+                          { label: "Training Organisations", value: "Training Organisations" },
+                        ]},
+                        { key: "city", label: "City", type: "text" },
+                        { key: "state", label: "State", type: "text" },
+                        { key: "country", label: "Country", type: "text" },
+                        { key: "address_text", label: "Address Line", type: "textarea" },
+                        { key: "google_map_link", label: "Google Map Link", type: "text" },
+                      ]);
+                      setModalInitialData(headerForm);
+                      setOnModalSave(() => async (data: any) => {
+                        await handleUpdateProfile(data);
+                        setHeaderForm(data);
+                      });
+                      setIsEditModalOpen(true);
+                    }}
+                    className="px-4 py-1.5 bg-blue-600 text-white font-semibold rounded-full hover:bg-blue-700 transition-colors flex items-center gap-2 cursor-pointer shadow-lg shadow-blue-100"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                    </svg>
+                    Edit Info
+                  </button>
+                  {(permissions?.isOwner || (profile && user && profile.userId === user.id)) && (
                     <button
-                      onClick={() => setIsEditingHeader(false)}
-                      className="px-4 py-1.5 text-gray-600 font-semibold hover:bg-gray-100 rounded-full transition-colors"
+                      onClick={() => {
+                        setAutoOpenInvite(true);
+                        setActiveProfileTab("team");
+                      }}
+                      className="px-4 py-1.5 bg-green-600 text-white font-semibold rounded-full hover:bg-green-700 transition-all shadow-md hover:shadow-lg flex items-center gap-2 cursor-pointer"
                     >
-                      Cancel
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                      </svg>
+                      Add Member
                     </button>
-                    <button
-                      onClick={saveHeader}
-                      disabled={saving}
-                      className="px-6 py-1.5 bg-blue-600 text-white font-semibold rounded-full hover:bg-blue-700 transition-colors flex items-center"
-                    >
-                      {saving ? "Saving..." : "Save"}
-                    </button>
-                  </div>
+                  )}
+                  <button
+                    onClick={fetchEnquiries}
+                    className="px-4 py-1.5 bg-indigo-600 text-white font-semibold rounded-full hover:bg-indigo-700 transition-all shadow-md hover:shadow-lg flex items-center gap-2 cursor-pointer"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                    </svg>
+                    Enquiries
+                  </button>
+                  <button className="px-4 py-1.5 border border-blue-600 text-blue-600 font-semibold rounded-full hover:bg-blue-50 transition-colors cursor-pointer">
+                    Resources
+                  </button>
                 </div>
-              )}
+              </div>
             </div>
 
             {showImageModal && profile?.profileImageUrl && (
@@ -579,64 +782,198 @@ export default function ProfilePage() {
             )}
           </div>
 
+          <div className="mt-8 flex border-b border-gray-200">
+            <button
+              onClick={() => {
+                setActiveProfileTab("overview");
+                setAutoOpenInvite(false);
+              }}
+              className={`px-8 py-4 text-sm font-bold transition-all ${
+                activeProfileTab === "overview"
+                  ? "text-blue-600 border-b-2 border-blue-600"
+                  : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+              }`}
+            >
+              Overview
+            </button>
+            {(permissions?.isOwner || (profile && user && profile.userId === user.id)) && (
+              <button
+                onClick={() => setActiveProfileTab("team")}
+                className={`px-8 py-4 text-sm font-bold transition-all ${
+                  activeProfileTab === "team"
+                    ? "text-blue-600 border-b-2 border-blue-600"
+                    : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+                }`}
+              >
+                Team Management
+              </button>
+            )}
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
-            {/* Left Column (Main Content) */}
-            <div className="md:col-span-2 space-y-6">
-              {/* About Section */}
+            {activeProfileTab === "overview" ? (
+              <>
+                {/* Left Column (Main Content) */}
+                <div className="md:col-span-2 space-y-6">
+                  {/* About Section */}
               <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 relative group">
                 <div className="flex justify-between items-center mb-4">
                   <h2 className="text-xl font-bold text-gray-900">About</h2>
-                  {!isEditingAbout && (
-                    <button
-                      onClick={() => setIsEditingAbout(true)}
-                      className="p-2 text-gray-500 hover:bg-gray-100 rounded-full transition-all"
-                    >
-                      <svg
-                        className="w-5 h-5"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
-                        ></path>
-                      </svg>
-                    </button>
-                  )}
+                  <button
+                    onClick={() => {
+                      setModalTitle("Edit About");
+                      setModalFields([{ key: "about", label: "About text", type: "textarea" }]);
+                      setModalInitialData({ about: aboutText });
+                      setOnModalSave(() => async (data: any) => {
+                        const updatedData = { ...data };
+                        
+                        // Convert string back to Rich Text structure for about
+                        if (updatedData.about && typeof updatedData.about === 'string') {
+                          updatedData.about = [
+                            {
+                              type: "paragraph",
+                              children: [
+                                {
+                                  type: "text",
+                                  text: updatedData.about
+                                }
+                              ]
+                            }
+                          ];
+                        }
+                        
+                        await handleUpdateProfile(updatedData);
+                        setAboutText(data.about);
+                      });
+                      setIsEditModalOpen(true);
+                    }}
+                    className="p-2 text-gray-500 hover:bg-gray-100 rounded-full transition-all"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                    </svg>
+                  </button>
                 </div>
 
-                {!isEditingAbout ? (
-                  <p className="text-gray-700 whitespace-pre-wrap leading-relaxed">
-                    {aboutText}
-                  </p>
-                ) : (
-                  <div className="space-y-4">
-                    <textarea
-                      rows={4}
-                      className="w-full px-4 py-2 text-black border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none resize-none"
-                      value={aboutText}
-                      onChange={(e) => setAboutText(e.target.value)}
-                    />
-                    <div className="flex justify-end gap-2">
-                      <button
-                        onClick={() => setIsEditingAbout(false)}
-                        className="px-4 py-1.5 text-gray-600 font-semibold hover:bg-gray-100 rounded-full transition-colors"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        disabled={saving}
-                        onClick={() => setIsEditingAbout(false)} // Simulation for now
-                        className="px-6 py-1.5 bg-blue-600 text-white font-semibold rounded-full hover:bg-blue-700 transition-colors"
-                      >
-                        Save
-                      </button>
-                    </div>
+                <p className="text-gray-700 whitespace-pre-wrap leading-relaxed">
+                  {aboutText}
+                </p>
+              </div>
+
+              {/* Business Details Section */}
+              <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 relative group">
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-xl font-bold text-gray-900">Business Details</h2>
+                  <button
+                    onClick={() => {
+                        setModalTitle("Edit Business Details");
+                        setModalFields([
+                          { key: "brand_tagline", label: "Brand Tagline", type: "text" },
+                          { key: "legal_entity_name", label: "Legal Entity Name", type: "text" },
+                          { key: "designation", label: "Designation", type: "text" },
+                          { key: "vision_mission", label: "Vision & Mission", type: "textarea" },
+                        ]);
+                        const visionMission = (profile as any)?.vision_mission;
+                        const visionMissionText = Array.isArray(visionMission) 
+                            ? richTextToString(visionMission) 
+                            : (visionMission || "");
+
+                        setModalInitialData({
+                          brand_tagline: (profile as any)?.brand_tagline || "",
+                          legal_entity_name: profile?.legal_entity_name || "",
+                          designation: profile?.designation || "",
+                          vision_mission: visionMissionText,
+                        });
+                        setOnModalSave(() => async (data: any) => {
+                          const updatedData = { ...data };
+                          
+                          // Convert string back to Rich Text structure for vision_mission
+                          if (updatedData.vision_mission && typeof updatedData.vision_mission === 'string') {
+                            updatedData.vision_mission = [
+                              {
+                                type: "paragraph",
+                                children: [
+                                  {
+                                    type: "text",
+                                    text: updatedData.vision_mission
+                                  }
+                                ]
+                              }
+                            ];
+                          }
+                          
+                          await handleUpdateProfile(updatedData);
+                        });
+                        setIsEditModalOpen(true);
+                    }}
+                    className="p-2 text-gray-500 hover:bg-gray-100 rounded-full transition-all"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                    </svg>
+                  </button>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="text-xs font-bold text-gray-400 uppercase">Legal Entity Name</label>
+                    <p className="text-gray-900 font-semibold">{profile?.legal_entity_name || "N/A"}</p>
                   </div>
-                )}
+                  <div>
+                    <label className="text-xs font-bold text-gray-400 uppercase">Designation</label>
+                    <p className="text-gray-900 font-semibold">{profile?.designation || "N/A"}</p>
+                  </div>
+                </div>
+
+                <div className="mt-6 border-t border-gray-50 pt-4">
+                    <label className="text-xs font-bold text-gray-400 uppercase">Vision & Mission</label>
+                    <p className="text-gray-700 mt-1 whitespace-pre-wrap">
+                      {Array.isArray((profile as any)?.vision_mission) 
+                        ? richTextToString((profile as any)?.vision_mission) 
+                        : ((profile as any)?.vision_mission || "N/A")}
+                    </p>
+                </div>
+              </div>
+
+              {/* Facilities & Amenities */}
+              <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                    <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" /></svg>
+                    Facilities & Amenities
+                  </h2>
+                  <button 
+                    onClick={() => {
+                        setModalTitle("Manage Facilities & Amenities");
+                        setModalFields([
+                          { key: "amenities", label: "Facilities", type: "chips" },
+                        ]);
+                        setModalInitialData({
+                          amenities: (profile?.amenities as string[]) || [],
+                        });
+                        setOnModalSave(() => async (data: any) => {
+                          await handleUpdateProfile(data);
+                        });
+                        setIsEditModalOpen(true);
+                    }}
+                    className="p-2 text-gray-500 hover:bg-gray-100 rounded-full transition-all"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                    </svg>
+                  </button>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {profile?.amenities && (profile.amenities as string[]).length > 0 ? (
+                    (profile.amenities as string[]).map((a, i) => (
+                      <span key={i} className="px-3 py-1 bg-gray-50 text-gray-700 rounded-full text-xs font-medium border border-gray-200">
+                        {a}
+                      </span>
+                    ))
+                  ) : (
+                    <p className="text-sm text-gray-400 italic">No amenities listed.</p>
+                  )}
+                </div>
               </div>
 
               {/* Company Details */}
@@ -740,24 +1077,63 @@ export default function ProfilePage() {
                           )}
 
                           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-                            {section.imageUrls.map((url, index) => (
-                              <div
-                                key={index}
-                                className="relative aspect-video overflow-hidden rounded-xl border border-gray-100 bg-gray-50 shadow-sm group cursor-pointer"
-                                onClick={() => setPreviewImage(url)}
-                              >
-                                <img
-                                  src={url}
-                                  alt={`${section.Title}-${index}`}
-                                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-                                />
-                                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all flex items-center justify-center">
-                                  <svg className="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
-                                  </svg>
-                                </div>
-                              </div>
-                            ))}
+                            {section.imageUrls.map((url, index) => {
+                                const isVideo = section.media_type === 'video';
+                                let videoContent = null;
+
+                                if (isVideo) {
+                                    // Check if YouTube
+                                    const ytMatch = url.match(/(?:youtube\.com\/(?:[^\/"\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+                                    if (ytMatch) {
+                                        const videoId = ytMatch[1];
+                                        videoContent = (
+                                            <iframe 
+                                                src={`https://www.youtube.com/embed/${videoId}`} 
+                                                className="w-full h-full object-cover"
+                                                title="YouTube video player"
+                                                frameBorder="0"
+                                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                                                allowFullScreen
+                                            />
+                                        );
+                                    } else {
+                                        // Assume direct video or other
+                                        videoContent = (
+                                            <video controls className="w-full h-full object-cover bg-black">
+                                                <source src={url} />
+                                                Your browser does not support the video tag.
+                                            </video>
+                                        );
+                                    }
+                                }
+
+                                return (
+                                  <div
+                                    key={index}
+                                    className="relative aspect-video overflow-hidden rounded-xl border border-gray-100 bg-gray-50 shadow-sm group"
+                                  >
+                                    {isVideo ? (
+                                        videoContent
+                                    ) : (
+                                        <div 
+                                            className="w-full h-full relative cursor-pointer"
+                                            onClick={() => setPreviewImage(url)}
+                                        >
+                                            <img
+                                              src={url}
+                                              alt={`${section.Title}-${index}`}
+                                              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                                            />
+                                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all flex items-center justify-center pointer-events-none">
+                                              <svg className="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
+                                              </svg>
+                                            </div>
+                                        </div>
+                                    )}
+                                  </div>
+                                );
+                            })}
                           </div>
                         </div>
                       ))}
@@ -904,22 +1280,131 @@ export default function ProfilePage() {
                       </p>
                     </div>
                   </div>
+                  <div className="flex items-center gap-3">
+                    <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.828a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                    </svg>
+                    <div>
+                      <p className="text-xs text-gray-500">Social Links</p>
+                      <div className="flex gap-2 mt-1">
+                        {contactForm.social_links?.linkedin && <a href={contactForm.social_links.linkedin} target="_blank" className="text-blue-600 hover:scale-110 transition">LI</a>}
+                        {contactForm.social_links?.twitter && <a href={contactForm.social_links.twitter} target="_blank" className="text-blue-400 hover:scale-110 transition">TW</a>}
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
                 <button
                   onClick={() => {
-                    const newWebsite = prompt(
-                      "Enter new website URL:",
-                      profile?.website || ""
-                    );
-                    if (newWebsite !== null) {
-                      handleUpdateProfile({ website: newWebsite });
-                    }
+                    setModalTitle("Edit Contact Details");
+                    setModalFields([
+                      { key: "website", label: "Website", type: "text" },
+                      { key: "whatsapp", label: "WhatsApp Number", type: "text" },
+                      { key: "linkedin", label: "LinkedIn URL", type: "text" },
+                      { key: "twitter", label: "Twitter URL", type: "text" },
+                    ]);
+                    setModalInitialData({
+                      website: profile?.website || "",
+                      whatsapp: profile?.whatsapp || "",
+                      linkedin: contactForm.social_links?.linkedin || "",
+                      twitter: contactForm.social_links?.twitter || "",
+                    });
+                    setOnModalSave(() => async (data: any) => {
+                      const { website, whatsapp, linkedin, twitter } = data;
+                      await handleUpdateProfile({ 
+                        website, 
+                        whatsapp, 
+                        social_links: { ...contactForm.social_links, linkedin, twitter } 
+                      });
+                    });
+                    setIsEditModalOpen(true);
                   }}
                   className="w-full mt-6 py-2 border border-blue-600 text-blue-600 font-bold rounded hover:bg-blue-50 transition-all text-sm cursor-pointer"
                 >
                   Edit Contact Details
                 </button>
+              </div>
+
+              {/* Market Reach */}
+              <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 relative group">
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-lg font-bold text-gray-900">
+                    Market Reach
+                  </h2>
+                  <button 
+                    onClick={() => {
+                      setModalTitle("Edit Market Reach");
+                      setModalFields([
+                        { key: "experience_years", label: "Years of Experience", type: "number" },
+                        { key: "market_focus", label: "Market Focus", type: "text" },
+                      ]);
+                      setModalInitialData({
+                        experience_years: profile?.experience_years || 0,
+                        market_focus: profile?.market_focus || "",
+                      });
+                      setOnModalSave(() => async (data: any) => {
+                        await handleUpdateProfile(data);
+                      });
+                      setIsEditModalOpen(true);
+                    }}
+                    className="p-1.5 text-gray-400 hover:bg-gray-100 rounded-full transition-all"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                    </svg>
+                  </button>
+                </div>
+                <div className="space-y-4">
+                  <div>
+                    <p className="text-xs text-gray-500 uppercase font-bold">Years of Experience</p>
+                    <p className="text-gray-900 font-semibold">{profile?.experience_years || 0} years</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500 uppercase font-bold">Market Focus</p>
+                    <p className="text-gray-900 font-semibold">{profile?.market_focus || "N/A"}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Operating Footprint */}
+              <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 relative group">
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-lg font-bold text-gray-900">
+                    Operating Footprint
+                  </h2>
+                  <button 
+                    onClick={() => {
+                      setModalTitle("Manage Operating Footprint");
+                      setModalFields([
+                        { key: "operating_locations", label: "Locations", type: "locations" }
+                      ]);
+                      setModalInitialData({
+                        operating_locations: (profile as any)?.operating_locations || []
+                      });
+                      setOnModalSave(() => async (data: any) => {
+                        await handleUpdateProfile(data);
+                      });
+                      setIsEditModalOpen(true);
+                    }}
+                    className="p-1.5 text-gray-400 hover:bg-gray-100 rounded-full transition-all"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                    </svg>
+                  </button>
+                </div>
+                <div className="space-y-3">
+                   { (profile as any)?.operating_locations && (profile as any).operating_locations.length > 0 ? (
+                     (profile as any).operating_locations.map((loc: any, i: number) => (
+                        <div key={i} className="flex items-center gap-2 text-sm text-gray-600">
+                          <svg className="w-3 h-3 text-blue-500" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" /></svg>
+                          {loc.city}, {loc.country}
+                        </div>
+                     ))
+                   ) : (
+                     <p className="text-sm text-gray-400 italic">No operating locations added.</p>
+                   )}
+                </div>
               </div>
 
               {/* Analytics Simulation */}
@@ -964,15 +1449,27 @@ export default function ProfilePage() {
                     <p className="text-xs text-gray-500">
                       See how often you appear in results.
                     </p>
-                  </div>
                 </div>
               </div>
             </div>
           </div>
+        </>
+      ) : (
+        <div className="md:col-span-3">
+          {profile?.documentId && (
+            <TeamManagement 
+              companyProfileDocumentId={profile.documentId} 
+              initOpenInvite={autoOpenInvite}
+            />
+          )}
         </div>
+      )}
+    </div>
+  </div>
+</div>
 
-        {/* Enquiry Modal */}
-        {showEnquiries && (
+{/* Enquiry Modal */}
+{showEnquiries && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-300">
             <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[80vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-300">
               <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gradient-to-r from-indigo-50 to-white">
@@ -1137,7 +1634,12 @@ export default function ProfilePage() {
             Updating Profile...
           </div>
         )}
-      </div>
+     
+      <ContactInfoModal
+        isOpen={isContactModalOpen}
+        onClose={() => setIsContactModalOpen(false)}
+        profile={profile}
+      />
     </ProtectedRoute>
   );
 }

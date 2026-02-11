@@ -83,11 +83,11 @@ export default function SignInPage() {
         if (profile) {
           router.push('/');
         } else {
-          router.push('/company-profile');
+          router.push('/complete-profile');
         }
       } catch (profileError) {
         console.error('Error checking profile:', profileError);
-        router.push('/company-profile');
+        router.push('/complete-profile');
       }
     } catch (error: any) {
       console.error('Verification error:', error);
