@@ -283,7 +283,7 @@ export default function PublicProfilePage() {
                   {profile.about?.length
                     ? richTextToString(profile.about)
                     : `${profile.company_name} is a leading ${
-                        profile.category?.type || "business"
+                        profile.category_items?.[0]?.category || "business"
                       } based in ${
                         profile.city
                       }. Connect with us for premium B2B services.`}

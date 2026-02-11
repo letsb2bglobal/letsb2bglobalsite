@@ -353,6 +353,7 @@ export default function CompanyProfilePage() {
         profile_status: "active",
 
         userId: user.id,
+        email: user.email,
         profileImageUrl: profileImageUrl || undefined,
         headerImageUrl: headerImageUrl || undefined,
 
@@ -364,11 +365,20 @@ export default function CompanyProfilePage() {
 
         // categories: categoriesData,
 
-        category: categoriesData[0] || {
-          type: categories[0] || "General",
-          subtype: subcategory || undefined,
-          description: categoryDescription || undefined,
-        },
+        category_items:
+          categoriesData.length > 0
+            ? categoriesData.map((cat) => ({
+                category: cat.type,
+                sub_categories: cat.subtype ? [cat.subtype] : [],
+                description: cat.description,
+              }))
+            : [
+                {
+                  category: categories[0] || "General",
+                  sub_categories: subcategory ? [subcategory] : [],
+                  description: categoryDescription || undefined,
+                },
+              ],
 
         image_sections: imageSections,
       });
