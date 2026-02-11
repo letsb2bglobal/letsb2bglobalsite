@@ -423,7 +423,7 @@ useEffect(() => {
                             )}
                           </div>
                           <p className="text-gray-600 font-medium text-sm">
-                              {p.category?.type || ""}
+                              {p.category_items?.[0]?.category || ""}
                           </p>
                           <p className="text-gray-500 text-xs mt-1 flex items-center gap-1 font-medium">
                             <svg
@@ -684,7 +684,7 @@ useEffect(() => {
                     {(activeWorkspace?.data.company_name || profile?.company_name || user?.username || "User").toUpperCase()}
                   </h4>
                   <p className="text-gray-500 text-xs mt-0.5 font-medium">
-                     {activeWorkspace?.data.category?.type || profile?.category?.type || "Professional at Let's B2B"}
+                     {activeWorkspace?.data.category_items?.[0]?.category || profile?.category_items?.[0]?.category || "Professional at Let's B2B"}
                   </p>
                 </div>
 

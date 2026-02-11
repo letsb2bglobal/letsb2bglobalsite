@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import ProtectedRoute, { useAuth } from "@/components/ProtectedRoute";
@@ -39,7 +39,7 @@ interface Enquiry {
   publishedAt: string;
 }
 
-export default function ProfilePage() {
+function ProfileContent() {
   const router = useRouter();
   const user = useAuth();
   const searchParams = useSearchParams();
@@ -203,7 +203,7 @@ export default function ProfilePage() {
         setAboutText(
           data.about?.length
             ? richTextToString(data.about)
-            : `${data.company_name} is a leading ${data.category?.type} based in ${data.city}.`
+            : `${data.company_name} is a leading ${data.category_items?.[0]?.category || "business"} based in ${data.city}.`
         );
 
         setContactForm({
@@ -1006,7 +1006,7 @@ export default function ProfilePage() {
                       </span>
                     </div>
                     <p className="text-gray-600 font-medium mt-1">
-                      Full-time • {profile?.category?.type || "General Business"}
+                      Full-time • {profile?.category_items?.[0]?.category || "General Business"}
                     </p>
                     <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-sm text-gray-500">
                       <div className="flex items-center gap-1">
@@ -1641,5 +1641,16 @@ export default function ProfilePage() {
         profile={profile}
       />
     </ProtectedRoute>
+  );
+}
+export default function ProfilePage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-[#f3f2ef]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    }>
+      <ProfileContent />
+    </Suspense>
   );
 }
