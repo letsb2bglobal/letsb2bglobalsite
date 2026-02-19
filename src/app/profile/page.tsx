@@ -3,6 +3,7 @@
 import React, { useState, useEffect, Suspense } from "react";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
 import ProtectedRoute, { useAuth } from "@/components/ProtectedRoute";
 import {
   checkUserProfile,
@@ -15,7 +16,7 @@ import {
   updateImageSections,
   type UserProfile,
 } from "@/lib/profile";
-import { authenticatedFetch } from "@/lib/auth";
+import { authenticatedFetch, clearAuthData } from "@/lib/auth";
 import { getUserPosts, type Post } from "@/lib/posts";
 import MediaModal from "@/components/MediaModal";
 import ProfileEditModal from "@/components/ProfileEditModal";
@@ -426,6 +427,23 @@ function ProfileContent() {
               )}
               </div>
               <span className="text-[10px] font-medium hidden md:block">Me</span>
+            </button>
+
+            <Link
+              href="/pricing"
+              className="flex flex-col items-center text-gray-500 hover:text-blue-600 transition-colors"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+              </svg>
+              <span className="text-[10px] font-medium hidden md:block">Pricing</span>
+            </Link>
+
+            <button
+              onClick={() => { clearAuthData(); router.push("/signin"); }}
+              className="text-gray-500 hover:text-red-600 transition-colors font-medium text-sm"
+            >
+              Logout
             </button>
           </div>
         </div>

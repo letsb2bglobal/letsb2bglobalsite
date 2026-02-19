@@ -2,10 +2,12 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import ProtectedRoute, { useAuth } from '@/components/ProtectedRoute';
 import { fetchUserConversations, fetchMessages, sendMessage, type Conversation, type Message } from '@/lib/messages';
 import { getAllUserProfiles, type UserProfile } from '@/lib/profile';
 import { useTeam } from '@/context/TeamContext';
+import { clearAuthData } from '@/lib/auth';
 import WorkspaceSwitcher from '@/components/WorkspaceSwitcher';
 
 export default function MessagesPage() {
@@ -127,6 +129,15 @@ export default function MessagesPage() {
                 {user?.username?.substring(0, 2).toUpperCase()}
               </div>
               <span className="text-[10px] font-medium hidden md:block">Me</span>
+            </button>
+            <Link href="/pricing" className="text-gray-500 hover:text-blue-600 transition-colors flex flex-col items-center">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+              </svg>
+              <span className="text-[10px] font-medium hidden md:block">Pricing</span>
+            </Link>
+            <button onClick={() => { clearAuthData(); router.push('/signin'); }} className="text-gray-500 hover:text-red-600 transition-colors font-medium text-sm">
+              Logout
             </button>
           </div>
         </div>

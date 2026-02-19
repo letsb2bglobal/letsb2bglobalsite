@@ -134,22 +134,3 @@ export const acceptInvitation = async (token: string) => {
   return await response.json();
 };
 
-/**
- * Get current user's permissions
- */
-export const getMyPermissions = async (): Promise<MyPermissions> => {
-  const token = getToken();
-  if (!token) throw new Error("Not authenticated");
-
-  const response = await fetch(`${API_URL}/api/company-team-members/my-permissions`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error("Failed to fetch permissions");
-  }
-
-  return await response.json();
-};

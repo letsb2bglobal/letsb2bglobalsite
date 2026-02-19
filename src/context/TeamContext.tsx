@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { getMyContexts, UserProfile } from "@/lib/profile";
-import { getMyPermissions, MyPermissions } from "@/lib/team";
+import { MyPermissions } from "@/lib/team";
 import { useAuth } from "@/components/ProtectedRoute";
 import { useRouter } from "next/navigation";
 
@@ -81,14 +81,18 @@ export function TeamProvider({ children }: { children: ReactNode }) {
       setWorkspaces(availableWorkspaces);
 
       // Default logic: ownProfile first, else first membership
+      const nextWorkspace = availableWorkspaces[0] || null;
       if (!activeWorkspace || !availableWorkspaces.find(w => w.data.documentId === activeWorkspace.data.documentId)) {
-         setActiveWorkspace(availableWorkspaces[0] || null);
+         setActiveWorkspace(nextWorkspace);
       }
 
-      // 2. Fetch Permissions for backward compatibility (Optional, but keeping for now)
-      // Note: In a full V3 flow, permissions would be derived from activeWorkspace.role
-      const data = await getMyPermissions();
-      setPermissions(data);
+      // Derive permissions from workspace (my-permissions API returns 404)
+      const ws = nextWorkspace || activeWorkspace;
+      setPermissions({
+        isOwner: ws?.type === 'OWNER',
+        role: ws?.role ?? 'Viewer',
+        permissions: [],
+      });
 
     } catch (error) {
       console.error("Error fetching workspaces/permissions:", error);
@@ -104,9 +108,11 @@ export function TeamProvider({ children }: { children: ReactNode }) {
 
   const switchWorkspace = (workspace: Workspace) => {
     setActiveWorkspace(workspace);
-    // Update permissions based on the new workspace role
-    // For V3 compatibility, we might want to manually set permissions here 
-    // or trigger an API call if permissions are still backend-managed per workspace
+    setPermissions({
+      isOwner: workspace.type === 'OWNER',
+      role: workspace.role,
+      permissions: [],
+    });
   };
 
   const refreshPermissions = async () => {
