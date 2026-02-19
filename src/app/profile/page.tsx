@@ -859,6 +859,12 @@ function ProfileContent() {
                         )}
                       </div>
                     )}
+                    <Link
+                      href="/pricing"
+                      className="inline-block mt-4 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition"
+                    >
+                      Upgrade Membership
+                    </Link>
                   </div>
 
                   {/* About Section */}
