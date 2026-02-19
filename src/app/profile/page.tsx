@@ -24,6 +24,7 @@ import { ImageSection } from "@/lib/profile";
 import TeamManagement from "@/components/TeamManagement";
 import WorkspaceSwitcher from "@/components/WorkspaceSwitcher";
 import { useTeam } from "@/context/TeamContext";
+import { useMembership } from "@/context/MembershipContext";
 
 interface Enquiry {
   id: number;
@@ -51,6 +52,7 @@ function ProfileContent() {
   const [activeProfileTab, setActiveProfileTab] = useState<"overview" | "team">("overview");
   const [autoOpenInvite, setAutoOpenInvite] = useState(false);
   const { permissions, activeWorkspace } = useTeam();
+  const { status: membershipStatus, loading: membershipLoading } = useMembership();
 
   // Edit states
 
@@ -361,6 +363,12 @@ function ProfileContent() {
             </span>
           </div>
           <div className="flex items-center gap-6">
+            {!membershipLoading && membershipStatus && (
+              <span className="text-xs font-medium text-gray-600 bg-gray-100 px-2 py-1 rounded hidden sm:block">
+                {membershipStatus.tier}
+                {membershipStatus.is_active ? " • Active" : ""}
+              </span>
+            )}
             <WorkspaceSwitcher />
             <button
               onClick={() => router.push("/")}
@@ -815,6 +823,26 @@ function ProfileContent() {
               <>
                 {/* Left Column (Main Content) */}
                 <div className="md:col-span-2 space-y-6">
+                  {/* Membership Status (from context) */}
+                  <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+                    <h2 className="text-xl font-bold text-gray-900 mb-3">Membership Status</h2>
+                    {membershipLoading && (
+                      <p className="text-gray-500 text-sm">Checking membership...</p>
+                    )}
+                    {!membershipLoading && membershipStatus && (
+                      <div className="space-y-2 text-sm">
+                        <p><span className="text-gray-500">Tier:</span> <strong>{membershipStatus.tier}</strong></p>
+                        <p><span className="text-gray-500">Active:</span> <strong>{membershipStatus.is_active ? "Yes" : "No"}</strong></p>
+                        {membershipStatus.expiry && (
+                          <p><span className="text-gray-500">Expiry:</span> <strong>{membershipStatus.expiry}</strong></p>
+                        )}
+                        {membershipStatus.message && (
+                          <p className="text-gray-600 mt-2">{membershipStatus.message}</p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
                   {/* About Section */}
               <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 relative group">
                 <div className="flex justify-between items-center mb-4">

@@ -1,13 +1,15 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { getActiveMembershipPlans } from '@/modules/membership/services/membership.service';
+import { getActiveMembershipPlans, buySubscription } from '@/modules/membership/services/membership.service';
+import { useMembership } from '@/context/MembershipContext';
 
 export default function PricingPage() {
   const [verifiedDuration, setVerifiedDuration] = useState('months_3');
   const [premiumDuration, setPremiumDuration] = useState('months_3');
   const [plans, setPlans] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const { status: membershipStatus, loading: membershipLoading } = useMembership();
 
   useEffect(() => {
     async function fetchPlans() {
@@ -37,12 +39,38 @@ export default function PricingPage() {
   const verifiedPlan = getPlan("VERIFIED", verifiedDuration);
   const premiumPlan = getPlan("PREMIUM", premiumDuration);
 
+  async function handleBuy(tier: string, duration: string) {
+    try {
+      const response = await buySubscription(
+        "k2vja3w3hxynm2nta8g41dit",
+        tier,
+        duration
+      );
+
+      console.log("Buy subscription response:", response);
+    } catch (err: any) {
+      console.error("Buy failed:", err.message);
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-5xl mx-auto">
         <h1 className="text-3xl font-bold text-center text-gray-900 mb-10">
           Choose Your Plan
         </h1>
+
+        {!membershipLoading && membershipStatus && (
+          <div className="max-w-md mx-auto mb-8 bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
+            <h2 className="text-sm font-semibold text-gray-800 mb-2">Your membership</h2>
+            <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-gray-600">
+              <span><strong>Tier:</strong> {membershipStatus.tier}</span>
+              <span><strong>Active:</strong> {membershipStatus.is_active ? 'Yes' : 'No'}</span>
+              {membershipStatus.expiry && <span><strong>Expiry:</strong> {membershipStatus.expiry}</span>}
+            </div>
+            {membershipStatus.message && <p className="text-gray-500 text-xs mt-2">{membershipStatus.message}</p>}
+          </div>
+        )}
 
         <div className="grid gap-6 md:grid-cols-3">
           {/* CARD 1 — ENTRY (Free) */}
@@ -101,6 +129,7 @@ export default function PricingPage() {
             </ul>
             <button
               type="button"
+              onClick={() => handleBuy("VERIFIED", verifiedDuration)}
               className="mt-auto w-full py-2.5 px-4 bg-gray-800 text-white rounded-md font-medium hover:bg-gray-700 transition-colors"
             >
               Buy Now
@@ -144,6 +173,7 @@ export default function PricingPage() {
             </ul>
             <button
               type="button"
+              onClick={() => handleBuy("PREMIUM", premiumDuration)}
               className="mt-auto w-full py-2.5 px-4 bg-gray-800 text-white rounded-md font-medium hover:bg-gray-700 transition-colors"
             >
               Buy Now
