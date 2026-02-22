@@ -14,9 +14,10 @@ import Cookies from "js-cookie";
 import EnquiryModal from "@/components/EnquiryModal";
 import PostModal from "@/components/PostModal";
 import { getOrCreateConversation } from "@/lib/messages";
-import { searchPosts, getAllPosts, type Post } from "@/lib/posts";
+import { getTradeWallFeed, searchTradeWall, logActivity, type Post } from "@/lib/posts";
 import WorkspaceSwitcher from "@/components/WorkspaceSwitcher";
 import { useTeam } from "@/context/TeamContext";
+import { Search, MapPin } from "lucide-react";
 
 export default function Home() {
   const router = useRouter();
@@ -86,15 +87,27 @@ useEffect(() => {
 
 
   const fetchPosts = async () => {
-    if (searchText || locationText) return; // Don't fetch all if searching
+    if (searchText || locationText) return; 
     setPostsLoading(true);
     try {
-      const response = await getAllPosts();
+      const response = await getTradeWallFeed();
       if (response && response.data) {
         setPosts(response.data);
+        
+        // Log view for initial items
+        if (user?.id) {
+          response.data.forEach(item => {
+            logActivity({
+              user: user.id,
+              action_type: "view",
+              item_id: item.documentId,
+              item_type: item._type || "post"
+            });
+          });
+        }
       }
     } catch (error) {
-      console.error("Error fetching posts:", error);
+      console.error("Error fetching TradeWall:", error);
     } finally {
       setPostsLoading(false);
     }
@@ -136,7 +149,11 @@ useEffect(() => {
           }
         } else {
           setPostsLoading(true);
-          const response = await searchPosts(searchText, locationText);
+          const response = await searchTradeWall({
+            q: searchText,
+            city: locationText,
+            category: profile?.category_items?.[0]?.category // Simplified category search
+          });
           if (response?.data) {
             setPosts(response.data);
           }
@@ -226,22 +243,11 @@ useEffect(() => {
 
   return (
     <div className="min-h-screen bg-[#f3f2ef]">
-      {/* Navigation Bar */}
-      <div className="h-14 w-full bg-white border-b border-gray-200 sticky top-0 z-50 flex items-center px-4 md:px-20 justify-between">
-        <div
-          className="flex items-center gap-2 cursor-pointer"
-          onClick={() => router.push("/")}
-        >
-          <span className="text-blue-600 font-bold text-2xl italic">L</span>
-          <span className="font-bold text-gray-800 hidden md:block uppercase tracking-tight">
-            Let's B2B
-          </span>
-        </div>
-        <div className="flex bg-gray-100 rounded-lg overflow-hidden w-full max-w-2xl mx-4 items-center gap-0 border border-transparent focus-within:border-blue-500 transition-all shadow-sm">
-          <div className="flex-1 flex items-center gap-2 px-3 py-1.5 border-r border-gray-200">
-            <svg className="w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
+      {/* Search Bar section relocated to top of content or integrated into header */}
+      <div className="bg-white border-b border-gray-100 py-4 px-4 md:px-20">
+        <div className="max-w-6xl mx-auto flex bg-gray-100 rounded-lg overflow-hidden w-full items-center gap-0 border border-transparent focus-within:border-blue-500 transition-all shadow-sm">
+          <div className="flex-1 flex items-center gap-2 px-3 py-2 border-r border-gray-200">
+            <Search className="w-4 h-4 text-gray-400 shrink-0" />
             <input
               type="text"
               placeholder="Business name or service..."
@@ -250,11 +256,8 @@ useEffect(() => {
               onChange={(e) => setSearchText(e.target.value)}
             />
           </div>
-          <div className="w-1/3 flex items-center gap-2 px-3 py-1.5 bg-gray-50/50">
-            <svg className="w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
+          <div className="w-1/3 flex items-center gap-2 px-3 py-2 bg-gray-50/50">
+            <MapPin className="w-4 h-4 text-gray-400 shrink-0" />
             <input
               type="text"
               placeholder="Destination..."
@@ -269,66 +272,31 @@ useEffect(() => {
             </div>
           )}
         </div>
-        <div className="flex items-center gap-6">
-          <WorkspaceSwitcher />
-          <button
-            onClick={() => router.push("/")}
-            className="flex flex-col items-center text-blue-600 transition-colors"
-          >
-            <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" />
-            </svg>
-            <span className="text-[10px] font-bold hidden md:block">Home</span>
-          </button>
-          <button
-            onClick={() => router.push("/messages")}
-            className="flex flex-col items-center text-gray-500 hover:text-blue-600 transition-colors"
-          >
-            <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 9h12v2H6V9zm8 5H6v-2h8v2zm4-6H6V6h12v2z" />
-            </svg>
-            <span className="text-[10px] font-medium hidden md:block">
-              Messaging
-            </span>
-          </button>
-          
-          {(permissions?.isOwner || profile) && (
-            <button
-              onClick={() => router.push("/profile?action=add-member")}
-              className="group flex flex-col items-center text-gray-500 hover:text-green-600 transition-colors"
-            >
-              <div className="p-1 rounded-lg group-hover:bg-green-50 transition-colors">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-                </svg>
-              </div>
-              <span className="text-[10px] font-medium hidden md:block">Add Team</span>
-            </button>
-          )}
-
-          <button
-            onClick={() => router.push("/profile")}
-            className="flex flex-col items-center text-gray-500 hover:text-blue-600 transition-colors"
-          >
-            <div className="h-6 w-6 rounded-full bg-gray-200 overflow-hidden border border-gray-300">
-              <div className="w-full h-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-[8px]">
-                {user?.username?.substring(0, 2).toUpperCase()}
-              </div>
-            </div>
-            <span className="text-[10px] font-medium hidden md:block">Me</span>
-          </button>
-          <button
-            onClick={handleLogout}
-            className="text-gray-500 hover:text-red-600 transition-colors font-medium text-sm"
-          >
-            Logout
-          </button>
-        </div>
       </div>
 
       <div className="max-w-6xl mx-auto mt-6 px-4 grid grid-cols-1 md:grid-cols-4 gap-6 pb-10">
         {/* Main Feed */}
         <div className="md:col-span-3 space-y-4">
+          {/* Profile Completeness Banner */}
+          {activeTab === "tradewall" && (!profile?.latitude || !profile?.longitude || !profile?.category_items?.length) && (
+            <div className="bg-indigo-600 rounded-xl p-4 text-white flex justify-between items-center shadow-lg animate-in slide-in-from-top duration-500">
+              <div className="flex items-center gap-3">
+                <div className="bg-white/20 p-2 rounded-lg">
+                  <Search className="w-5 h-5" />
+                </div>
+                <div>
+                  <p className="font-bold text-sm">Improve your matches!</p>
+                  <p className="text-xs text-indigo-100">Complete your profile location and category for intelligent ranking.</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => router.push("/profile")}
+                className="bg-white text-indigo-600 px-4 py-1.5 rounded-lg text-xs font-black uppercase hover:bg-indigo-50 transition-colors"
+              >
+                Fix Now
+              </button>
+            </div>
+          )}
 
           {/* Tab Switcher */}
           <div className="flex border-b border-gray-200 mb-4 bg-white rounded-t-lg overflow-hidden">
@@ -535,78 +503,72 @@ useEffect(() => {
                 key={post.id}
                 className="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all overflow-hidden p-6 space-y-4"
               >
-                <div className="flex justify-between items-start">
-                  <div className="flex gap-3">
-                    <div
+                <div className="flex gap-3">
+                  {/* Avatar */}
+                  <div
+                    onClick={() => {
+                      const docId = getProfileDocId(post.userId);
+                      if (docId) router.push(`/profile/${docId}`);
+                      else if (post.userId === user?.id) router.push("/profile");
+                    }}
+                    className="h-10 w-10 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-bold text-sm cursor-pointer hover:scale-105 transition-transform shrink-0"
+                  >
+                    {(post.user_profile?.company_name || "?").substring(0, 1).toUpperCase()}
+                  </div>
+
+                  {/* Header info */}
+                  <div className="flex-1 min-w-0">
+                    <p
                       onClick={() => {
                         const docId = getProfileDocId(post.userId);
                         if (docId) router.push(`/profile/${docId}`);
-                        else if (post.userId === user?.id)
-                          router.push("/profile");
+                        else if (post.userId === user?.id) router.push("/profile");
                       }}
-                      className={`h-10 w-10 rounded-lg flex items-center justify-center text-white font-bold cursor-pointer hover:scale-105 transition-transform ${
-                        post.roleType === "seller"
-                          ? "bg-blue-600"
-                          : "bg-green-600"
-                      }`}
+                      className="font-bold text-gray-900 hover:text-blue-600 cursor-pointer transition-colors truncate text-sm"
                     >
-                      {post.roleType === "seller" ? "S" : "B"}
-                    </div>
-                    <div className="flex-1">
-                      <h3
-                        onClick={() => {
-                          const docId = getProfileDocId(post.userId);
-                          if (docId) router.push(`/profile/${docId}`);
-                          else if (post.userId === user?.id)
-                            router.push("/profile");
-                        }}
-                        className="font-bold text-gray-900 hover:text-blue-600 cursor-pointer transition-colors"
-                      >
-                        {post.title}
-                      </h3>
-                        <div className="flex items-center gap-2 mt-0.5">
-                          <span
-                            className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
-                              post.intentType === "demand"
-                                ? "bg-red-50 text-red-600"
-                                : "bg-green-50 text-green-600"
-                            }`}
-                          >
-                            {post.intentType}
-                          </span>
-                          <span className="text-[10px] text-gray-500 font-medium">
-                            {post.destinationCity || "Anywhere"} • {formatTime(post.createdAt)}
-                          </span>
-                          {post.score && (
-                            <span className="bg-amber-50 text-amber-600 text-[9px] font-black px-1.5 py-0.5 rounded border border-amber-100 flex items-center gap-1">
-                              {post.score} Match
-                            </span>
-                          )}
-                        </div>
-                      </div>
+                      {post.user_profile?.company_name || post.title || "B2B Partner"}
+                    </p>
+                    <div className="flex flex-wrap items-center gap-1.5 mt-1">
+                      {(post.destination || post.destinationCity) && (
+                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-indigo-50 text-indigo-600 flex items-center gap-1">
+                          <svg className="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd"/>
+                          </svg>
+                          {post.destination || post.destinationCity}
+                        </span>
+                      )}
+                      {post.category?.name && (
+                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-600">
+                          {post.category.name}
+                        </span>
+                      )}
+                      <span className="text-[10px] text-gray-400 font-medium">{formatTime(post.createdAt)}</span>
+                      {(post._score !== undefined ? post._score >= 0.7 : !!post.score) && (
+                        <span className="bg-amber-50 text-amber-600 text-[9px] font-black px-1.5 py-0.5 rounded-full border border-amber-100 flex items-center gap-1">
+                          <svg className="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                          Best Match
+                        </span>
+                      )}
+                      {post.status === "Closed" && (
+                        <span className="text-[9px] font-black px-1.5 py-0.5 rounded-full bg-red-50 text-red-500 border border-red-100">Closed</span>
+                      )}
                     </div>
                   </div>
+                </div>
 
-                <div className="text-sm text-gray-700 leading-relaxed">
-                  {post.content && Array.isArray(post.content) ? (
-                    post.content.map((block: any, idx: number) => (
-                      <p key={idx}>
-                        {block.children
-                          ?.map((child: any) => child.text)
-                          .join(" ")}
-                      </p>
-                    ))
-                  ) : (
-                    <p>
-                      {typeof post.content === "string"
-                        ? post.content
-                        : "No content available"}
-                    </p>
-                  )}
+                {/* Description */}
+                <div className="text-sm text-gray-700 leading-relaxed line-clamp-3">
+                  {post.description
+                    || (Array.isArray(post.content)
+                      ? post.content.map((b: any) => b.children?.map((c: any) => c.text).join(" ")).join(" ")
+                      : typeof post.content === "string" ? post.content : "No description available.")}
                 </div>
 
                 <div className="pt-2 border-t border-gray-50 flex gap-4">
-                  <button className="text-xs font-bold text-gray-500 hover:text-indigo-600 uppercase tracking-wider flex items-center gap-1">
+                  <button 
+                    onClick={() => user?.id && logActivity({ user: user.id, action_type: 'click', item_id: post.documentId, item_type: post._type || 'post' })}
+                    className="text-xs font-bold text-gray-500 hover:text-indigo-600 uppercase tracking-wider flex items-center gap-1"
+                  >
                     <svg
                       className="w-4 h-4"
                       fill="none"
@@ -622,7 +584,10 @@ useEffect(() => {
                     </svg>
                     Connect
                   </button>
-                  <button className="text-xs font-bold text-gray-500 hover:text-indigo-600 uppercase tracking-wider flex items-center gap-1">
+                  <button 
+                    onClick={() => user?.id && logActivity({ user: user.id, action_type: 'reply', item_id: post.documentId, item_type: post._type || 'post' })}
+                    className="text-xs font-bold text-gray-500 hover:text-indigo-600 uppercase tracking-wider flex items-center gap-1"
+                  >
                     <svg
                       className="w-4 h-4"
                       fill="none"

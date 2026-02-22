@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { getTeamMembers, inviteMember, removeTeamMember, resendInvitation, TeamMember } from "@/lib/team";
+import { getTeamMembers, addDirectMember, removeTeamMember, resendInvitation, TeamMember } from "@/lib/team";
 import { useToast } from "./Toast";
 import { useTeam } from "@/context/TeamContext";
 
@@ -17,7 +17,8 @@ export default function TeamManagement({ companyProfileDocumentId, initOpenInvit
   const [inviteData, setInviteData] = useState({
     email: "",
     role: "Sales Executive",
-    permission_level: "Sales Executive",
+    full_name: "",
+    designation: "",
   });
   const [isInviting, setIsInviting] = useState(false);
   const { showToast } = useToast();
@@ -49,16 +50,16 @@ export default function TeamManagement({ companyProfileDocumentId, initOpenInvit
     e.preventDefault();
     setIsInviting(true);
     try {
-      await inviteMember({
+      const response = await addDirectMember({
         ...inviteData,
         company_profile_id: companyProfileDocumentId,
       });
-      showToast("Invitation sent successfully!", "success");
+      showToast(response.message || "Member added successfully!", "success");
       setIsInviteModalOpen(false);
-      setInviteData({ email: "", role: "Sales Executive", permission_level: "Sales Executive" });
+      setInviteData({ email: "", role: "Sales Executive", full_name: "", designation: "" });
       fetchMembers();
     } catch (error: any) {
-      showToast(error.message || "Failed to send invitation", "error");
+      showToast(error.message || "Failed to add team member", "error");
     } finally {
       setIsInviting(false);
     }
@@ -102,7 +103,7 @@ export default function TeamManagement({ companyProfileDocumentId, initOpenInvit
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
             </svg>
-            Invite Member
+            Add Team Member
           </button>
         )}
       </div>
@@ -184,7 +185,7 @@ export default function TeamManagement({ companyProfileDocumentId, initOpenInvit
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
           <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 animate-in fade-in zoom-in duration-200">
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xl font-bold text-gray-900">Invite Team Member</h3>
+              <h3 className="text-xl font-bold text-gray-900">Add Team Member</h3>
               <button 
                 onClick={() => setIsInviteModalOpen(false)}
                 className="p-2 hover:bg-gray-100 rounded-full transition-colors"
@@ -208,6 +209,17 @@ export default function TeamManagement({ companyProfileDocumentId, initOpenInvit
                 />
               </div>
 
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-gray-500 uppercase ml-1">Full Name (Optional)</label>
+                <input
+                  type="text"
+                  placeholder="John Doe"
+                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
+                  value={inviteData.full_name}
+                  onChange={(e) => setInviteData({...inviteData, full_name: e.target.value})}
+                />
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <label className="text-xs font-bold text-gray-500 uppercase ml-1">Role</label>
@@ -225,19 +237,14 @@ export default function TeamManagement({ companyProfileDocumentId, initOpenInvit
                   </select>
                 </div>
                 <div className="space-y-1">
-                  <label className="text-xs font-bold text-gray-500 uppercase ml-1">Permission Level</label>
-                  <select
+                  <label className="text-xs font-bold text-gray-500 uppercase ml-1">Designation (Optional)</label>
+                  <input
+                    type="text"
+                    placeholder="Sr. Manager"
                     className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
-                    value={inviteData.permission_level}
-                    onChange={(e) => setInviteData({...inviteData, permission_level: e.target.value})}
-                  >
-                    <option value="Admin">Admin Level</option>
-                    <option value="Trade Manager">Trade Manager Level</option>
-                    <option value="Sales Executive">Sales Executive Level</option>
-                    <option value="Operations">Operations Level</option>
-                    <option value="Finance">Finance Level</option>
-                    <option value="Viewer">Viewer Level</option>
-                  </select>
+                    value={inviteData.designation}
+                    onChange={(e) => setInviteData({...inviteData, designation: e.target.value})}
+                  />
                 </div>
               </div>
 
@@ -246,7 +253,7 @@ export default function TeamManagement({ companyProfileDocumentId, initOpenInvit
                 disabled={isInviting}
                 className="w-full py-3.5 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-all shadow-lg hover:shadow-blue-200 disabled:opacity-50 mt-2"
               >
-                {isInviting ? "SENDING..." : "SEND INVITATION →"}
+                {isInviting ? "ADDING..." : "ADD MEMBER DIRECTLY →"}
               </button>
             </form>
           </div>

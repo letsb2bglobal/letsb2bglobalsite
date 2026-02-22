@@ -8,19 +8,34 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  --font-sans: var(--font-inter);
+  --font-heading: var(--font-outfit);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+body {
+  background: #f8fafc;
+  color: #0f172a;
+  font-family: var(--font-inter), system-ui, sans-serif;
+  letter-spacing: -0.01em;
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-outfit), sans-serif;
+}
+
+.premium-card {
+  @apply bg-white rounded-[2rem] border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all duration-500 hover:shadow-[0_20px_50px_rgba(0,0,0,0.1)] hover:border-blue-200/50 hover:-translate-y-1 overflow-hidden;
+}
+
+.glass-effect {
+  @apply bg-white/70 backdrop-blur-xl border border-white/20;
+}
+
+.stunning-border {
+  @apply relative before:absolute before:inset-0 before:p-[1px] before:rounded-[inherit] before:bg-gradient-to-br before:from-blue-500/20 before:to-transparent before:-z-10;
+}
+
+.neon-glow {
+  @apply shadow-[0_0_15px_rgba(37,99,235,0.1)];
 }

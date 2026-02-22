@@ -8,6 +8,9 @@ import EnquiryModal from "@/components/EnquiryModal";
 import ContactInfoModal from "@/components/ContactInfoModal";
 import { getOrCreateConversation } from "@/lib/messages";
 import { getUserPosts, type Post } from "@/lib/posts";
+import FollowButton from "@/components/FollowButton";
+import { useMembership } from "@/context/MembershipContext";
+import ConnectionsModal from "@/components/ConnectionsModal";
 
 export default function PublicProfilePage() {
   const params = useParams();
@@ -28,6 +31,30 @@ export default function PublicProfilePage() {
   // Posts states
   const [userPosts, setUserPosts] = useState<Post[]>([]);
   const [loadingPosts, setLoadingPosts] = useState(false);
+
+  // Networking States
+  const [isConnectionsModalOpen, setIsConnectionsModalOpen] = useState(false);
+  const [connectionsInitialTab, setConnectionsInitialTab] = useState<"followers" | "following">("followers");
+  const [networkingCounts, setNetworkingCounts] = useState({ followers: 0, following: 0 });
+
+  const fetchNetworkingCounts = async (id: string) => {
+    try {
+      const { getNetworkingCounts } = await import("@/modules/networking/services/networking.service");
+      const counts = await getNetworkingCounts(id);
+      setNetworkingCounts(counts);
+    } catch (error) {
+      console.error("Failed to fetch counts:", error);
+    }
+  };
+
+  useEffect(() => {
+    const handleUpdate = (e: any) => {
+       fetchNetworkingCounts(documentId);
+    };
+
+    window.addEventListener("networking:updated", handleUpdate);
+    return () => window.removeEventListener("networking:updated", handleUpdate);
+  }, [documentId]);
 
   const richTextToString = (blocks: any[] | null | undefined) => {
     if (!Array.isArray(blocks)) return "";
@@ -55,7 +82,12 @@ export default function PublicProfilePage() {
     const fetchProfile = async () => {
       if (documentId) {
         try {
-          const data = await getProfileByDocumentId(documentId);
+          // Parallel fetch for profile and live counts
+          const [data] = await Promise.all([
+             getProfileByDocumentId(documentId),
+             fetchNetworkingCounts(documentId)
+          ]);
+          
           if (data) {
             setProfile(data);
             if (data.userId) {
@@ -112,35 +144,6 @@ export default function PublicProfilePage() {
   return (
     <ProtectedRoute>
       <div className="min-h-screen bg-[#f3f2ef] pb-12">
-        {/* Navigation Bar */}
-        <div className="h-14 w-full bg-white border-b border-gray-200 sticky top-0 z-50 flex items-center px-4 md:px-20 justify-between">
-          <div
-            className="flex items-center gap-2 cursor-pointer"
-            onClick={() => router.push("/")}
-          >
-            <span className="text-blue-600 font-bold text-2xl italic">L</span>
-            <span className="font-bold text-gray-800 hidden md:block">LET'S B2B</span>
-          </div>
-          <button
-            onClick={() => router.back()}
-            className="text-gray-600 hover:text-gray-900 text-sm font-medium flex items-center gap-1"
-          >
-            <svg
-              className="w-4 h-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M10 19l-7-7m0 0l7-7m-7 7h18"
-              ></path>
-            </svg>
-            Back
-          </button>
-        </div>
 
         <div className="max-w-5xl mx-auto mt-6 px-4">
           <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden relative">
@@ -229,43 +232,46 @@ export default function PublicProfilePage() {
                       Contact info
                     </span>
                   </p>
+
+                  {/* Networking Counters */}
+                  <div className="flex items-center gap-6 mt-4 pt-4 border-t border-gray-50">
+                    <div 
+                      onClick={() => { setConnectionsInitialTab("followers"); setIsConnectionsModalOpen(true); }}
+                      className="group cursor-pointer"
+                    >
+                      <p className="text-lg font-black text-slate-900 group-hover:text-blue-600 transition-colors leading-none">
+                        {networkingCounts.followers}
+                      </p>
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Followers</p>
+                    </div>
+                    <div 
+                      onClick={() => { setConnectionsInitialTab("following"); setIsConnectionsModalOpen(true); }}
+                      className="group cursor-pointer"
+                    >
+                      <p className="text-lg font-black text-slate-900 group-hover:text-blue-600 transition-colors leading-none">
+                        {networkingCounts.following}
+                      </p>
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Following</p>
+                    </div>
+                  </div>
                 </div>
-                <div className="mt-4 md:mt-0 flex gap-2">
+                <div className="mt-6 md:mt-0 flex flex-wrap gap-3">
+                  <FollowButton targetProfileId={documentId} />
                   <button
                     onClick={() => setIsInquiryModalOpen(true)}
-                    className="px-6 py-2 border border-blue-600 text-blue-600 font-bold rounded-full hover:bg-blue-50 transition-all flex items-center gap-2"
+                    className="px-6 py-2 border-2 border-slate-100 text-slate-700 font-bold rounded-full hover:bg-slate-50 transition-all flex items-center gap-2 bg-white"
                   >
-                    <svg
-                      className="w-4 h-4"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"
-                      ></path>
+                    <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
                     </svg>
                     Enquiry
                   </button>
                   <button
                     onClick={handleMessageClick}
-                    className="px-6 py-2 bg-blue-600 text-white font-bold rounded-full hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 flex items-center gap-2"
+                    className="px-6 py-2 bg-slate-900 text-white font-bold rounded-full hover:bg-slate-800 transition-all shadow-xl shadow-slate-200 flex items-center gap-2"
                   >
-                    <svg
-                      className="w-4 h-4"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-                      ></path>
+                    <svg className="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                     </svg>
                     Message
                   </button>
@@ -590,6 +596,13 @@ export default function PublicProfilePage() {
             isOpen={isContactModalOpen}
             onClose={() => setIsContactModalOpen(false)}
             profile={profile}
+        />
+
+        <ConnectionsModal
+            isOpen={isConnectionsModalOpen}
+            onClose={() => setIsConnectionsModalOpen(false)}
+            profileId={documentId}
+            initialTab={connectionsInitialTab}
         />
 
         {previewImage && (

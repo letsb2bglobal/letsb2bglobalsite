@@ -28,6 +28,7 @@ const COOKIE_OPTIONS = {
 
 const JWT_COOKIE_NAME = 'auth_token';
 const USER_COOKIE_NAME = 'user_data';
+const PROFILE_COOKIE_NAME = 'profile_data';
 
 /**
  * Store authentication data in cookies
@@ -40,6 +41,33 @@ export const setAuthData = (jwt: string, user: User): void => {
     // Store user data in cookie
     Cookies.set(USER_COOKIE_NAME, JSON.stringify(user), COOKIE_OPTIONS);
   }
+};
+
+/**
+ * Store profile data in cookies
+ */
+export const setProfileData = (profile: any): void => {
+  if (typeof window !== 'undefined' && profile) {
+    Cookies.set(PROFILE_COOKIE_NAME, JSON.stringify(profile), COOKIE_OPTIONS);
+  }
+};
+
+/**
+ * Get profile data from cookies
+ */
+export const getProfileData = (): any | null => {
+  if (typeof window !== 'undefined') {
+    const profileStr = Cookies.get(PROFILE_COOKIE_NAME);
+    if (profileStr) {
+      try {
+        return JSON.parse(profileStr);
+      } catch (error) {
+        console.error('Error parsing profile data:', error);
+        return null;
+      }
+    }
+  }
+  return null;
 };
 
 /**
@@ -84,6 +112,7 @@ export const clearAuthData = (): void => {
   if (typeof window !== 'undefined') {
     Cookies.remove(JWT_COOKIE_NAME);
     Cookies.remove(USER_COOKIE_NAME);
+    Cookies.remove(PROFILE_COOKIE_NAME);
   }
 };
 
