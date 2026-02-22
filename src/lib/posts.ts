@@ -4,25 +4,24 @@ export interface Post {
   id: number;
   documentId: string;
   userId: number;
-  roleType: 'seller' | 'buyer';
-  intentType: 'demand' | 'offer';
-  title: string;
-  content: any; // Strapi JSON content
-  destinationCity: string;
+  description: string;
+  destination: string;
+  category?: { id: number; documentId: string; name: string };
+  user_profile?: { id: number; company_name: string };
+  status?: 'Open' | 'Closed';
   createdAt: string;
   updatedAt: string;
   publishedAt: string;
-  media?: any;
+  media?: any[];
   score?: number;
-}
-
-export interface CreatePostData {
-  userId: number;
-  roleType: 'seller' | 'buyer';
-  intentType: 'demand' | 'offer';
-  title: string;
-  content: any;
-  destinationCity: string;
+  _type?: 'post' | 'enquiry';
+  _score?: number;
+  // Legacy fields kept for backward-compat during transition
+  title?: string;
+  content?: any;
+  roleType?: 'seller' | 'buyer';
+  intentType?: 'demand' | 'offer';
+  destinationCity?: string;
 }
 
 export interface PostResponse {
@@ -37,6 +36,14 @@ export interface PostResponse {
   };
 }
 
+export interface CreatePostData {
+  userId: number;
+  description: string;
+  destination: string;
+  category: string; // documentId of category
+  media?: number[]; // optional file IDs
+}
+
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://api.letsb2b.com';
 
 export const getAllPosts = async (): Promise<PostResponse> => {
@@ -49,10 +56,6 @@ export const getAllPosts = async (): Promise<PostResponse> => {
   try {
     const response = await fetch(`${apiUrl}/api/posts?sort=createdAt:desc`, {
       method: 'GET',
-      // headers: {
-      //   'Authorization': `Bearer ${token}`,
-      //   'Content-Type': 'application/json',
-      // },
     });
 
     if (!response.ok) {
@@ -67,11 +70,15 @@ export const getAllPosts = async (): Promise<PostResponse> => {
 };
 
 export const createPost = async (postData: CreatePostData): Promise<Post> => {
+  const token = getToken();
+  if (!token) throw new Error('No authentication token found');
+  
   try {
     const response = await fetch(`${apiUrl}/api/posts`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
       },
       body: JSON.stringify({
         data: postData,
@@ -146,6 +153,81 @@ export const searchPosts = async (
     return result;
   } catch (error) {
     console.error("Error searching posts:", error);
+    throw error;
+  }
+};
+
+/**
+ * Log user engagement activity to improve feed ranking
+ */
+export const logActivity = async (data: {
+  user: number;
+  action_type: 'view' | 'click' | 'save' | 'reply';
+  item_id: string; // documentId
+  item_type: 'post' | 'enquiry';
+}): Promise<void> => {
+  const token = getToken();
+  try {
+    await fetch(`${apiUrl}/api/activity-logs`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: token ? `Bearer ${token}` : "",
+      },
+      body: JSON.stringify({ data }),
+    });
+  } catch (error) {
+    console.error("Activity logging failed:", error);
+  }
+};
+
+/**
+ * Get the unified TradeWall feed (Posts + Enquiries)
+ */
+export const getTradeWallFeed = async (page: number = 1, pageSize: number = 10): Promise<PostResponse> => {
+  const token = getToken();
+  try {
+    const response = await fetch(`${apiUrl}/api/trade-wall?page=${page}&pageSize=${pageSize}`, {
+      method: "GET",
+      headers: {
+        Authorization: token ? `Bearer ${token}` : "",
+      },
+    });
+
+    if (!response.ok) throw new Error("Failed to fetch TradeWall feed");
+    return await response.json();
+  } catch (error) {
+    console.error("TradeWall error:", error);
+    throw error;
+  }
+};
+
+/**
+ * Search the TradeWall with intelligent ranking
+ */
+export const searchTradeWall = async (params: {
+  q?: string;
+  category?: string; // documentId
+  city?: string;
+}): Promise<PostResponse> => {
+  const token = getToken();
+  const searchParams = new URLSearchParams();
+  if (params.q) searchParams.append("q", params.q);
+  if (params.category) searchParams.append("category", params.category);
+  if (params.city) searchParams.append("city", params.city);
+
+  try {
+    const response = await fetch(`${apiUrl}/api/trade-wall/search?${searchParams.toString()}`, {
+      method: "GET",
+      headers: {
+        Authorization: token ? `Bearer ${token}` : "",
+      },
+    });
+
+    if (!response.ok) throw new Error("Search failed");
+    return await response.json();
+  } catch (error) {
+    console.error("TradeWall search error:", error);
     throw error;
   }
 };

@@ -103,33 +103,6 @@ export default function MessagesPage() {
   return (
     <ProtectedRoute>
       <div className="min-h-screen bg-[#f3f2ef]">
-        {/* Navigation Bar */}
-        <div className="h-14 w-full bg-white border-b border-gray-200 sticky top-0 z-50 flex items-center px-4 md:px-20 justify-between">
-          <div className="flex items-center gap-2 cursor-pointer" onClick={() => router.push('/')}>
-            <span className="text-blue-600 font-bold text-2xl italic">L</span>
-            <span className="font-bold text-gray-800">LET'S B2B</span>
-          </div>
-          <h1 className="text-lg font-bold text-gray-800 hidden md:block">Messaging</h1>
-          <div className="flex items-center gap-6">
-            <WorkspaceSwitcher />
-            <button onClick={() => router.push('/')} className="text-gray-500 hover:text-blue-600 transition-colors flex flex-col items-center">
-              <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" /></svg>
-              <span className="text-[10px] font-medium hidden md:block">Home</span>
-            </button>
-            {permissions?.isOwner && (
-              <button onClick={() => router.push('/profile?action=add-member')} className="text-gray-500 hover:text-green-600 transition-colors flex flex-col items-center">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" /></svg>
-                <span className="text-[10px] font-medium hidden md:block">Add Team</span>
-              </button>
-            )}
-            <button onClick={() => router.push('/profile')} className="text-gray-500 hover:text-blue-600 transition-colors flex flex-col items-center">
-              <div className="h-6 w-6 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-[8px] border border-blue-200">
-                {user?.username?.substring(0, 2).toUpperCase()}
-              </div>
-              <span className="text-[10px] font-medium hidden md:block">Me</span>
-            </button>
-          </div>
-        </div>
 
         <div className="max-w-6xl mx-auto mt-6 px-4 grid grid-cols-1 md:grid-cols-3 gap-0 h-[calc(100vh-100px)] bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
           

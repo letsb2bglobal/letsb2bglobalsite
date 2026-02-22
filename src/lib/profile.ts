@@ -78,6 +78,10 @@ export interface UserProfile {
   updatedAt: string;
   publishedAt: string;
   score?: number;
+
+  // Networking attributes (counter caching)
+  followers_count?: number;
+  following_count?: number;
 }
 
 export interface ImageSection {
@@ -276,13 +280,20 @@ export const getMyContexts = async (): Promise<{
         "Content-Type": "application/json",
       },
     });
-
     if (!response.ok) {
       if (response.status === 404) return { exists: false, ownProfile: null, memberships: [] };
       throw new Error("Failed to fetch user contexts");
     }
 
-    return await response.json();
+    const result = await response.json();
+    
+    // Cache the primary profile in cookies for performance
+    if (result.ownProfile) {
+      const { setProfileData } = await import("./auth");
+      setProfileData(result.ownProfile);
+    }
+
+    return result;
   } catch (error) {
     console.error("Error fetching user contexts:", error);
     return { exists: false, ownProfile: null, memberships: [] };
@@ -797,7 +808,7 @@ export const getProfileByDocumentIdCustom = async (
 
   try {
     const response = await fetch(
-      `${apiUrl}/api/user-profiles/by-document/${documentId}`,
+      `${apiUrl}/api/user-profiles/by-document/${documentId}?populate[0]=image_sections&populate[1]=category_items&populate[2]=profile_image&populate[3]=header_image`,
       {
         method: "GET",
         headers: {
@@ -813,7 +824,8 @@ export const getProfileByDocumentIdCustom = async (
       return null;
     }
 
-    const data = await response.json();
+    const result = await response.json();
+    const data = result.data || result;
     return data;
   } catch (error) {
     console.error("Error fetching user profile by document ID:", error);

@@ -1,36 +1,12 @@
 import { getToken } from "@/lib/auth";
 
-const API_URL = "https://api.letsb2b.com/api";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://api.letsb2b.com";
 
 function getTokenForRequest(): string | null {
   if (typeof window === "undefined") return null;
-
-  // 1) Primary source: auth cookie via auth.ts
   const fromCookie = getToken();
   if (fromCookie) return fromCookie;
-
-  // 2) Token stored directly under "auth.token"
-  const authTokenKey = localStorage.getItem("auth.token");
-  if (authTokenKey) return authTokenKey;
-
-  // 3) Token stored in a JSON object under "auth" (e.g. { token: "..." })
-  const authObj = localStorage.getItem("auth");
-  if (authObj) {
-    try {
-      const parsed = JSON.parse(authObj);
-      if (parsed?.token) return parsed.token;
-    } catch {
-      // ignore JSON parse errors and fall through
-    }
-  }
-
-  // 4) Legacy keys
-  const fromStorage = localStorage.getItem("auth_token") ?? localStorage.getItem("token");
-  if (fromStorage) return fromStorage;
-
-  // 5) Fallback: read raw cookie by name
-  const match = document.cookie.match(/auth_token=([^;]+)/);
-  return match ? decodeURIComponent(match[1]) : null;
+  return localStorage.getItem("auth.token") || localStorage.getItem("token") || null;
 }
 
 function getAuthHeaders(): Record<string, string> {
@@ -44,109 +20,74 @@ function getAuthHeaders(): Record<string, string> {
   return headers;
 }
 
+/**
+ * Fetch all active membership plans
+ * GET /api/membership-plans?filters[is_active][$eq]=true
+ */
 export async function getActiveMembershipPlans() {
   const headers = getAuthHeaders();
-
   const response = await fetch(
-    `${API_URL}/membership-plans?filters[is_active][$eq]=true`,
-    {
-      method: "GET",
-      headers,
-    }
+    `${API_URL}/api/membership-plans?filters[is_active][$eq]=true`,
+    { method: "GET", headers }
   );
 
+  if (response.status === 403) return [];
   const data = await response.json().catch(() => null);
-
-  if (response.status === 403) {
-    return [];
-  }
-
-  if (!response.ok) {
-    throw new Error(
-      data?.error?.message ||
-      data?.message ||
-      `Request failed with status ${response.status}`
-    );
-  }
-
   return data?.data || [];
 }
 
-export async function getMembershipStatus() {
+/**
+ * Fetch details for a specific membership plan
+ * GET /api/membership-plans/:documentId
+ */
+export async function getMembershipDetails(documentId: string) {
   const headers = getAuthHeaders();
-
   const response = await fetch(
-    `${API_URL}/membership-status`,
-    {
-      method: "GET",
-      headers,
-    }
+    `${API_URL}/api/membership-plans/${documentId}`,
+    { method: "GET", headers }
   );
-
   const data = await response.json().catch(() => null);
-
-  if (!response.ok) {
-    throw new Error(
-      data?.error?.message ||
-      data?.message ||
-      `Request failed with status ${response.status}`
-    );
-  }
-
-  // API returns { data: { tier, is_active, expiry, message } }
-  return data?.data ?? data ?? null;
+  return data?.data || null;
 }
 
-export async function buySubscription(
-  profileId: string,
-  tier: string,
-  durationCode: string
-) {
-  const baseUrl =
-    typeof process !== "undefined" && process.env?.NEXT_PUBLIC_API_URL
-      ? process.env.NEXT_PUBLIC_API_URL
-      : API_URL;
-
-  const token = getTokenForRequest();
-  if (!token) {
-    console.error("buySubscription: no JWT token found in storage/cookies");
-    // Frontend-only friendly error message
-    throw new Error("You must be logged in to purchase a subscription.");
-  }
-
+/**
+ * Fetch transaction history from the Ledger
+ * GET /api/payment-transactions?filters[user_profile][documentId][$eq]=PROFILE_ID&sort=createdAt:desc
+ */
+export async function getTransactionHistory(profileId: string) {
+  const headers = getAuthHeaders();
   const response = await fetch(
-    `${baseUrl}/buy-subscription`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({
-        profileId,
-        tier,
-        durationCode,
-      }),
-    }
+    `${API_URL}/api/payment-transactions?filters[user_profile][documentId][$eq]=${profileId}&sort=createdAt:desc`,
+    { method: "GET", headers }
   );
-
   const data = await response.json().catch(() => null);
+  return data?.data || [];
+}
 
-  if (!response.ok) {
-    // Log full response body for debugging
-    console.error("buySubscription error response", response.status, data);
+/**
+ * Fetch subscriptions for a user profile
+ * GET /api/membership-subscriptions?filters[profile][documentId][$eq]=PROFILE_ID&sort=end_date:desc
+ */
+export async function getUserSubscriptions(profileId: string) {
+  const headers = getAuthHeaders();
+  const response = await fetch(
+    `${API_URL}/api/membership-subscriptions?filters[profile][documentId][$eq]=${profileId}&sort=end_date:desc`,
+    { method: "GET", headers }
+  );
+  const data = await response.json().catch(() => null);
+  return data?.data || [];
+}
 
-    if (response.status === 403) {
-      // Friendly, specific 403 message
-      throw new Error("You do not have permission to perform this action.");
-    }
-
-    throw new Error(
-      data?.error?.message ||
-      data?.message ||
-      `Request failed with status ${response.status}`
-    );
-  }
-
-  return data;
+/**
+ * Fetch current active membership status
+ * GET /api/membership-status?profileId=PROFILE_ID
+ */
+export async function getMembershipStatus(profileId: string) {
+  const headers = getAuthHeaders();
+  const response = await fetch(
+    `${API_URL}/api/membership-status?profileId=${profileId}`,
+    { method: "GET", headers }
+  );
+  const data = await response.json().catch(() => null);
+  return data || null;
 }

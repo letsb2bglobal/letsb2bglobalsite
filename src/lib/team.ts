@@ -73,6 +73,34 @@ export const inviteMember = async (data: {
 };
 
 /**
+ * Add a member directly without invitation token
+ */
+export const addDirectMember = async (data: {
+  email: string;
+  role: string;
+  company_profile_id: string;
+  full_name?: string;
+  designation?: string;
+}) => {
+  const token = getToken();
+  const response = await fetch(`${API_URL}/api/company-team-members/add-direct`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error?.message || error?.error?.message || "Failed to add member directly");
+  }
+
+  return await response.json();
+};
+
+/**
  * Resend invitation
  */
 export const resendInvitation = async (invitationId: string) => {
@@ -141,15 +169,24 @@ export const getMyPermissions = async (): Promise<MyPermissions> => {
   const token = getToken();
   if (!token) throw new Error("Not authenticated");
 
-  const response = await fetch(`${API_URL}/api/company-team-members/my-permissions`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
+  try {
+    const response = await fetch(`${API_URL}/api/company-team-members/my-permissions`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
 
-  if (!response.ok) {
-    throw new Error("Failed to fetch permissions");
+    if (!response.ok) {
+      if (response.status === 404) {
+        // Return a default "Viewer" structure if no specific permissions found
+        return { role: "Viewer", permissions: [], isOwner: false };
+      }
+      throw new Error("Failed to fetch permissions");
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Permission fetch error:", error);
+    return { role: "Viewer", permissions: [], isOwner: false };
   }
-
-  return await response.json();
 };
