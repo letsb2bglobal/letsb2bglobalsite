@@ -14,7 +14,7 @@ import Cookies from "js-cookie";
 import EnquiryModal from "@/components/EnquiryModal";
 import PostModal from "@/components/PostModal";
 import { getOrCreateConversation } from "@/lib/messages";
-import { getTradeWallFeed, searchTradeWall, logActivity, type Post } from "@/lib/posts";
+import { getTradeWallFeed, searchTradeWall, logActivity, deletePost, type Post } from "@/lib/posts";
 import WorkspaceSwitcher from "@/components/WorkspaceSwitcher";
 import { useTeam } from "@/context/TeamContext";
 import { Search, MapPin } from "lucide-react";
@@ -43,6 +43,8 @@ export default function Home() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [postsLoading, setPostsLoading] = useState(false);
   const [isPostModalOpen, setIsPostModalOpen] = useState(false);
+  const [editingPost, setEditingPost] = useState<Post | null>(null);
+  const [deletingPostId, setDeletingPostId] = useState<string | null>(null);
 
   // Search States
   const [searchText, setSearchText] = useState("");
@@ -117,7 +119,22 @@ useEffect(() => {
     if (activeTab === "tradewall" && !searchText && !locationText) {
       fetchPosts();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
+
+  const handleDeletePost = async (documentId: string) => {
+    if (!window.confirm('Are you sure you want to delete this post?')) return;
+    setDeletingPostId(documentId);
+    try {
+      await deletePost(documentId);
+      setPosts((prev) => prev.filter((p) => p.documentId !== documentId));
+    } catch (err: any) {
+      console.error('Delete failed:', err);
+      alert(err?.message || 'Failed to delete post.');
+    } finally {
+      setDeletingPostId(null);
+    }
+  };
 
   // Handle Debounced Search
   useEffect(() => {
@@ -537,13 +554,19 @@ useEffect(() => {
                           {post.destination || post.destinationCity}
                         </span>
                       )}
-                      {post.category?.name && (
-                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-600">
-                          {post.category.name}
-                        </span>
-                      )}
+                      {(() => {
+                        const cat = post.category;
+                        const catStr = Array.isArray(cat)
+                          ? cat.join(', ')
+                          : typeof cat === 'string' ? cat : null;
+                        return catStr ? (
+                          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-600">
+                            {catStr}
+                          </span>
+                        ) : null;
+                      })()}
                       <span className="text-[10px] text-gray-400 font-medium">{formatTime(post.createdAt)}</span>
-                      {(post._score !== undefined ? post._score >= 0.7 : !!post.score) && (
+                      {(post._score !== undefined && post._score >= 0.7) && (
                         <span className="bg-amber-50 text-amber-600 text-[9px] font-black px-1.5 py-0.5 rounded-full border border-amber-100 flex items-center gap-1">
                           <svg className="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
                           Best Match
@@ -564,45 +587,58 @@ useEffect(() => {
                       : typeof post.content === "string" ? post.content : "No description available.")}
                 </div>
 
-                <div className="pt-2 border-t border-gray-50 flex gap-4">
-                  <button 
+                <div className="pt-2 border-t border-gray-50 flex items-center gap-4">
+                  <button
                     onClick={() => user?.id && logActivity({ user: user.id, action_type: 'click', item_id: post.documentId, item_type: post._type || 'post' })}
                     className="text-xs font-bold text-gray-500 hover:text-indigo-600 uppercase tracking-wider flex items-center gap-1"
                   >
-                    <svg
-                      className="w-4 h-4"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M14 10h4.757m-9.488 9.21a.75.75 0 01-1.114 0l-3.23-3.23a.75.75 0 010-1.114l3.23-3.23a.75.75 0 011.114 0l3.23 3.23a.75.75 0 010 1.114l-3.23 3.23z"
-                      ></path>
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 10h4.757m-9.488 9.21a.75.75 0 01-1.114 0l-3.23-3.23a.75.75 0 010-1.114l3.23-3.23a.75.75 0 011.114 0l3.23 3.23a.75.75 0 010 1.114l-3.23 3.23z" />
                     </svg>
                     Connect
                   </button>
-                  <button 
+                  <button
                     onClick={() => user?.id && logActivity({ user: user.id, action_type: 'reply', item_id: post.documentId, item_type: post._type || 'post' })}
                     className="text-xs font-bold text-gray-500 hover:text-indigo-600 uppercase tracking-wider flex items-center gap-1"
                   >
-                    <svg
-                      className="w-4 h-4"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-                      ></path>
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                     </svg>
                     Reply
                   </button>
+                  {/* Owner actions — only visible to the post creator */}
+                  {post.userId === user?.id && (
+                    <>
+                      <div className="ml-auto flex items-center gap-2">
+                        <button
+                          onClick={() => {
+                            setEditingPost(post);
+                            setIsPostModalOpen(true);
+                          }}
+                          className="text-xs font-bold text-amber-500 hover:text-amber-700 uppercase tracking-wider flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-amber-50 transition-colors"
+                        >
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                          </svg>
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleDeletePost(post.documentId)}
+                          disabled={deletingPostId === post.documentId}
+                          className="text-xs font-bold text-red-400 hover:text-red-600 uppercase tracking-wider flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-red-50 transition-colors disabled:opacity-50"
+                        >
+                          {deletingPostId === post.documentId ? (
+                            <div className="w-3.5 h-3.5 border-2 border-red-400 border-t-transparent rounded-full animate-spin" />
+                          ) : (
+                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          )}
+                          Delete
+                        </button>
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
             ))
@@ -734,14 +770,27 @@ useEffect(() => {
         />
       )}
 
-      {/* Post Modal */}
+      {/* Post Modal — Create or Edit */}
       {isPostModalOpen && (
         <PostModal
           isOpen={isPostModalOpen}
-          onClose={() => setIsPostModalOpen(false)}
+          onClose={() => {
+            setIsPostModalOpen(false);
+            setEditingPost(null);
+          }}
+          editPost={editingPost}
           onPostCreated={() => {
-            if (activeTab === "tradewall") fetchPosts();
-            else setActiveTab("tradewall");
+            // After create: switch to tradewall tab.
+            // The tab-change useEffect will fire fetchPosts() once — no double call.
+            if (activeTab === 'tradewall') {
+              fetchPosts();
+            } else {
+              setActiveTab('tradewall');
+            }
+          }}
+          onPostUpdated={() => {
+            // After edit: refresh in-place (single fetch)
+            fetchPosts();
           }}
         />
       )}
