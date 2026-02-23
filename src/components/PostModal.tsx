@@ -2,104 +2,96 @@
 
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/components/ProtectedRoute';
-import { createPost, type CreatePostData } from '@/lib/posts';
+import {
+  createPost,
+  updatePost,
+  deletePost,
+  type CreatePostData,
+  type Post,
+  TRADE_WALL_CATEGORIES,
+} from '@/lib/posts';
 import { useToast } from '@/components/Toast';
-import { getToken } from '@/lib/auth';
-
-interface Category {
-  id: number;
-  documentId: string;
-  name: string;
-}
 
 interface PostModalProps {
   isOpen: boolean;
   onClose: () => void;
   onPostCreated?: () => void;
+  // Pass these to enable edit mode
+  editPost?: Post | null;
+  onPostUpdated?: () => void;
 }
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.letsb2b.com';
 
-// Static fallback — used when API categories are empty or unavailable
-const STATIC_CATEGORIES: Category[] = [
-  { id: 1, documentId: 'travel_agency', name: 'Travel Agency' },
-  { id: 2, documentId: 'tour_operator', name: 'Tour Operator' },
-  { id: 3, documentId: 'dmc', name: 'DMC' },
-  { id: 4, documentId: 'hotel_resort_stay', name: 'Hotel / Resort / Stay' },
-  { id: 5, documentId: 'transport_provider', name: 'Transport Provider' },
-  { id: 6, documentId: 'event_mice', name: 'Event / MICE Company' },
-  { id: 7, documentId: 'wellness_medical', name: 'Wellness / Medical Tourism' },
-  { id: 8, documentId: 'travel_tech', name: 'Travel Tech Company' },
-];
-
-export default function PostModal({ isOpen, onClose, onPostCreated }: PostModalProps) {
+export default function PostModal({
+  isOpen,
+  onClose,
+  onPostCreated,
+  editPost,
+  onPostUpdated,
+}: PostModalProps) {
   const user = useAuth();
   const { showToast } = useToast();
+  const isEditMode = !!editPost;
 
   const [formData, setFormData] = useState({
     description: '',
     destination: '',
     category: '',
+    status: 'Open' as 'Open' | 'Closed',
   });
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [categoriesLoading, setCategoriesLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  // Fetch categories on open; fallback to static list if API returns nothing
+  // Populate form when editing
   useEffect(() => {
-    if (!isOpen) return;
-    const fetchCategories = async () => {
-      setCategoriesLoading(true);
-      try {
-        const token = getToken();
-        const res = await fetch(`${API_URL}/api/categories?filters[active][$eq]=true`, {
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
-        });
-        if (res.ok) {
-          const result = await res.json();
-          const apiCategories: Category[] = result.data || [];
-          // Use API results if available, otherwise fall back to static list
-          setCategories(apiCategories.length > 0 ? apiCategories : STATIC_CATEGORIES);
-        } else {
-          setCategories(STATIC_CATEGORIES);
-        }
-      } catch (err) {
-        console.error('Failed to load categories, using static list:', err);
-        setCategories(STATIC_CATEGORIES);
-      } finally {
-        setCategoriesLoading(false);
-      }
-    };
-    fetchCategories();
-  }, [isOpen]);
+    if (editPost) {
+      setFormData({
+        description: editPost.description || '',
+        destination: editPost.destination || '',
+        // category is string | string[] — take first if array
+        category: Array.isArray(editPost.category)
+          ? editPost.category[0] || ''
+          : editPost.category || '',
+        status: editPost.status || 'Open',
+      });
+    } else {
+      setFormData({ description: '', destination: '', category: '', status: 'Open' });
+    }
+  }, [editPost, isOpen]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user?.id) return;
 
-    if (!formData.category) {
-      showToast('Please select a category.', 'error');
-      return;
-    }
-
     setSubmitting(true);
     try {
-      const postData: CreatePostData = {
-        userId: user.id,
-        description: formData.description,
-        destination: formData.destination,
-        category: formData.category,
-      };
-
-      await createPost(postData);
-
-      showToast('Post published to TradeWall!', 'success');
-      if (onPostCreated) onPostCreated();
+      if (isEditMode && editPost) {
+        // ── EDIT MODE ──
+        await updatePost(editPost.documentId, {
+          description: formData.description,
+          destination: formData.destination,
+          ...(formData.category ? { category: formData.category } : {}),
+          status: formData.status,
+        });
+        showToast('Post updated successfully!', 'success');
+        onPostUpdated?.();
+      } else {
+        // ── CREATE MODE ──
+        const postData: CreatePostData = {
+          userId: user.id,
+          description: formData.description,
+          destination: formData.destination,
+          ...(formData.category ? { category: formData.category } : {}),
+          status: 'Open',
+        };
+        await createPost(postData);
+        showToast('Post published to TradeWall!', 'success');
+        onPostCreated?.();
+      }
       onClose();
-      setFormData({ description: '', destination: '', category: '' });
     } catch (error: any) {
-      console.error('Error creating post:', error);
-      showToast(error?.message || 'Failed to create post. Please try again.', 'error');
+      console.error('Error saving post:', error);
+      showToast(error?.message || 'Failed to save post. Please try again.', 'error');
     } finally {
       setSubmitting(false);
     }
@@ -114,16 +106,26 @@ export default function PostModal({ isOpen, onClose, onPostCreated }: PostModalP
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-300">
 
         {/* Header */}
-        <div className="p-5 border-b border-gray-100 flex justify-between items-center bg-gradient-to-r from-indigo-50 to-white">
+        <div className={`p-5 border-b border-gray-100 flex justify-between items-center bg-gradient-to-r ${isEditMode ? 'from-amber-50 to-white' : 'from-indigo-50 to-white'}`}>
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-              </svg>
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-white ${isEditMode ? 'bg-amber-500' : 'bg-indigo-600'}`}>
+              {isEditMode ? (
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+              ) : (
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+                </svg>
+              )}
             </div>
             <div>
-              <h2 className="text-lg font-black text-gray-900 leading-tight">Post to TradeWall</h2>
-              <p className="text-[10px] text-indigo-600 font-bold uppercase tracking-widest">Share your requirement or offer</p>
+              <h2 className="text-lg font-black text-gray-900 leading-tight">
+                {isEditMode ? 'Edit Post' : 'Post to TradeWall'}
+              </h2>
+              <p className={`text-[10px] font-bold uppercase tracking-widest ${isEditMode ? 'text-amber-600' : 'text-indigo-600'}`}>
+                {isEditMode ? 'Update your post details' : 'Share your requirement or offer'}
+              </p>
             </div>
           </div>
           <button
@@ -182,25 +184,44 @@ export default function PostModal({ isOpen, onClose, onPostCreated }: PostModalP
             </div>
 
             <div>
-              <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5">Category *</label>
+              <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5">Category</label>
               <select
-                required
-                className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all text-sm disabled:opacity-60"
+                className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all text-sm"
                 value={formData.category}
                 onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                disabled={categoriesLoading}
               >
-                <option value="">
-                  {categoriesLoading ? 'Loading...' : 'Select...'}
-                </option>
-                {categories.map((cat) => (
-                  <option key={cat.documentId} value={cat.documentId}>
-                    {cat.name}
-                  </option>
+                <option value="">Select category...</option>
+                {TRADE_WALL_CATEGORIES.map((cat) => (
+                  <option key={cat} value={cat}>{cat}</option>
                 ))}
               </select>
             </div>
           </div>
+
+          {/* Status toggle — only shown in edit mode */}
+          {isEditMode && (
+            <div>
+              <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-2">Post Status</label>
+              <div className="flex gap-3">
+                {(['Open', 'Closed'] as const).map((s) => (
+                  <button
+                    key={s}
+                    type="button"
+                    onClick={() => setFormData({ ...formData, status: s })}
+                    className={`flex-1 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all border ${
+                      formData.status === s
+                        ? s === 'Open'
+                          ? 'bg-green-50 border-green-400 text-green-700'
+                          : 'bg-red-50 border-red-400 text-red-600'
+                        : 'bg-gray-50 border-gray-200 text-gray-400 hover:bg-gray-100'
+                    }`}
+                  >
+                    {s}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Info notice */}
           <div className="flex items-start gap-2 bg-indigo-50 rounded-xl p-3 border border-indigo-100">
@@ -224,20 +245,22 @@ export default function PostModal({ isOpen, onClose, onPostCreated }: PostModalP
             </button>
             <button
               type="submit"
-              disabled={submitting || !formData.description || !formData.destination || !formData.category}
-              className="flex-[2] py-3 bg-indigo-600 text-white font-bold text-sm rounded-xl hover:bg-indigo-700 transition-all shadow-lg flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={submitting || !formData.description || !formData.destination}
+              className={`flex-[2] py-3 text-white font-bold text-sm rounded-xl transition-all shadow-lg flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${
+                isEditMode ? 'bg-amber-500 hover:bg-amber-600' : 'bg-indigo-600 hover:bg-indigo-700'
+              }`}
             >
               {submitting ? (
                 <>
                   <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  Publishing...
+                  {isEditMode ? 'Saving...' : 'Publishing...'}
                 </>
               ) : (
                 <>
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d={isEditMode ? 'M5 13l4 4L19 7' : 'M12 19l9 2-9-18-9 18 9-2zm0 0v-8'} />
                   </svg>
-                  Publish to TradeWall
+                  {isEditMode ? 'Save Changes' : 'Publish to TradeWall'}
                 </>
               )}
             </button>

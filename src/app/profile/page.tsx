@@ -196,10 +196,8 @@ function ProfileContent() {
   const fetchUserPosts = async (userId: number) => {
     setLoadingPosts(true);
     try {
-      const response = await getUserPosts(userId);
-      if (response && response.data) {
-        setUserPosts(response.data);
-      }
+      const posts = await getUserPosts(userId);
+      setUserPosts(posts);
     } catch (error) {
       console.error("Error fetching user posts:", error);
     } finally {
