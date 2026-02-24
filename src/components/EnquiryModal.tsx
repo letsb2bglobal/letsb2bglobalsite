@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { type UserProfile } from '@/lib/profile';
 import { useAuth } from '@/components/ProtectedRoute';
 import { useToast } from '@/components/Toast';
@@ -12,6 +13,7 @@ interface EnquiryModalProps {
 }
 
 export default function EnquiryModal({ isOpen, onClose, targetProfile }: EnquiryModalProps) {
+  const router = useRouter();
   const user = useAuth();
   const { showToast } = useToast();
   const [inquiryForm, setInquiryForm] = useState({
@@ -23,43 +25,27 @@ export default function EnquiryModal({ isOpen, onClose, targetProfile }: Enquiry
 
   const handleSendInquiry = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user?.id || !targetProfile?.userId) return;
+    if (!user?.id || !targetProfile?.userId) {
+      showToast("Please login to send an enquiry", "error");
+      return;
+    }
 
     setSubmitting(true);
 
     try {
-      const apiUrl = "https://api.letsb2b.com/api/enquiries";
-
-      const response = await fetch(apiUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          data: {
-            fromUserId: user.id,
-            toUserId: targetProfile.userId,
-            title: inquiryForm.title,
-            description: inquiryForm.description,
-            destination: inquiryForm.destination,
-            messagestatus: "open"
-          }
-        })
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        console.error("Strapi error:", result);
-        showToast(`Failed to send enquiry: ${result?.error?.message || "Something went wrong"}`, 'error');
-        return;
-      }
+      const { startEnquiry } = await import("@/lib/enquiry");
+      
+      const messageBody = `Requirement: ${inquiryForm.title}\nDestination: ${inquiryForm.destination}\n\n${inquiryForm.description}`;
+      
+      await startEnquiry(targetProfile.documentId, inquiryForm.title, messageBody);
 
       showToast("Enquiry sent successfully!");
       onClose();
-    } catch (error) {
-      console.error("Network error:", error);
-      showToast("An error occurred. Please try again.", 'error');
+      // Optionally redirect to messages to see the conversation
+      router.push("/messages");
+    } catch (error: any) {
+      console.error("Enquiry error:", error);
+      showToast(error.message || "An error occurred. Please try again.", 'error');
     } finally {
       setSubmitting(false);
     }
