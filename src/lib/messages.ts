@@ -1,18 +1,17 @@
+import { getToken } from "./auth";
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.letsb2b.com';
+
 export interface Conversation {
   id: number;
   documentId: string;
   userAId: number;
   userBId: number;
-  enquiryId: number | null;
+  enquiryId?: number | null;
   isActive: boolean;
+  lastMessageAt: string;
   createdAt: string;
   updatedAt: string;
-  publishedAt: string;
-}
-
-export interface ConversationResponse {
-  data: Conversation[];
-  meta?: any;
 }
 
 export interface Message {
@@ -21,150 +20,188 @@ export interface Message {
   conversationId: number;
   senderUserId: number;
   message: string;
-  messageType: 'text';
+  messageType: 'text' | 'image' | 'file';
+  media?: any;
   isRead: boolean;
   createdAt: string;
   updatedAt: string;
-  publishedAt: string;
 }
 
-export interface MessageResponse {
-  data: Message[];
-  meta?: any;
-}
+/**
+ * Fetch all conversations for the current user
+ * Spec 2.1: GET /api/conversations?sort=lastMessageAt:desc
+ * The backend automatically filters this to only show relevant threads.
+ */
+export const fetchUserConversations = async (): Promise<Conversation[]> => {
+  const token = getToken();
+  if (!token) throw new Error("No auth token");
 
-const API_URL = 'https://api.letsb2b.com/api';
+  const query = new URLSearchParams({
+    'sort': 'lastMessageAt:desc'
+  });
+
+  const response = await fetch(`${API_URL}/api/conversations?${query.toString()}`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+
+  if (!response.ok) throw new Error("Failed to fetch conversations");
+  const result = await response.json();
+  return result.data;
+};
 
 /**
- * Find an existing conversation between two users
+ * Fetch a single conversation by its documentId
  */
-export const findConversation = async (userAId: number, userBId: number): Promise<Conversation | null> => {
-  try {
-    // Check both directions (A->B and B->A)
-    const apiUrl = `${API_URL}/conversations?filters[$or][0][$and][0][userAId][$eq]=${userAId}&filters[$or][0][$and][1][userBId][$eq]=${userBId}&filters[$or][1][$and][0][userAId][$eq]=${userBId}&filters[$or][1][$and][1][userBId][$eq]=${userAId}`;
-    
-    const response = await fetch(apiUrl, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json"
+export const fetchConversationById = async (convDocId: string): Promise<Conversation> => {
+  const token = getToken();
+  if (!token) throw new Error("No auth token");
+
+  const response = await fetch(`${API_URL}/api/conversations/${convDocId}`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+
+  if (!response.ok) throw new Error("Failed to fetch conversation");
+  const result = await response.json();
+  return result.data;
+};
+
+/**
+ * Find or create a conversation between two users
+ * Spec 2.3: Check if exists between userA and userB, else create.
+ */
+export const getOrCreateConversation = async (userAId: number, userBId: number): Promise<Conversation> => {
+  const token = getToken();
+  if (!token) throw new Error("No auth token");
+
+  // Step 1: Check existing
+  const findQuery = new URLSearchParams({
+    'filters[$or][0][userAId]': userAId.toString(),
+    'filters[$or][0][userBId]': userBId.toString(),
+    'filters[$or][1][userAId]': userBId.toString(),
+    'filters[$or][1][userBId]': userAId.toString()
+  });
+
+  const findRes = await fetch(`${API_URL}/api/conversations?${findQuery.toString()}`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+
+  if (findRes.ok) {
+    const findResult = await findRes.json();
+    // We need to find the one where BOTH match (Strapi OR might be loose)
+    const match = findResult.data?.find((c: any) => 
+      (Number(c.userAId) === userAId && Number(c.userBId) === userBId) ||
+      (Number(c.userAId) === userBId && Number(c.userBId) === userAId)
+    );
+    if (match) return match;
+  }
+
+  // Step 2: Create
+  const response = await fetch(`${API_URL}/api/conversations`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      data: {
+        userAId,
+        userBId,
+        isActive: true,
+        lastMessageAt: new Date().toISOString()
       }
-    });
+    })
+  });
 
-    const result = await response.json();
-    if (result.data && result.data.length > 0) {
-      return result.data[0];
-    }
-    return null;
-  } catch (error) {
-    console.error("Error finding conversation:", error);
-    return null;
-  }
+  const result = await response.json();
+  if (!response.ok) throw new Error(result?.error?.message || "Failed to start conversation");
+  return result.data;
 };
 
 /**
- * Create a new conversation or return existing
+ * Fetch messages for a conversation
+ * Spec 2.2: GET /api/messages?filters[conversationId]=ID&sort=createdAt:asc
  */
-export const getOrCreateConversation = async (userAId: number, userBId: number, enquiryId: number | null = null) => {
-  // 1. Check if exists
-  const existing = await findConversation(userAId, userBId);
-  if (existing) return existing;
+export const fetchChatMessages = async (conversationId: number, lastCreatedAt?: string): Promise<Message[]> => {
+  const token = getToken();
+  if (!token) throw new Error("No auth token");
 
-  // 2. Create new if not
-  try {
-    const response = await fetch(`${API_URL}/conversations`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        data: {
-          userAId,
-          userBId,
-          enquiryId,
-          isActive: true
-        }
-      })
-    });
+  const query = new URLSearchParams({
+    'filters[conversationId]': conversationId.toString(),
+    'sort': 'createdAt:asc'
+  });
 
-    const result = await response.json();
-    if (!response.ok) throw new Error(result?.error?.message || "Failed to create conversation");
-    return result.data;
-  } catch (error) {
-    console.error("Error creating conversation:", error);
-    throw error;
+  if (lastCreatedAt) {
+    query.append('filters[createdAt][$gt]', lastCreatedAt);
   }
+
+  const url = `${API_URL}/api/messages?${query.toString()}`;
+  const response = await fetch(url, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+
+  const responseText = await response.text();
+  let result;
+  try {
+    result = JSON.parse(responseText);
+  } catch (e) {
+    result = { raw: responseText };
+  }
+
+  if (!response.ok) {
+    console.error("IM Fetch Error Body:", result);
+    throw new Error(result?.error?.message || `IM Fetch Failed (${response.status})`);
+  }
+  
+  return result.data;
 };
 
 /**
- * Fetch all conversations for a user
+ * Send a chat message
+ * Spec 2.4: POST /api/messages
  */
-export const fetchUserConversations = async (userId: number): Promise<ConversationResponse> => {
-  try {
-    const apiUrl = `${API_URL}/conversations?filters[$or][0][userAId][$eq]=${userId}&filters[$or][1][userBId][$eq]=${userId}&sort=updatedAt:desc`;
-    const response = await fetch(apiUrl, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json"
+export const sendChatMessage = async (conversationId: number, text: string) => {
+  const token = getToken();
+  if (!token) throw new Error("No auth token");
+
+  const response = await fetch(`${API_URL}/api/messages`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      data: {
+        conversationId: conversationId,
+        message: text,
+        messageType: 'text'
       }
-    });
+    })
+  });
 
-    const result = await response.json();
-    if (!response.ok) throw new Error(result?.error?.message || "Failed to fetch conversations");
-    return result;
-  } catch (error) {
-    console.error("Error fetching conversations:", error);
-    throw error;
+  if (!response.ok) {
+    const err = await response.json();
+    throw new Error(err?.error?.message || "Failed to send message");
   }
+  return await response.json();
 };
 
 /**
- * Fetch all messages for a conversation
+ * Upload chat media
  */
-export const fetchMessages = async (conversationId: number): Promise<MessageResponse> => {
-  try {
-    const apiUrl = `${API_URL}/messages?filters[conversationId][$eq]=${conversationId}&sort=createdAt:asc`;
-    const response = await fetch(apiUrl, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json"
-      }
-    });
+export const uploadChatMedia = async (conversationId: number, message: string, files: File[]) => {
+  const token = getToken();
+  if (!token) throw new Error("No auth token");
 
-    const result = await response.json();
-    if (!response.ok) throw new Error(result?.error?.message || "Failed to fetch messages");
-    return result;
-  } catch (error) {
-    console.error("Error fetching messages:", error);
-    throw error;
-  }
-};
+  const formData = new FormData();
+  formData.append('data', JSON.stringify({ conversationId: conversationId, message }));
+  files.forEach(file => formData.append('files', file));
 
-/**
- * Send a new message
- */
-export const sendMessage = async (conversationId: number, senderUserId: number, text: string) => {
-  try {
-    const response = await fetch(`${API_URL}/messages`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        data: {
-          conversationId,
-          senderUserId,
-          message: text,
-          messageType: "text",
-          isRead: false
-        }
-      })
-    });
+  const response = await fetch(`${API_URL}/api/messages/upload`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+    body: formData
+  });
 
-    const result = await response.json();
-    if (!response.ok) throw new Error(result?.error?.message || "Failed to send message");
-    return result.data;
-  } catch (error) {
-    console.error("Error sending message:", error);
-    throw error;
-  }
+  if (!response.ok) throw new Error("Failed to upload media");
+  return await response.json();
 };

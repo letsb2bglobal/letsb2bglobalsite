@@ -14,11 +14,14 @@ import {
   LogOut, 
   PlusCircle, 
   Search,
-  ChevronDown
+  ChevronDown,
+  Bell
 } from 'lucide-react';
 import { getUser, clearAuthData, isAuthenticated } from '@/lib/auth';
 import { useTeam } from '@/context/TeamContext';
 import WorkspaceSwitcher from './WorkspaceSwitcher';
+import { fetchEnquiryThreads } from '@/lib/enquiry';
+import { fetchUserConversations } from '@/lib/messages';
 
 const Header = () => {
   const router = useRouter();
@@ -28,17 +31,50 @@ const Header = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { activeWorkspace } = useTeam();
   const [isScrolled, setIsScrolled] = useState(false);
+  const [hasNewNotifications, setHasNewNotifications] = useState(false);
 
   useEffect(() => {
-    setUser(getUser());
+    const currentUser = getUser();
+    setUser(currentUser);
     setIsLoggedIn(isAuthenticated());
     
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 10);
     };
     window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+
+    // Initial check
+    if (currentUser?.id) {
+      checkNotifications(currentUser.id);
+    }
+
+    /* Notification polling removed per user request */
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
   }, []);
+
+  const checkNotifications = async (userId: number) => {
+    try {
+      const threads = await fetchEnquiryThreads();
+      const conversations = await fetchUserConversations();
+      
+      // Look for any enquiry with unread_count (if backend provides it)
+      // or just any item updated in the last 5 minutes as a heuristic for "new"
+      const now = new Date();
+      const isNew = (dateStr: string) => {
+        const date = new Date(dateStr);
+        return (now.getTime() - date.getTime()) < 5 * 60 * 1000; // 5 mins
+      };
+
+      const hasRecentEnquiry = threads.some(t => isNew(t.updatedAt));
+      const hasRecentChat = conversations.some(c => isNew(c.updatedAt));
+
+      setHasNewNotifications(hasRecentEnquiry || hasRecentChat);
+    } catch (err) {
+      console.error("Notification check failed", err);
+    }
+  };
 
   const handleLogout = () => {
     clearAuthData();
@@ -47,8 +83,9 @@ const Header = () => {
 
   const navLinks = [
     { name: 'Home', href: '/', icon: Home },
+    { name: 'Chat', href: '/messages', icon: MessageSquare }, // Chat focused
+    { name: 'Enquiries', href: '/enquiries', icon: Bell },     // Formal Enquiry focused
     { name: 'Pricing', href: '/pricing', icon: CreditCard },
-    { name: 'Messages', href: '/messages', icon: MessageSquare },
   ];
 
   if (!isLoggedIn && pathname !== '/signin' && pathname !== '/signup') {
@@ -101,19 +138,33 @@ const Header = () => {
           <div className="hidden md:flex items-center gap-4">
             <WorkspaceSwitcher />
             
-            <div className="h-8 w-px bg-gray-200 mx-2"></div>
+            <div className="h-8 w-px bg-gray-200 mx-1"></div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
+              {/* Notification Icon */}
+              <Link 
+                href="/messages" 
+                className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-all relative"
+              >
+                <Bell className="w-5 h-5" />
+                {hasNewNotifications && (
+                  <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-blue-600 rounded-full ring-2 ring-white animate-pulse"></span>
+                )}
+              </Link>
+
               <Link
                 href="/profile"
                 className="flex items-center gap-2 p-1 pr-3 rounded-full hover:bg-gray-50 transition-all border border-transparent hover:border-gray-200"
               >
-                <div className="h-8 w-8 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-xs ring-2 ring-white shadow-sm">
+                <div className="h-8 w-8 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-xs ring-2 ring-white shadow-sm relative">
                   {user?.username?.substring(0, 2).toUpperCase()}
+                  {hasNewNotifications && (
+                    <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-blue-600 rounded-full border-2 border-white animate-pulse"></span>
+                  )}
                 </div>
                 <div className="flex flex-col">
                   <span className="text-xs font-bold text-gray-900 leading-tight">
-                    {activeWorkspace?.data.company_name || user?.username || 'Me'}
+                    {activeWorkspace?.data?.company_name || user?.username || 'Me'}
                   </span>
                   <span className="text-[10px] text-gray-500 leading-tight">View Profile</span>
                 </div>
@@ -131,6 +182,15 @@ const Header = () => {
 
           {/* Mobile Menu Button */}
           <div className="md:hidden flex items-center gap-4">
+             <Link 
+                href="/messages" 
+                className="p-2 text-gray-400 hover:text-blue-600 relative"
+              >
+                <Bell className="w-6 h-6" />
+                {hasNewNotifications && (
+                  <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-blue-600 rounded-full ring-2 ring-white animate-pulse"></span>
+                )}
+              </Link>
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               className="p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors"

@@ -15,6 +15,7 @@ import {
   updateImageSections,
   type UserProfile,
 } from "@/lib/profile";
+import { fetchEnquiryThreads, type EnquiryThread } from "@/lib/enquiry";
 import { authenticatedFetch } from "@/lib/auth";
 import { getUserPosts, type Post } from "@/lib/posts";
 import MediaModal from "@/components/MediaModal";
@@ -27,19 +28,7 @@ import { useTeam } from "@/context/TeamContext";
 import { useMembership } from "@/context/MembershipContext";
 import ConnectionsModal from "@/components/ConnectionsModal";
 
-interface Enquiry {
-  id: number;
-  documentId: string;
-  fromUserId: number;
-  toUserId: number;
-  title: string;
-  description: string;
-  destination: string;
-  messagestatus: string;
-  createdAt: string;
-  updatedAt: string;
-  publishedAt: string;
-}
+// Interface is now using EnquiryThread from lib/enquiry
 
 function ProfileContent() {
   const router = useRouter();
@@ -100,7 +89,7 @@ function ProfileContent() {
 
   // Enquiry states
   const [showEnquiries, setShowEnquiries] = useState(false);
-  const [enquiries, setEnquiries] = useState<Enquiry[]>([]);
+  const [enquiries, setEnquiries] = useState<EnquiryThread[]>([]);
   const [loadingEnquiries, setLoadingEnquiries] = useState(false);
 
   // Posts states
@@ -157,41 +146,29 @@ function ProfileContent() {
       .join("\n");
   };
 
-  const fetchEnquiries = async () => {
+  const fetchEnquiries = async (silent = false) => {
     if (!user?.id) return;
 
-    setLoadingEnquiries(true);
-    setShowEnquiries(true);
+    if (!silent) {
+      setLoadingEnquiries(true);
+      setShowEnquiries(true);
+    }
 
     try {
-      const apiUrl =
-        `https://api.letsb2b.com/api/enquiries` +
-        `?filters[$or][0][fromUserId][$eq]=${user.id}` +
-        `&filters[$or][1][toUserId][$eq]=${user.id}` +
-        `&sort=createdAt:desc`;
-
-      const response = await fetch(apiUrl, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          // ❌ NO Authorization header
-        },
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        console.error("Strapi error:", result);
-        return;
-      }
-
-      setEnquiries(result.data || []);
+      const threadList = await fetchEnquiryThreads();
+      setEnquiries(threadList);
     } catch (error) {
       console.error("Error fetching enquiries:", error);
     } finally {
-      setLoadingEnquiries(false);
+      if (!silent) setLoadingEnquiries(false);
     }
   };
+
+  useEffect(() => {
+    if (user?.id) {
+      fetchEnquiries(true);
+    }
+  }, [user?.id]);
 
   const fetchUserPosts = async (userId: number) => {
     setLoadingPosts(true);
@@ -1083,14 +1060,14 @@ function ProfileContent() {
                     </div>
                   </div>
 
-                  {/* Growth Analytics - SLATE Accent */}
+                  {/* Market Intelligence - SLATE Accent */}
                   <div className="premium-card p-12 relative group bg-white border-2 border-slate-200 hover:border-slate-900/10 transition-all duration-500 overflow-hidden">
                     <div className="absolute bottom-0 right-0 w-64 h-64 bg-slate-50 rounded-full translate-x-1/2 translate-y-1/2 -z-10" />
                     <h2 className="text-2xl font-black text-slate-900 uppercase tracking-tight mb-12 flex items-center gap-4">
                       Market Intelligence
                       <span className="px-3 py-1 bg-slate-900 text-white text-[10px] rounded-lg animate-pulse">LIVE</span>
                     </h2>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12">
                       <div className="flex items-center gap-8 group/stat">
                         <div className="w-24 h-24 bg-slate-900 rounded-[2.5rem] flex flex-col items-center justify-center text-white shadow-2xl transition-transform group-hover/stat:rotate-6">
                            <p className="text-2xl font-black">128</p>
@@ -1098,7 +1075,18 @@ function ProfileContent() {
                         </div>
                         <div>
                           <p className="text-2xl font-black text-slate-900 tracking-tighter">Profile Visibility</p>
-                          <p className="text-sm font-bold text-slate-500 mt-1">Unique institutional entities explored your profile this month.</p>
+                          <p className="text-sm font-bold text-slate-500 mt-1">Institutional entities that explored your profile.</p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-8 group/stat">
+                         <div className="w-24 h-24 bg-blue-600 rounded-[2.5rem] flex flex-col items-center justify-center text-white shadow-2xl transition-transform group-hover/stat:scale-110">
+                           <p className="text-2xl font-black">{enquiries.length}</p>
+                           <p className="text-[8px] font-black uppercase tracking-widest opacity-60">Enquiries</p>
+                        </div>
+                        <div>
+                          <p className="text-2xl font-black text-slate-900 tracking-tighter">Business Flow</p>
+                          <p className="text-sm font-bold text-slate-500 mt-1">Active negotiation threads in your business inbox.</p>
                         </div>
                       </div>
 
@@ -1109,11 +1097,59 @@ function ProfileContent() {
                         </div>
                         <div>
                           <p className="text-2xl font-black text-slate-900 tracking-tighter">Search Power</p>
-                          <p className="text-sm font-bold text-slate-500 mt-1">Your brand appeared in 45 high-intent industry searches.</p>
+                          <p className="text-sm font-bold text-slate-500 mt-1">Appearance in high-intent industry searches.</p>
                         </div>
                       </div>
                     </div>
                   </div>
+
+                  {/* Recent Conversations Preview */}
+                  {enquiries.length > 0 && (
+                    <div className="premium-card p-12 relative group bg-white border-2 border-slate-100 hover:border-slate-900/10 transition-all duration-500">
+                       <div className="flex justify-between items-center mb-10">
+                          <div>
+                            <h2 className="text-2xl font-black text-slate-900 uppercase tracking-tight">Recent Conversations</h2>
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mt-1">Last active negotiation threads</p>
+                          </div>
+                          <button 
+                            onClick={() => fetchEnquiries()}
+                            className="px-6 py-2 bg-slate-900 text-white text-[10px] font-bold rounded-xl hover:bg-slate-800 transition-all uppercase tracking-widest"
+                          >
+                            Open Inbox
+                          </button>
+                       </div>
+                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {enquiries.slice(0, 4).map(thread => {
+                            const otherCompany = Number(thread.from_company?.userId) === Number(user?.id) 
+                              ? thread.to_company 
+                              : thread.from_company;
+
+                            return (
+                              <div 
+                                key={thread.documentId}
+                                onClick={() => router.push(`/messages?threadId=${thread.documentId}&mode=enquiry`)}
+                                className="p-6 bg-slate-50 border-2 border-slate-100 rounded-3xl hover:border-indigo-200 hover:bg-white hover:shadow-xl transition-all group/thread cursor-pointer"
+                              >
+                                 <div className="flex items-center gap-4">
+                                    <div className="w-12 h-12 rounded-2xl bg-indigo-600 flex items-center justify-center text-white font-black text-lg shadow-lg shadow-indigo-100 group-hover/thread:scale-110 transition-transform">
+                                      {otherCompany?.company_name?.substring(0, 1).toUpperCase()}
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                      <h4 className="font-black text-slate-900 uppercase tracking-tight truncate">
+                                        {otherCompany?.company_name || thread.title}
+                                      </h4>
+                                      <p className="text-[10px] text-slate-400 font-bold truncate mt-0.5">{thread.last_message_preview || "No messages yet"}</p>
+                                    </div>
+                                    <svg className="w-4 h-4 text-slate-300 group-hover/thread:text-indigo-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+                                    </svg>
+                                 </div>
+                              </div>
+                            );
+                          })}
+                       </div>
+                    </div>
+                  )}
 
                   {/* My Tradewall Posts Section - BOTTOM Activity */}
                   <div id="tradewall-posts"
@@ -1245,84 +1281,48 @@ function ProfileContent() {
                     </p>
                   </div>
                 ) : enquiries.length > 0 ? (
-                  enquiries.map((enquiry) => (
-                    <div
-                      key={enquiry.id}
-                      className="p-4 rounded-xl border border-gray-100 hover:border-indigo-200 hover:bg-indigo-50/30 transition-all group"
-                    >
-                      <div className="flex justify-between items-start mb-2">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold">
-                            {enquiry.fromUserId === user?.id ? "TO" : "FR"}
+                  enquiries.map((thread) => {
+                    const otherCompany = Number(thread.from_company?.userId) === Number(user?.id) 
+                      ? thread.to_company 
+                      : thread.from_company;
+                    
+                    return (
+                      <div
+                        key={thread.documentId}
+                        onClick={() => router.push(`/messages?threadId=${thread.documentId}`)}
+                        className="p-4 rounded-xl border border-gray-100 hover:border-indigo-200 hover:bg-indigo-50/30 transition-all group cursor-pointer"
+                      >
+                        <div className="flex justify-between items-start mb-2">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white font-black text-xs shadow-lg shadow-indigo-100">
+                              {otherCompany?.company_name?.substring(0, 1).toUpperCase()}
+                            </div>
+                            <div>
+                              <h4 className="font-black text-slate-900 tracking-tight">
+                                {otherCompany?.company_name || thread.title}
+                              </h4>
+                              <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">
+                                {new Date(thread.last_message_at || thread.updatedAt).toLocaleString()}
+                              </p>
+                            </div>
                           </div>
-                          <div>
-                            <h4 className="font-bold text-gray-900">
-                              {enquiry.title || "No Subject"}
-                            </h4>
-                            <p className="text-xs text-gray-500">
-                              {new Date(enquiry.createdAt).toLocaleString()}
-                            </p>
-                          </div>
+                   
                         </div>
-                        <span
-                          className={`px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider ${
-                            enquiry.fromUserId === user?.id
-                              ? "bg-blue-100 text-blue-700"
-                              : "bg-green-100 text-green-700"
-                          }`}
-                        >
-                          {enquiry.fromUserId === user?.id
-                            ? "Sent"
-                            : "Received"}
-                        </span>
-                      </div>
-                      <p className="text-gray-700 text-sm leading-relaxed ml-12">
-                        {enquiry.description}
-                      </p>
-                      {enquiry.destination && (
-                        <p className="text-[10px] text-gray-400 mt-2 ml-12 flex items-center gap-1 font-bold italic uppercase">
-                          <svg
-                            className="w-3 h-3"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth="2"
-                              d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                            ></path>
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth="2"
-                              d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                            ></path>
-                          </svg>
-                          {enquiry.destination}
+                        <p className="text-slate-600 text-xs font-medium leading-relaxed mt-2 pl-2 border-l-2 border-slate-100">
+                          {thread.last_message_preview || "No preview available"}
                         </p>
-                      )}
-                      <div className="mt-3 flex justify-end">
-                        <button className="text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                          View Details
-                          <svg
-                            className="w-3 h-3"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth="2"
-                              d="M9 5l7 7-7 7"
-                            ></path>
-                          </svg>
-                        </button>
+                        
+                        <div className="mt-3 flex justify-end">
+                          <button className="text-[10px] font-black uppercase tracking-widest text-indigo-600 hover:text-indigo-800 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                            Open Workspace
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+                            </svg>
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                  ))
+                    );
+                  })
                 ) : (
                   <div className="text-center py-12">
                     <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
