@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import CategorySelect from '@/components/CategorySelect';
 
 interface ProfileEditModalProps {
   isOpen: boolean;
@@ -256,16 +257,12 @@ export default function ProfileEditModal({
                   {/* Add New Category */}
                   <div className="p-4 bg-gray-50 rounded-xl border border-dashed border-gray-300 space-y-3">
                     <p className="text-xs font-bold text-gray-500 uppercase">Add New Category</p>
-                    <select
-                      className="w-full px-3 py-2 text-sm text-black border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white"
+                    <CategorySelect
                       value={newCategory.category}
-                      onChange={(e) => setNewCategory({ ...newCategory, category: e.target.value })}
-                    >
-                      <option value="">Select Category</option>
-                      {field.options?.map((opt) => (
-                        <option key={opt.value} value={opt.value}>{opt.label}</option>
-                      ))}
-                    </select>
+                      onChange={(val) => setNewCategory({ ...newCategory, category: val })}
+                      placeholder="Select Category"
+                      className="w-full px-3 py-2 text-sm text-black border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white disabled:opacity-60"
+                    />
                     
                     <div className="space-y-2">
                         <div className="flex flex-wrap gap-2">

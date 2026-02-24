@@ -19,60 +19,44 @@ export interface AuthResponse {
   user: User;
 }
 
-// Cookie configuration
+// ─── Cookie configuration ──────────────────────────────────────────────────
 const COOKIE_OPTIONS = {
-  expires: 7, // 7 days
-  secure: process.env.NODE_ENV === 'production', // Only use secure in production (HTTPS)
-  sameSite: 'strict' as const, // CSRF protection
+  expires: 7,
+  secure: process.env.NODE_ENV === 'production',
+  sameSite: 'strict' as const,
 };
 
-const JWT_COOKIE_NAME = 'auth_token';
-const USER_COOKIE_NAME = 'user_data';
+const JWT_COOKIE_NAME     = 'auth_token';
+const USER_COOKIE_NAME    = 'user_data';
 const PROFILE_COOKIE_NAME = 'profile_data';
 
-/**
- * Store authentication data in cookies
- */
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.letsb2b.com';
+
+// ─── Cookie helpers ────────────────────────────────────────────────────────
+
 export const setAuthData = (jwt: string, user: User): void => {
   if (typeof window !== 'undefined') {
-    // Store JWT token in cookie
     Cookies.set(JWT_COOKIE_NAME, jwt, COOKIE_OPTIONS);
-    
-    // Store user data in cookie
     Cookies.set(USER_COOKIE_NAME, JSON.stringify(user), COOKIE_OPTIONS);
   }
 };
 
-/**
- * Store profile data in cookies
- */
 export const setProfileData = (profile: any): void => {
   if (typeof window !== 'undefined' && profile) {
     Cookies.set(PROFILE_COOKIE_NAME, JSON.stringify(profile), COOKIE_OPTIONS);
   }
 };
 
-/**
- * Get profile data from cookies
- */
 export const getProfileData = (): any | null => {
   if (typeof window !== 'undefined') {
-    const profileStr = Cookies.get(PROFILE_COOKIE_NAME);
-    if (profileStr) {
-      try {
-        return JSON.parse(profileStr);
-      } catch (error) {
-        console.error('Error parsing profile data:', error);
-        return null;
-      }
+    const raw = Cookies.get(PROFILE_COOKIE_NAME);
+    if (raw) {
+      try { return JSON.parse(raw); } catch { return null; }
     }
   }
   return null;
 };
 
-/**
- * Get JWT token from cookies
- */
 export const getToken = (): string | null => {
   if (typeof window !== 'undefined') {
     return Cookies.get(JWT_COOKIE_NAME) || null;
@@ -80,34 +64,18 @@ export const getToken = (): string | null => {
   return null;
 };
 
-/**
- * Get user data from cookies
- */
 export const getUser = (): User | null => {
   if (typeof window !== 'undefined') {
-    const userStr = Cookies.get(USER_COOKIE_NAME);
-    if (userStr) {
-      try {
-        return JSON.parse(userStr);
-      } catch (error) {
-        console.error('Error parsing user data:', error);
-        return null;
-      }
+    const raw = Cookies.get(USER_COOKIE_NAME);
+    if (raw) {
+      try { return JSON.parse(raw); } catch { return null; }
     }
   }
   return null;
 };
 
-/**
- * Check if user is authenticated
- */
-export const isAuthenticated = (): boolean => {
-  return getToken() !== null;
-};
+export const isAuthenticated = (): boolean => getToken() !== null;
 
-/**
- * Clear authentication data (logout)
- */
 export const clearAuthData = (): void => {
   if (typeof window !== 'undefined') {
     Cookies.remove(JWT_COOKIE_NAME);
@@ -116,119 +84,164 @@ export const clearAuthData = (): void => {
   }
 };
 
+// ─── Auth API helpers ──────────────────────────────────────────────────────
+
 /**
- * Login API call
+ * Flow 2 — Login
+ * POST /api/auth/local
+ * Throws 'UNVERIFIED_EMAIL' if account exists but email not confirmed.
  */
 export const login = async (
   identifier: string,
   password: string
 ): Promise<AuthResponse> => {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://api.letsb2b.com';
-  
-  const response = await fetch(`${apiUrl}/api/auth/local`, {
+  const response = await fetch(`${API_URL}/api/auth/local`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ identifier, password })
+    body: JSON.stringify({ identifier, password }),
   });
 
   const data = await response.json();
 
   if (!response.ok) {
-    throw new Error(data?.error?.message || 'Login failed');
+    const msg: string = data?.error?.message || 'Login failed';
+    if (msg.toLowerCase().includes('not confirmed')) {
+      throw new Error('UNVERIFIED_EMAIL');
+    }
+    throw new Error(msg);
   }
 
   return data;
 };
 
+// ─── Flow 1 — Sign Up ─────────────────────────────────────────────────────
+
 /**
- * Register with OTP
+ * Step 1: Register — send email + username + password.
+ * Backend sends OTP to email on success.
  */
-export const registerWithOtp = async (
+export const register = async (
   email: string,
-  username: string
-): Promise<{ message: string }> => {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://api.letsb2b.com';
-  
-  const response = await fetch(`${apiUrl}/api/auth/register-with-otp`, {
+  username: string,
+  password: string
+): Promise<{ message: string; email: string }> => {
+  const response = await fetch(`${API_URL}/api/auth/register`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, username })
+    body: JSON.stringify({ email, username, password }),
   });
 
   const data = await response.json();
-
-  if (!response.ok) {
-    throw new Error(data?.error?.message || 'Registration request failed');
-  }
-
+  if (!response.ok) throw new Error(data?.error?.message || 'Registration failed');
   return data;
 };
 
 /**
- * Login with OTP
+ * Step 2: Verify signup OTP → returns jwt + user (auto-logged-in).
  */
-export const loginWithOtp = async (
+export const verifySignupOtp = async (
+  email: string,
+  otp: string
+): Promise<AuthResponse> => {
+  const response = await fetch(`${API_URL}/api/auth/verify-signup-otp`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, otp }),
+  });
+
+  const data = await response.json();
+  if (!response.ok) throw new Error(data?.error?.message || 'OTP verification failed');
+  return data;
+};
+
+/**
+ * Resend signup OTP.
+ */
+export const resendSignupOtp = async (
   email: string
 ): Promise<{ message: string }> => {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://api.letsb2b.com';
-  
-  const response = await fetch(`${apiUrl}/api/auth/login-with-otp`, {
+  const response = await fetch(`${API_URL}/api/auth/resend-signup-otp`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email })
+    body: JSON.stringify({ email }),
   });
 
   const data = await response.json();
+  if (!response.ok) throw new Error(data?.error?.message || 'Resend failed');
+  return data;
+};
 
-  if (!response.ok) {
-    throw new Error(data?.error?.message || 'Login request failed');
-  }
+// ─── Flow 3 — Reset Password ──────────────────────────────────────────────
 
+/**
+ * Step 1: Send forgot-password OTP to email.
+ */
+export const forgotPasswordOtp = async (
+  email: string
+): Promise<{ message: string }> => {
+  const response = await fetch(`${API_URL}/api/auth/forgot-password-otp`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email }),
+  });
+
+  const data = await response.json();
+  if (!response.ok) throw new Error(data?.error?.message || 'Failed to send OTP');
   return data;
 };
 
 /**
- * Verify OTP
+ * Step 2: Verify reset OTP → returns resetToken (keep in memory only).
  */
-export const verifyEmailOtp = async (
+export const verifyResetOtp = async (
   email: string,
-  otp: number
-): Promise<AuthResponse> => {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://api.letsb2b.com';
-  
-  const response = await fetch(`${apiUrl}/api/auth/verify-email-otp`, {
+  otp: string
+): Promise<{ message: string; resetToken: string }> => {
+  const response = await fetch(`${API_URL}/api/auth/verify-reset-otp`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, otp })
+    body: JSON.stringify({ email, otp }),
   });
 
   const data = await response.json();
-
-  if (!response.ok) {
-    throw new Error(data?.error?.message || 'Verification failed');
-  }
-
+  if (!response.ok) throw new Error(data?.error?.message || 'Invalid or expired OTP');
   return data;
 };
 
 /**
- * Make authenticated API requests
+ * Step 3: Set new password with resetToken → returns jwt + user (auto-logged-in).
  */
+export const updatePassword = async (
+  email: string,
+  resetToken: string,
+  newPassword: string
+): Promise<AuthResponse & { message: string }> => {
+  const response = await fetch(`${API_URL}/api/auth/update-password`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, resetToken, newPassword }),
+  });
+
+  const data = await response.json();
+  if (!response.ok) throw new Error(data?.error?.message || 'Password update failed');
+  return data;
+};
+
+// ─── Authenticated fetch helper ───────────────────────────────────────────
+
 export const authenticatedFetch = async (
   url: string,
   options: RequestInit = {}
 ): Promise<Response> => {
   const token = getToken();
-  
-  if (!token) {
-    throw new Error('No authentication token found');
-  }
+  if (!token) throw new Error('No authentication token found');
 
-  const headers = {
-    ...options.headers,
-    'Authorization': `Bearer ${token}`,
-    'Content-Type': 'application/json',
-  };
-
-  return fetch(url, { ...options, headers });
+  return fetch(url, {
+    ...options,
+    headers: {
+      ...options.headers,
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+  });
 };

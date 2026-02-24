@@ -11,6 +11,7 @@ import AuthLayout from "@/components/AuthLayout";
 import Image from "next/image";
 import { useToast } from "@/components/Toast";
 import { useTeam } from "@/context/TeamContext";
+import CategorySelect from "@/components/CategorySelect";
 
 type ProfileType = "Individual" | "Company" | "Association";
 
@@ -20,27 +21,6 @@ interface Category {
   description: string;
 }
 
-const BUSINESS_TYPES = [
-  "Travel Agent",
-  "Tour Operator",
-  "Destination Management Company (DMC)",
-  "Handling Partner",
-  "Hotel",
-  "Resort",
-  "Homestay",
-  "Service Villas",
-  "Apartments",
-  "Houseboats",
-  "Cruise Liners",
-  "Transport Provider",
-  "Activity / Experience Provider",
-  "Wellness Centres",
-  "Ayurveda Centres",
-  "Medical Tourism Facilitators",
-  "Tourism Associations",
-  "Hospitality Institutions",
-  "Training Organisations"
-];
 
 const TARGET_BUYER_TYPES = [
   "B2B",
@@ -451,17 +431,18 @@ export default function CompleteProfileContent() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1">
                 <label className="text-xs font-bold text-gray-500 uppercase ml-1">Business Type</label>
-                <select
-                  name="business_type"
+                <CategorySelect
                   value={formData.business_type}
-                  onChange={handleInputChange}
-                  className={`w-full px-4 py-3.5 bg-gray-50 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all ${errors.business_type ? "border-red-500" : "border-gray-200"}`}
-                >
-                  <option value="">Select Business Type</option>
-                  {BUSINESS_TYPES.map(type => (
-                    <option key={type} value={type}>{type}</option>
-                  ))}
-                </select>
+                  onChange={(val) => {
+                    setFormData((prev) => ({ ...prev, business_type: val }));
+                    if (errors.business_type) setErrors((p) => ({ ...p, business_type: '' }));
+                  }}
+                  placeholder="Select Business Type"
+                  className={`w-full px-4 py-3.5 bg-gray-50 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm disabled:opacity-60 ${
+                    errors.business_type ? 'border-red-500' : 'border-gray-200'
+                  }`}
+                />
+                {errors.business_type && <p className="text-red-500 text-[10px] font-bold ml-1">{errors.business_type}</p>}
               </div>
               {profileType !== "Individual" && (
                 <div className="space-y-1">
@@ -637,16 +618,12 @@ export default function CompleteProfileContent() {
             <div className="p-8 space-y-5">
               <div className="space-y-1">
                 <label className="text-xs font-bold text-gray-500 uppercase ml-1">Category Title</label>
-                <select
+                <CategorySelect
                   value={currentCategory.category}
-                  onChange={(e) => setCurrentCategory({...currentCategory, category: e.target.value})}
-                  className="w-full px-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-medium"
-                >
-                  <option value="">Select Category</option>
-                  {BUSINESS_TYPES.map(type => (
-                    <option key={type} value={type}>{type}</option>
-                  ))}
-                </select>
+                  onChange={(val) => setCurrentCategory({ ...currentCategory, category: val })}
+                  placeholder="Select Category"
+                  className="w-full px-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-medium disabled:opacity-60"
+                />
               </div>
               <div className="space-y-1">
                 <label className="text-xs font-bold text-gray-500 uppercase ml-1">Sub-Categories</label>
