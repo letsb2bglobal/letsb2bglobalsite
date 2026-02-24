@@ -2,15 +2,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/components/ProtectedRoute';
-import {
-  createPost,
-  updatePost,
-  deletePost,
-  type CreatePostData,
-  type Post,
-  TRADE_WALL_CATEGORIES,
-} from '@/lib/posts';
+import { createPost, updatePost, type CreatePostData, type Post } from '@/lib/posts';
 import { useToast } from '@/components/Toast';
+import CategorySelect from '@/components/CategorySelect';
 
 interface PostModalProps {
   isOpen: boolean;
@@ -185,16 +179,12 @@ export default function PostModal({
 
             <div>
               <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5">Category</label>
-              <select
-                className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all text-sm"
+              <CategorySelect
                 value={formData.category}
-                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-              >
-                <option value="">Select category...</option>
-                {TRADE_WALL_CATEGORIES.map((cat) => (
-                  <option key={cat} value={cat}>{cat}</option>
-                ))}
-              </select>
+                onChange={(val) => setFormData({ ...formData, category: val })}
+                placeholder="Select category..."
+                className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all text-sm disabled:opacity-60"
+              />
             </div>
           </div>
 
