@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import ProtectedRoute, { useAuth } from '@/components/ProtectedRoute';
 import { 
@@ -15,7 +15,7 @@ import {
 import { useToast } from '@/components/Toast';
 import Image from 'next/image';
 
-export default function MessagesPage() {
+function MessagesContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const user = useAuth();
@@ -72,7 +72,7 @@ export default function MessagesPage() {
       }
     };
     sync();
-  }, [user?.id]);
+  }, [user?.id, searchParams]); // Added searchParams to deps
 
   // Message Loading & Polling
   useEffect(() => {
@@ -117,7 +117,7 @@ export default function MessagesPage() {
     return () => {
       if (pollingRef.current) clearInterval(pollingRef.current);
     };
-  }, [activeConversation, user]);
+  }, [activeConversation, user, profileNames]);
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -299,6 +299,14 @@ export default function MessagesPage() {
         </div>
       </div>
     </ProtectedRoute>
+  );
+}
+
+export default function MessagesPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[#f1f3f6] flex items-center justify-center"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div></div>}>
+      <MessagesContent />
+    </Suspense>
   );
 }
 
