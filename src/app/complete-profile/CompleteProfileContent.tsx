@@ -41,6 +41,7 @@ export default function CompleteProfileContent() {
   const [isLoading, setIsLoading] = useState(false);
   const [submitError, setSubmitError] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isInitializing, setIsInitializing] = useState(true);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
 
   // Form State
@@ -112,9 +113,18 @@ export default function CompleteProfileContent() {
             else if (!p.full_name && !p.company_name) setCurrentStep(2);
             else if (!p.business_type) setCurrentStep(3);
             else setCurrentStep(4);
+          } else {
+            // New user - pre-fill email and mobile from auth even if profile doesn't exist yet
+            setFormData(prev => ({
+              ...prev,
+              email: user.email || "",
+              mobile_number: (user as any)?.mobile_number || "",
+            }));
           }
         } catch (err) {
           console.error("Error initializing profile:", err);
+        } finally {
+          setIsInitializing(false);
         }
       }
     }
@@ -309,26 +319,33 @@ export default function CompleteProfileContent() {
         <p className="text-gray-500 text-sm font-medium">Build your professional B2B identity</p>
       </div>
 
-      <div className="mb-10">
-        <div className="flex items-center justify-between mb-2">
-          <h2 className="text-2xl font-bold text-gray-900">
-            {currentStep === 1 && "Choose Profile Type"}
-            {currentStep === 2 && "Identity Details"}
-            {currentStep === 3 && "Business Classification"}
-            {currentStep === 4 && "Location & Launch"}
-          </h2>
-          <span className="text-sm font-bold text-blue-600 bg-blue-50 px-3 py-1 rounded-full">
-            Step {currentStep} of 4
-          </span>
+      {isInitializing ? (
+        <div className="flex flex-col items-center justify-center py-20 space-y-4">
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
+          <p className="text-gray-500 text-sm font-medium animate-pulse">Loading profile data...</p>
         </div>
-        <div className="flex gap-2">
-          {[1, 2, 3, 4].map((s) => (
-            <div key={s} className={`h-1.5 flex-1 rounded-full transition-all duration-500 ${s <= currentStep ? "bg-blue-600 shadow-[0_0_8px_rgba(37,99,235,0.3)]" : "bg-gray-100"}`} />
-          ))}
-        </div>
-      </div>
+      ) : (
+        <>
+          <div className="mb-10">
+            <div className="flex items-center justify-between mb-2">
+              <h2 className="text-2xl font-bold text-gray-900">
+                {currentStep === 1 && "Choose Profile Type"}
+                {currentStep === 2 && "Identity Details"}
+                {currentStep === 3 && "Business Classification"}
+                {currentStep === 4 && "Location & Launch"}
+              </h2>
+              <span className="text-sm font-bold text-blue-600 bg-blue-50 px-3 py-1 rounded-full">
+                Step {currentStep} of 4
+              </span>
+            </div>
+            <div className="flex gap-2">
+              {[1, 2, 3, 4].map((s) => (
+                <div key={s} className={`h-1.5 flex-1 rounded-full transition-all duration-500 ${s <= currentStep ? "bg-blue-600 shadow-[0_0_8px_rgba(37,99,235,0.3)]" : "bg-gray-100"}`} />
+              ))}
+            </div>
+          </div>
 
-      <div className="space-y-6">
+          <div className="space-y-6">
         {currentStep === 1 && (
           <div className="grid grid-cols-1 gap-4">
             <ProfileTypeCard 
@@ -354,76 +371,86 @@ export default function CompleteProfileContent() {
         )}
 
         {currentStep === 2 && (
-          <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
-            {profileType === "Individual" ? (
-              <div className="space-y-4">
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-gray-500 uppercase ml-1">Full Name</label>
-                  <input
-                    type="text"
-                    name="full_name"
-                    value={formData.full_name}
-                    onChange={handleInputChange}
-                    placeholder="Enter your full name"
-                    className={`w-full px-4 py-3.5 bg-gray-50 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all ${errors.full_name ? "border-red-500" : "border-gray-200"}`}
-                  />
-                  {errors.full_name && <p className="text-red-500 text-[10px] font-bold ml-1">{errors.full_name}</p>}
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-gray-500 uppercase ml-1">{profileType} Name</label>
-                  <input
-                    type="text"
-                    name="company_name"
-                    value={formData.company_name}
-                    onChange={handleInputChange}
-                    placeholder={`Enter ${profileType?.toLowerCase()} name`}
-                    className={`w-full px-4 py-3.5 bg-gray-50 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all ${errors.company_name ? "border-red-500" : "border-gray-200"}`}
-                  />
-                  {errors.company_name && <p className="text-red-500 text-[10px] font-bold ml-1">{errors.company_name}</p>}
-                </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-gray-500 uppercase ml-1">Contact Person</label>
-                  <input
-                    type="text"
-                    name="contact_person_name"
-                    value={formData.contact_person_name}
-                    onChange={handleInputChange}
-                    placeholder="Full name of contact person"
-                    className="w-full px-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
-                  />
-                </div>
-              </div>
-            )}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-gray-500 uppercase ml-1">Email Address</label>
-                <input
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleInputChange}
-                  readOnly={!!user?.email}
-                  placeholder="contact@example.com"
-                  className={`w-full px-4 py-3.5 bg-gray-50 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all ${errors.email ? "border-red-500" : "border-gray-200"} ${user?.email ? "opacity-60 cursor-not-allowed text-gray-500" : ""}`}
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-gray-500 uppercase ml-1">Mobile Number</label>
-                <input
-                  type="tel"
-                  name="mobile_number"
-                  value={formData.mobile_number}
-                  onChange={handleInputChange}
-                  readOnly={!!(user as any)?.mobile_number}
-                  placeholder="+1 234 567 890"
-                  className={`w-full px-4 py-3.5 bg-gray-50 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all ${errors.mobile_number ? "border-red-500" : "border-gray-200"} ${(user as any)?.mobile_number ? "opacity-60 cursor-not-allowed text-gray-500" : ""}`}
-                />
+          !formData.email ? (
+            <div className="p-10 bg-gray-50 rounded-2xl border border-gray-100 flex flex-col items-center text-center space-y-4">
+              <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center text-3xl">📧</div>
+              <div>
+                <h3 className="text-xl font-bold text-gray-900">Email Required</h3>
+                <p className="text-gray-500 text-sm mt-1">Your email address is required to proceed. Please ensure you are signed in correctly.</p>
               </div>
             </div>
-          </div>
+          ) : (
+            <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+              {profileType === "Individual" ? (
+                <div className="space-y-4">
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-gray-500 uppercase ml-1">Full Name</label>
+                    <input
+                      type="text"
+                      name="full_name"
+                      value={formData.full_name}
+                      onChange={handleInputChange}
+                      placeholder="Enter your full name"
+                      className={`w-full px-4 py-3.5 bg-gray-50 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all ${errors.full_name ? "border-red-500" : "border-gray-200"}`}
+                    />
+                    {errors.full_name && <p className="text-red-500 text-[10px] font-bold ml-1">{errors.full_name}</p>}
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-gray-500 uppercase ml-1">{profileType} Name</label>
+                    <input
+                      type="text"
+                      name="company_name"
+                      value={formData.company_name}
+                      onChange={handleInputChange}
+                      placeholder={`Enter ${profileType?.toLowerCase()} name`}
+                      className={`w-full px-4 py-3.5 bg-gray-50 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all ${errors.company_name ? "border-red-500" : "border-gray-200"}`}
+                    />
+                    {errors.company_name && <p className="text-red-500 text-[10px] font-bold ml-1">{errors.company_name}</p>}
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-gray-500 uppercase ml-1">Contact Person</label>
+                    <input
+                      type="text"
+                      name="contact_person_name"
+                      value={formData.contact_person_name}
+                      onChange={handleInputChange}
+                      placeholder="Full name of contact person"
+                      className="w-full px-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
+                    />
+                  </div>
+                </div>
+              )}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-gray-500 uppercase ml-1">Email Address</label>
+                  <input
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleInputChange}
+                    readOnly={!!user?.email}
+                    placeholder="contact@example.com"
+                    className={`w-full px-4 py-3.5 bg-gray-50 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all ${errors.email ? "border-red-500" : "border-gray-200"} ${user?.email ? "opacity-60 cursor-not-allowed text-gray-500" : ""}`}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-gray-500 uppercase ml-1">Mobile Number</label>
+                  <input
+                    type="tel"
+                    name="mobile_number"
+                    value={formData.mobile_number}
+                    onChange={handleInputChange}
+                    readOnly={!!(user as any)?.mobile_number}
+                    placeholder="+1 234 567 890"
+                    className={`w-full px-4 py-3.5 bg-gray-50 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all ${errors.mobile_number ? "border-red-500" : "border-gray-200"} ${(user as any)?.mobile_number ? "opacity-60 cursor-not-allowed text-gray-500" : ""}`}
+                  />
+                </div>
+              </div>
+            </div>
+          )
         )}
 
         {currentStep === 3 && (
@@ -593,8 +620,10 @@ export default function CompleteProfileContent() {
               ← GO BACK
             </button>
           )}
-        </div>
-      </div>
+            </div>
+          </div>
+        </>
+      )}
 
       {/* Category Modal */}
       {showCategoryModal && (
