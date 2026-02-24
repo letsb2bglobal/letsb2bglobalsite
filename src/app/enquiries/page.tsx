@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import ProtectedRoute, { useAuth } from '@/components/ProtectedRoute';
 import { 
@@ -16,7 +16,7 @@ import {
 import { useToast } from '@/components/Toast';
 import Image from 'next/image';
 
-export default function EnquiriesPage() {
+function EnquiriesContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const user = useAuth();
@@ -78,7 +78,7 @@ export default function EnquiriesPage() {
       }
     };
     loadStaticData();
-  }, [user?.id]);
+  }, [user?.id, searchParams]); // Added searchParams to deps
 
   // Load messages when thread changes
   useEffect(() => {
@@ -272,6 +272,14 @@ export default function EnquiriesPage() {
         </div>
       </div>
     </ProtectedRoute>
+  );
+}
+
+export default function EnquiriesPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[#f8f9fb] flex items-center justify-center"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div></div>}>
+      <EnquiriesContent />
+    </Suspense>
   );
 }
 
