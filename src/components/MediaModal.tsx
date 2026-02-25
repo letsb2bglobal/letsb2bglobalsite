@@ -42,18 +42,21 @@ export default function MediaModal({
     setActiveSectionIndex(sections.length);
   };
 
-  const validateFile = (file: File, type: "image" | "video") => {
-      const allowed = file.type.startsWith(type + "/");
-      const maxSize = type === "image" ? 2 * 1024 * 1024 : 10 * 1024 * 1024;
-      if (!allowed) {
-          alert(`File must be a ${type}`);
-          return false;
+  const validateFile = (file: File) => {
+      const isImage = file.type.startsWith("image/");
+      const isVideo = file.type.startsWith("video/");
+      
+      if (!isImage && !isVideo) {
+          alert("File must be an image or a video");
+          return null;
       }
+
+      const maxSize = isImage ? 2 * 1024 * 1024 : 10 * 1024 * 1024;
       if (file.size > maxSize) {
-          alert(`${type === 'image' ? 'Image' : 'Video'} must be smaller than ${type === 'image' ? '2MB' : '10MB'}`);
-          return false;
+          alert(`${isImage ? 'Image' : 'Video'} must be smaller than ${isImage ? '2MB' : '10MB'}`);
+          return null;
       }
-      return true;
+      return isImage ? "image" : "video";
   };
 
   const handleRemoveSection = (index: number) => {
@@ -72,9 +75,12 @@ export default function MediaModal({
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
 
-    const type = sections[index].media_type || "image";
-    const validFiles = files.filter(f => validateFile(f, type));
-    if (validFiles.length === 0) return;
+    // Detect types and filter valid files
+    const validFilesWithTypes = files.map(f => ({ file: f, type: validateFile(f) })).filter(x => x.type !== null);
+    if (validFilesWithTypes.length === 0) return;
+
+    const validFiles = validFilesWithTypes.map(x => x.file);
+    const detectedType = validFilesWithTypes[0].type as "image" | "video";
 
     setIsUploading(true);
     try {
@@ -85,6 +91,8 @@ export default function MediaModal({
       newSections[index] = {
         ...newSections[index],
         imageUrls: [...newSections[index].imageUrls, ...newUrls],
+        // Automatically set media_type based on the uploaded file if not already set or if it's the first upload
+        media_type: newSections[index].imageUrls.length === 0 ? detectedType : newSections[index].media_type,
       };
       setSections(newSections);
     } catch (error) {
@@ -208,40 +216,27 @@ export default function MediaModal({
                       </div>
                     </div>
 
-                    {/* Media Type Selection */}
+                    {/* Media Type Info (Auto-detected) */}
                     <div className="flex gap-4 items-center pl-[56px]">
-                        <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">Media Type:</span>
-                        <div className="flex gap-2">
-                             {(['image', 'video'] as const).map(type => (
-                                 <button
-                                    key={type}
-                                    onClick={(e) => { e.stopPropagation(); handleUpdateSection(idx, 'media_type', type); }}
-                                    className={`px-3 py-1 rounded-lg text-xs font-bold border transition-all ${
-                                        (section.media_type || 'image') === type 
-                                        ? 'bg-blue-600 text-white border-blue-600'
-                                        : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
-                                    }`}
-                                 >
-                                     {type.charAt(0).toUpperCase() + type.slice(1)}
-                                 </button>
-                             ))}
-                        </div>
-                        <span className="text-[10px] text-gray-400 ml-2 italic">
-                            {section.media_type === 'video' ? 'Max 10MB per video (Upload or Link)' : 'Max 2MB per image (Upload or Link)'}
+                        <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">Media Selection:</span>
+                        <span className="text-[10px] text-gray-400 italic">
+                            Max 2MB per image / 10MB per video (Upload or Link)
                         </span>
                     </div>
 
                     {/* Image Grid */}
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                      {section.imageUrls.map((url, imgIdx) => (
+                      {section.imageUrls.map((url, imgIdx) => {
+                        const isVideo = url.toLowerCase().match(/\.(mp4|webm|ogg|mov|m4v)$/) || url.includes('youtube.com') || url.includes('youtu.be') || url.includes('vimeo.com') || section.media_type === 'video';
+                        return (
                         <div key={imgIdx} className="relative aspect-square group/img rounded-xl overflow-hidden border border-gray-200 bg-white shadow-sm">
-                          {section.media_type === 'video' ? (
+                          {isVideo ? (
                             <div className="w-full h-full bg-gray-900 flex flex-col items-center justify-center relative group-hover/img:scale-105 transition-transform duration-500">
                                 <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center backdrop-blur-sm">
                                   <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20"><path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" /></svg>
                                 </div>
                                 <div className="absolute bottom-0 inset-x-0 p-2 bg-gradient-to-t from-black/80 to-transparent">
-                                    <p className="text-[10px] text-white truncate px-1">{url}</p>
+                                    <p className="text-[10px] text-white truncate px-1">{url.split('/').pop()}</p>
                                 </div>
                             </div>
                           ) : (
@@ -259,7 +254,7 @@ export default function MediaModal({
                             </svg>
                           </button>
                         </div>
-                      ))}
+                      );})}
                       
                       {/* Add Media Card */}
                       <div 
@@ -278,7 +273,7 @@ export default function MediaModal({
                                   type="file" 
                                   multiple 
                                   className="hidden" 
-                                  accept={section.media_type === 'video' ? "video/*" : "image/*"}
+                                  accept="image/*,video/*"
                                   onChange={(e) => handleMediaUpload(idx, e)}
                                 />
                                 <div className="w-8 h-8 bg-blue-50 text-blue-500 rounded-full flex items-center justify-center mb-1">

@@ -15,6 +15,7 @@ export interface Post {
   updatedAt: string;
   publishedAt: string;
   media?: any[];
+  custom_attachments?: any[];
   _type?: 'post' | 'enquiry';
   _score?: number;
   // Legacy fields kept for backward-compat during transition
@@ -321,4 +322,35 @@ export const searchTradeWall = async (params: {
     console.error("TradeWall search error:", error);
     throw error;
   }
+};
+
+/**
+ * Upload Post Media
+ */
+export const uploadPostMedia = async (files: File[], data?: any): Promise<any> => {
+  const token = getToken();
+  if (!token) throw new Error("No authentication token found");
+
+  const formData = new FormData();
+  if (data) {
+    formData.append("data", JSON.stringify(data));
+  }
+  files.forEach((file) => {
+    formData.append("files", file);
+  });
+
+  const response = await fetch(`${apiUrl}/api/posts/upload`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData?.error?.message || "Failed to upload post media");
+  }
+
+  return await response.json();
 };

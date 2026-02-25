@@ -102,6 +102,8 @@ function ProfileContent() {
   // New Profile Edit Modal state
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
+  const [showAllPosts, setShowAllPosts] = useState(false);
+  const [playingVideoUrl, setPlayingVideoUrl] = useState<string | null>(null);
 
   // Networking States
   const [isConnectionsModalOpen, setIsConnectionsModalOpen] = useState(false);
@@ -275,9 +277,7 @@ function ProfileContent() {
 
     setSaving(true);
     try {
-      const uploadRes = await uploadProfileMedia([file]);
-      const imageUrl = uploadRes[0].url;
-      await updateProfileImage(profile.documentId, imageUrl);
+      await updateProfileImage(profile.documentId, file);
       
       // Refresh profile data
       const updatedProfile = await checkUserProfile(user!.id);
@@ -297,9 +297,7 @@ function ProfileContent() {
 
     setSaving(true);
     try {
-      const uploadRes = await uploadProfileMedia([file]);
-      const imageUrl = uploadRes[0].url;
-      await updateHeaderImage(profile.documentId, imageUrl);
+      await updateHeaderImage(profile.documentId, file);
       
       // Refresh profile data
       const updatedProfile = await checkUserProfile(user!.id);
@@ -550,7 +548,7 @@ function ProfileContent() {
                   Contact Info
                 </button>
                 <button 
-                  onClick={() => fetchEnquiries()}
+                  onClick={() => router.push('/enquiries')}
                   className="px-4 py-3 bg-slate-100 text-slate-600 font-black rounded-full hover:bg-slate-200 transition-all uppercase tracking-widest text-[10px] flex items-center gap-2"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -830,7 +828,7 @@ function ProfileContent() {
 
                               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
                                 {section.imageUrls.map((url, index) => {
-                                    const isVideo = section.media_type === 'video';
+                                    const isVideo = url.toLowerCase().match(/\.(mp4|webm|ogg|mov|m4v)$/) || url.includes('youtube.com') || url.includes('youtu.be') || url.includes('vimeo.com');
                                     let videoContent = null;
 
                                     if (isVideo) {
@@ -849,7 +847,7 @@ function ProfileContent() {
                                             );
                                         } else {
                                             videoContent = (
-                                                <video controls className="w-full h-full object-cover bg-black">
+                                                <video controls className="w-full h-full object-cover bg-black rounded-[2rem]">
                                                     <source src={url} />
                                                     Your browser does not support the video tag.
                                                 </video>
@@ -1112,7 +1110,7 @@ function ProfileContent() {
                             <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mt-1">Last active negotiation threads</p>
                           </div>
                           <button 
-                            onClick={() => fetchEnquiries()}
+                            onClick={() => router.push('/enquiries')}
                             className="px-6 py-2 bg-slate-900 text-white text-[10px] font-bold rounded-xl hover:bg-slate-800 transition-all uppercase tracking-widest"
                           >
                             Open Inbox
@@ -1127,7 +1125,7 @@ function ProfileContent() {
                             return (
                               <div 
                                 key={thread.documentId}
-                                onClick={() => router.push(`/messages?threadId=${thread.documentId}&mode=enquiry`)}
+                                onClick={() => router.push(`/enquiries?threadId=${thread.documentId}`)}
                                 className="p-6 bg-slate-50 border-2 border-slate-100 rounded-3xl hover:border-indigo-200 hover:bg-white hover:shadow-xl transition-all group/thread cursor-pointer"
                               >
                                  <div className="flex items-center gap-4">
@@ -1151,15 +1149,14 @@ function ProfileContent() {
                     </div>
                   )}
 
-                  {/* My Tradewall Posts Section - BOTTOM Activity */}
                   <div id="tradewall-posts"
- className="premium-card p-12 relative group bg-white border-2 border-slate-100 hover:border-blue-400/30 transition-all duration-500 border-t-8 border-t-blue-600">
+  className="premium-card p-12 relative group bg-white border-2 border-slate-100 hover:border-blue-400/30 transition-all duration-500 border-t-8 border-t-blue-600">
                     <div className="flex justify-between items-center mb-10">
                       <div>
                         <h2 className="text-2xl font-black text-slate-900 uppercase tracking-tight">My Tradewall Posts</h2>
                         <p className="text-[10px] font-black text-blue-600 uppercase tracking-[0.3em] mt-1">Direct Market Activity</p>
                       </div>
-                      <span className="bg-blue-50 text-blue-700 text-xs font-black px-5 py-2 rounded-full border border-blue-100">
+                      <span className="bg-blue-50 text-blue-700 text-[10px] font-black px-5 py-2 rounded-full border border-blue-100 uppercase tracking-widest">
                         {userPosts.length} ACTIVE SIGNALS
                       </span>
                     </div>
@@ -1171,43 +1168,100 @@ function ProfileContent() {
                         ))}
                       </div>
                     ) : userPosts.length > 0 ? (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        {userPosts.map((post) => (
-                          <div
-                            key={post.id}
-                            className={`p-10 rounded-[2.5rem] border-2 transition-all hover:shadow-2xl hover:-translate-y-1 relative overflow-hidden group/post ${
-                              post.intentType === "demand" 
-                              ? "bg-red-50/30 border-red-100 hover:border-red-300" 
-                              : "bg-green-50/30 border-green-100 hover:border-green-300"
-                            }`}
-                          >
-                            <div className={`absolute top-0 right-0 px-6 py-2 rounded-bl-3xl text-[10px] font-black uppercase tracking-widest text-white ${
-                              post.intentType === "demand" ? "bg-red-600" : "bg-green-600"
-                            }`}>
-                              {post.intentType}
+                      <div className="space-y-8">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                          {(showAllPosts ? userPosts : userPosts.slice(0, 2)).map((post) => (
+                            <div
+                              key={post.id}
+                              className="p-8 rounded-[2.5rem] border-2 border-slate-100 bg-white transition-all hover:shadow-2xl hover:-translate-y-1 relative overflow-hidden group/post flex flex-col"
+                            >
+                              <div className="flex justify-between items-start mb-6">
+                                <div className="flex flex-wrap gap-2">
+                                  {(post.category || post.intentType) && (
+                                    <span className="bg-blue-50 text-blue-600 text-[9px] font-black px-3 py-1.5 rounded-full border border-blue-100 uppercase tracking-widest">
+                                      {Array.isArray(post.category) ? post.category[0] : post.category || post.intentType}
+                                    </span>
+                                  )}
+                                  <span className="bg-indigo-50 text-indigo-600 text-[9px] font-black px-3 py-1.5 rounded-full border border-indigo-100 uppercase tracking-widest">
+                                    {post.destination || post.destinationCity || "Global"}
+                                  </span>
+                                </div>
+                                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
+                                  {new Date(post.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                                </span>
+                              </div>
+
+                              <div className="text-sm font-bold text-slate-700 leading-relaxed mb-6 flex-1 line-clamp-4">
+                                {post.description
+                                  || (Array.isArray(post.content)
+                                    ? post.content.map((b: any) => b.children?.map((c: any) => c.text).join(" ")).join(" ")
+                                    : typeof post.content === "string" ? post.content : post.title || "No description available.")}
+                              </div>
+
+                              {/* Media Scrolling Integration */}
+                              {(() => {
+                                const media = post.custom_attachments || post.media;
+                                if (!media || media.length === 0) return null;
+                                const mLen = media.length;
+
+                                return (
+                                  <div className="relative mt-4 -mx-2">
+                                    <div className="flex gap-2 overflow-x-auto pb-4 px-2 scrollbar-hide snap-x snap-mandatory">
+                                      {media.map((m: any, idx: number) => {
+                                        const isVideo = m.type === 'videos' || m.url?.toLowerCase().match(/\.(mp4|webm|ogg|mov|m4v)$/) || m.url?.includes('youtube.com') || m.url?.includes('youtu.be') || m.url?.includes('vimeo.com');
+                                        const isFile = m.type === 'files' || m.url?.toLowerCase().match(/\.(pdf|doc|docx|xls|xlsx|ppt|pptx|txt|csv)$/);
+                                        const isPlaying = playingVideoUrl === m.url;
+
+                                        return (
+                                          <div key={idx} className="relative flex-none w-[65%] aspect-square rounded-2xl overflow-hidden bg-slate-50 border border-slate-100 snap-center group/media shadow-sm">
+                                            {isVideo ? (
+                                              isPlaying ? (
+                                                <video src={m.url} controls autoPlay className="w-full h-full object-cover bg-black" onEnded={() => setPlayingVideoUrl(null)} />
+                                              ) : (
+                                                <div className="w-full h-full bg-slate-900 flex flex-col items-center justify-center relative cursor-pointer" onClick={() => setPlayingVideoUrl(m.url)}>
+                                                  <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center backdrop-blur-md border border-white/30 group-hover/media:scale-110 transition-transform">
+                                                    <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20"><path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" /></svg>
+                                                  </div>
+                                                  <span className="text-[7px] text-white/40 font-black uppercase mt-2 tracking-widest">Play</span>
+                                                </div>
+                                              )
+                                            ) : isFile ? (
+                                              <a href={m.url} download target="_blank" className="w-full h-full flex flex-col items-center justify-center p-3 bg-white hover:bg-slate-50 transition-colors group/file">
+                                                <div className="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white mb-2 shadow-lg group-hover/file:scale-110 transition-transform">
+                                                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                                                </div>
+                                                <span className="text-[8px] font-black text-slate-800 uppercase text-center line-clamp-1 px-1">{m.name || 'Doc'}</span>
+                                              </a>
+                                            ) : (
+                                              <>
+                                                <img src={m.url} alt={`Media ${idx}`} className="w-full h-full object-cover transition-transform duration-700 group-hover/media:scale-105" />
+                                                <div className="absolute inset-0 bg-black/0 group-hover/media:bg-black/10 transition-all cursor-pointer" onClick={() => window.open(m.url, '_blank')} />
+                                              </>
+                                            )}
+                                          </div>
+                                        );
+                                      })}
+                                    </div>
+                                  </div>
+                                );
+                              })()}
                             </div>
-                            <h4 className="text-2xl font-black text-slate-900 mb-4 pr-12 group-hover/post:text-blue-700 transition-colors line-clamp-2">
-                              {post.title}
-                            </h4>
-                            <p className="text-sm font-bold text-slate-400 mb-6 uppercase tracking-widest flex items-center gap-2">
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                          ))}
+                        </div>
+                        
+                        {!showAllPosts && userPosts.length > 2 && (
+                          <div className="flex justify-center mt-12">
+                            <button
+                              onClick={() => setShowAllPosts(true)}
+                              className="px-12 py-4 bg-slate-100 text-slate-800 font-black rounded-full hover:bg-blue-600 hover:text-white transition-all shadow-sm uppercase tracking-widest text-[10px] border-2 border-transparent hover:border-blue-400 group"
+                            >
+                              See all {userPosts.length} insights
+                              <svg className="w-4 h-4 ml-2 inline-block group-hover:translate-y-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
                               </svg>
-                              {post.destinationCity} • {new Date(post.createdAt).toLocaleDateString()}
-                            </p>
-                            <div className="text-base font-medium text-slate-600 line-clamp-3 leading-relaxed">
-                              {post.content && Array.isArray(post.content)
-                                ? post.content
-                                    .map((block: any) =>
-                                      block.children?.map((child: any) => child.text).join(" ")
-                                    )
-                                    .join(" ")
-                                : typeof post.content === "string"
-                                ? post.content
-                                : ""}
-                            </div>
+                            </button>
                           </div>
-                        ))}
+                        )}
                       </div>
                     ) : (
                       <div className="text-center py-20 bg-slate-50 rounded-[3rem] border-4 border-dashed border-slate-100">
@@ -1289,7 +1343,7 @@ function ProfileContent() {
                     return (
                       <div
                         key={thread.documentId}
-                        onClick={() => router.push(`/messages?threadId=${thread.documentId}`)}
+                        onClick={() => router.push(`/enquiries?threadId=${thread.documentId}`)}
                         className="p-4 rounded-xl border border-gray-100 hover:border-indigo-200 hover:bg-indigo-50/30 transition-all group cursor-pointer"
                       >
                         <div className="flex justify-between items-start mb-2">

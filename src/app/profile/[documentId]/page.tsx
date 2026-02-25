@@ -351,7 +351,7 @@ export default function PublicProfilePage() {
 
                           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
                             {section.imageUrls.map((url, index) => {
-                                const isVideo = section.media_type === 'video';
+                                const isVideo = url.toLowerCase().match(/\.(mp4|webm|ogg|mov|m4v)$/) || url.includes('youtube.com') || url.includes('youtu.be') || url.includes('vimeo.com');
                                 let videoContent = null;
 
                                 if (isVideo) {
@@ -372,7 +372,7 @@ export default function PublicProfilePage() {
                                     } else {
                                         // Assume direct video or other
                                         videoContent = (
-                                            <video controls className="w-full h-full object-cover bg-black">
+                                            <video controls className="w-full h-full object-cover bg-black rounded-xl">
                                                 <source src={url} />
                                                 Your browser does not support the video tag.
                                             </video>

@@ -45,6 +45,7 @@ export default function Home() {
   const [isPostModalOpen, setIsPostModalOpen] = useState(false);
   const [editingPost, setEditingPost] = useState<Post | null>(null);
   const [deletingPostId, setDeletingPostId] = useState<string | null>(null);
+  const [playingVideoUrl, setPlayingVideoUrl] = useState<string | null>(null);
 
   // Search States
   const [searchText, setSearchText] = useState("");
@@ -579,13 +580,98 @@ useEffect(() => {
                   </div>
                 </div>
 
-                {/* Description */}
                 <div className="text-sm text-gray-700 leading-relaxed line-clamp-3">
                   {post.description
                     || (Array.isArray(post.content)
                       ? post.content.map((b: any) => b.children?.map((c: any) => c.text).join(" ")).join(" ")
                       : typeof post.content === "string" ? post.content : "No description available.")}
                 </div>
+
+                {/* Media Scrolling Container / Grid */}
+                {(() => {
+                  const media = post.custom_attachments || post.media;
+                  if (!media || media.length === 0) return null;
+                  
+                  const mLen = media.length;
+                  
+                  // If only one item, show a nice hero image/video
+                  if (mLen === 1) {
+                    const m = media[0];
+                    const isVideo = m.url?.toLowerCase().match(/\.(mp4|webm|ogg|mov|m4v)$/) || m.url?.includes('youtube.com') || m.url?.includes('youtu.be') || m.url?.includes('vimeo.com');
+                    return (
+                      <div className="relative rounded-2xl overflow-hidden bg-gray-100 border border-gray-100 aspect-[21/9] mt-4 group/media">
+                        {isVideo ? (
+                          <div className="w-full h-full bg-slate-900 flex flex-col items-center justify-center">
+                            <svg className="w-12 h-12 text-white/50" fill="currentColor" viewBox="0 0 20 20"><path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" /></svg>
+                          </div>
+                        ) : (
+                          <img src={m.url} alt="Media" className="w-full h-full object-cover transition-transform duration-700 group-hover/media:scale-105" />
+                        )}
+                        <div className="absolute inset-0 bg-black/0 group-hover/media:bg-black/10 transition-all cursor-pointer" onClick={() => window.open(m.url, '_blank')} />
+                      </div>
+                    );
+                  }
+
+                  // If multiple items, use the horizontal scroll (1 full + 1/2 next)
+                  return (
+                    <div className="relative mt-4 -mx-1">
+                      <div className="flex gap-2 overflow-x-auto pb-4 px-1 scrollbar-hide snap-x snap-mandatory">
+                        {media.map((m: any, idx: number) => {
+                          const isVideo = m.type === 'videos' || m.url?.toLowerCase().match(/\.(mp4|webm|ogg|mov|m4v)$/) || m.url?.includes('youtube.com') || m.url?.includes('youtu.be') || m.url?.includes('vimeo.com');
+                          const isFile = m.type === 'files' || m.url?.toLowerCase().match(/\.(pdf|doc|docx|xls|xlsx|ppt|pptx|txt|csv)$/);
+                          const isPlaying = playingVideoUrl === m.url;
+
+                          return (
+                            <div 
+                              key={idx} 
+                              className="relative flex-none w-[52%] aspect-square rounded-2xl overflow-hidden bg-white border border-slate-200 snap-center group/media shadow-[0_2px_10px_-4px_rgba(0,0,0,0.1)]"
+                            >
+                              {isVideo ? (
+                                isPlaying ? (
+                                    <video 
+                                        src={m.url} 
+                                        controls 
+                                        autoPlay 
+                                        className="w-full h-full object-cover bg-black"
+                                        onEnded={() => setPlayingVideoUrl(null)}
+                                    />
+                                ) : (
+                                    <div className="w-full h-full bg-slate-900 flex flex-col items-center justify-center relative">
+                                        <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center backdrop-blur-md border border-white/30 group-hover/media:scale-110 transition-transform">
+                                            <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20"><path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" /></svg>
+                                        </div>
+                                        <span className="text-[9px] text-white/40 font-black uppercase mt-3 tracking-widest">Tap to Play</span>
+                                        <div className="absolute inset-0 cursor-pointer" onClick={() => setPlayingVideoUrl(m.url)} />
+                                    </div>
+                                )
+                              ) : isFile ? (
+                                <a 
+                                    href={m.url} 
+                                    download 
+                                    target="_blank" 
+                                    className="w-full h-full flex flex-col items-center justify-center p-4 bg-slate-50 hover:bg-slate-100 transition-colors group/file"
+                                >
+                                    <div className="w-14 h-14 rounded-2xl bg-indigo-600 flex items-center justify-center text-white mb-3 shadow-lg group-hover/file:scale-110 transition-transform">
+                                        <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                        </svg>
+                                    </div>
+                                    <span className="text-[10px] font-black text-slate-800 uppercase text-center line-clamp-2 px-2">{m.name || 'View Document'}</span>
+                                    <span className="text-[9px] text-slate-400 font-bold uppercase mt-1">Download File</span>
+                                </a>
+                              ) : (
+                                <>
+                                    <img src={m.url} alt={`Media ${idx}`} className="w-full h-full object-cover transition-transform duration-700 group-hover/media:scale-105" />
+                                    <div className="absolute inset-0 bg-black/0 group-hover/media:bg-black/10 transition-all cursor-pointer" onClick={() => window.open(m.url, '_blank')} />
+                                </>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })()}
 
                 <div className="pt-2 border-t border-gray-50 flex items-center gap-4">
                   <button
