@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/components/ProtectedRoute';
-import { createPost, updatePost, type CreatePostData, type Post } from '@/lib/posts';
+import { createPost, updatePost, uploadPostMedia, type CreatePostData, type Post } from '@/lib/posts';
 import { useToast } from '@/components/Toast';
 import CategorySelect from '@/components/CategorySelect';
 
@@ -34,7 +34,10 @@ export default function PostModal({
     category: '',
     status: 'Open' as 'Open' | 'Closed',
   });
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [mediaPreviews, setMediaPreviews] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
   // Populate form when editing
   useEffect(() => {
@@ -61,33 +64,64 @@ export default function PostModal({
     try {
       if (isEditMode && editPost) {
         // ── EDIT MODE ──
-        await updatePost(editPost.documentId, {
-          description: formData.description,
-          destination: formData.destination,
-          ...(formData.category ? { category: formData.category } : {}),
-          status: formData.status,
-        });
+        // If we have NEW files, we use the upload endpoint with documentId
+        // If NO new files, we just use updatePost
+        if (selectedFiles.length > 0) {
+          setUploading(true);
+          await uploadPostMedia(selectedFiles, { 
+            documentId: editPost.documentId,
+            description: formData.description,
+            destination: formData.destination,
+            category: formData.category,
+            status: formData.status
+          });
+          setUploading(false);
+        } else {
+          await updatePost(editPost.documentId, {
+            description: formData.description,
+            destination: formData.destination,
+            ...(formData.category ? { category: formData.category } : {}),
+            status: formData.status,
+          });
+        }
         showToast('Post updated successfully!', 'success');
         onPostUpdated?.();
       } else {
         // ── CREATE MODE ──
-        const postData: CreatePostData = {
-          userId: user.id,
-          description: formData.description,
-          destination: formData.destination,
-          ...(formData.category ? { category: formData.category } : {}),
-          status: 'Open',
-        };
-        await createPost(postData);
+        // Use the combined upload endpoint if files are present, else createPost
+        if (selectedFiles.length > 0) {
+          setUploading(true);
+          await uploadPostMedia(selectedFiles, {
+            userId: user.id,
+            description: formData.description,
+            destination: formData.destination,
+            category: formData.category,
+            status: 'Open'
+          });
+          setUploading(false);
+        } else {
+          const postData: CreatePostData = {
+            userId: user.id,
+            description: formData.description,
+            destination: formData.destination,
+            ...(formData.category ? { category: formData.category } : {}),
+            status: 'Open',
+          };
+          await createPost(postData);
+        }
         showToast('Post published to TradeWall!', 'success');
         onPostCreated?.();
       }
       onClose();
+      // Clear files
+      setSelectedFiles([]);
+      setMediaPreviews([]);
     } catch (error: any) {
       console.error('Error saving post:', error);
       showToast(error?.message || 'Failed to save post. Please try again.', 'error');
     } finally {
       setSubmitting(false);
+      setUploading(false);
     }
   };
 
@@ -186,6 +220,84 @@ export default function PostModal({
                 className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all text-sm disabled:opacity-60"
               />
             </div>
+          </div>
+
+          {/* Media Upload */}
+          <div className="space-y-3">
+            <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5">
+              Images / Videos
+            </label>
+            
+            <div className="flex flex-wrap gap-2">
+              {mediaPreviews.map((preview, idx) => {
+                const isVideo = selectedFiles[idx]?.type.startsWith('video/');
+                return (
+                  <div key={idx} className="relative w-20 h-20 rounded-xl overflow-hidden border border-gray-100 shadow-sm group bg-gray-900">
+                    {isVideo ? (
+                      <div className="w-full h-full flex flex-col items-center justify-center">
+                        <svg className="w-6 h-6 text-white/50" fill="currentColor" viewBox="0 0 20 20">
+                          <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
+                        </svg>
+                        <span className="text-[8px] text-white/50 font-bold uppercase mt-1">Video</span>
+                      </div>
+                    ) : (
+                      <img src={preview} alt="upload preview" className="w-full h-full object-cover" />
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const newFiles = [...selectedFiles];
+                        newFiles.splice(idx, 1);
+                        setSelectedFiles(newFiles);
+                        const newPreviews = [...mediaPreviews];
+                        newPreviews.splice(idx, 1);
+                        setMediaPreviews(newPreviews);
+                      }}
+                      className="absolute top-1 right-1 p-1 bg-black/50 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                );
+              })}
+              
+              {selectedFiles.length < 5 && (
+                <label className="w-20 h-20 rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center cursor-pointer hover:border-indigo-300 hover:bg-indigo-50 transition-all">
+                  <input
+                    type="file"
+                    className="hidden"
+                    accept="image/*,video/*"
+                    multiple
+                    onChange={(e) => {
+                      const files = Array.from(e.target.files || []);
+                      if (files.length + selectedFiles.length > 5) {
+                        showToast('Max 5 files allowed', 'error');
+                        return;
+                      }
+                      
+                      const newFiles = [...selectedFiles, ...files];
+                      setSelectedFiles(newFiles);
+                      
+                      const newPreviews = [...mediaPreviews];
+                      files.forEach(file => {
+                        const reader = new FileReader();
+                        reader.onloadend = () => {
+                          setMediaPreviews(prev => [...prev, reader.result as string]);
+                        };
+                        reader.readAsDataURL(file);
+                      });
+                    }}
+                  />
+                  <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+                  </svg>
+                  <span className="text-[10px] font-bold text-gray-400 mt-1 uppercase tracking-tighter">Add Media</span>
+                </label>
+              )}
+            </div>
+            <p className="text-[10px] text-gray-400">Max 5 files (Images/Videos up to 10MB each)</p>
           </div>
 
           {/* Status toggle — only shown in edit mode */}

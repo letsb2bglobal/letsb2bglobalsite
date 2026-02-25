@@ -566,22 +566,34 @@ export const verifyUserProfile = async (userId: number): Promise<boolean> => {
  */
 export const updateProfileImage = async (
   documentId: string,
-  imageUrl: string
+  image: File | string
 ): Promise<any> => {
   const token = getToken();
   if (!token) throw new Error("No authentication token found");
 
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://api.letsb2b.com";
 
+  let body: any;
+  const headers: any = {
+    Authorization: `Bearer ${token}`,
+  };
+
+  if (image instanceof File) {
+    const formData = new FormData();
+    formData.append("newImage", image);
+    body = formData;
+    // Don't set Content-Type for FormData
+  } else {
+    headers["Content-Type"] = "application/json";
+    body = JSON.stringify({ newImage: image });
+  }
+
   const response = await fetch(
     `${apiUrl}/api/user-profiles/${documentId}/profile-image`,
     {
       method: "PATCH",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ newImage: imageUrl }),
+      headers,
+      body,
     }
   );
 
@@ -627,28 +639,82 @@ export const deleteProfileImage = async (
  */
 export const updateHeaderImage = async (
   documentId: string,
-  imageUrl: string
+  image: File | string
 ): Promise<any> => {
   const token = getToken();
   if (!token) throw new Error("No authentication token found");
 
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://api.letsb2b.com";
 
+  let body: any;
+  const headers: any = {
+    Authorization: `Bearer ${token}`,
+  };
+
+  if (image instanceof File) {
+    const formData = new FormData();
+    formData.append("newImage", image);
+    body = formData;
+  } else {
+    headers["Content-Type"] = "application/json";
+    body = JSON.stringify({ newImage: image });
+  }
+
   const response = await fetch(
     `${apiUrl}/api/user-profiles/${documentId}/header-image`,
     {
       method: "PATCH",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ newImage: imageUrl }),
+      headers,
+      body,
     }
   );
 
   if (!response.ok) {
     const errorData = await response.json();
     throw new Error(errorData?.error?.message || "Failed to update header image");
+  }
+
+  return await response.json();
+};
+
+/**
+ * Update company logo
+ */
+export const updateCompanyLogo = async (
+  documentId: string,
+  image: File | string
+): Promise<any> => {
+  const token = getToken();
+  if (!token) throw new Error("No authentication token found");
+
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://api.letsb2b.com";
+
+  let body: any;
+  const headers: any = {
+    Authorization: `Bearer ${token}`,
+  };
+
+  if (image instanceof File) {
+    const formData = new FormData();
+    formData.append("newImage", image);
+    body = formData;
+  } else {
+    headers["Content-Type"] = "application/json";
+    body = JSON.stringify({ newImage: image });
+  }
+
+  const response = await fetch(
+    `${apiUrl}/api/user-profiles/${documentId}/logo`,
+    {
+      method: "PATCH",
+      headers,
+      body,
+    }
+  );
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData?.error?.message || "Failed to update company logo");
   }
 
   return await response.json();
