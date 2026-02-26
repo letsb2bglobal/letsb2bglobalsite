@@ -17,7 +17,7 @@ import {
 } from "@/lib/profile";
 import { fetchEnquiryThreads, type EnquiryThread } from "@/lib/enquiry";
 import { authenticatedFetch } from "@/lib/auth";
-import { getUserPosts, type Post } from "@/lib/posts";
+import { getTradeWallFeed, type Post } from "@/lib/posts";
 import MediaModal from "@/components/MediaModal";
 import ProfileEditModal from "@/components/ProfileEditModal";
 import ContactInfoModal from "@/components/ContactInfoModal";
@@ -175,14 +175,23 @@ function ProfileContent() {
   const fetchUserPosts = async (userId: number) => {
     setLoadingPosts(true);
     try {
-      const posts = await getUserPosts(userId);
-      setUserPosts(posts);
+      const response = await getTradeWallFeed(1, 50);
+      const items = response?.data || [];
+      const myItems = items.filter((item) => item.userId === userId);
+      setUserPosts(myItems);
     } catch (error) {
       console.error("Error fetching user posts:", error);
     } finally {
       setLoadingPosts(false);
     }
   };
+
+  // Ensure Tradewall posts always load for the authenticated user
+  useEffect(() => {
+    if (user?.id) {
+      fetchUserPosts(user.id);
+    }
+  }, [user?.id]);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -230,9 +239,12 @@ function ProfileContent() {
           experience_years: data.experience_years || 0,
           market_focus: data.market_focus || "",
         });
-        
-        // Use the userId from the actual profile data for posts
-        fetchUserPosts(data.userId);
+
+        // Load Tradewall posts for the authenticated user
+        const targetUserId = user?.id ?? data.userId;
+        if (targetUserId) {
+          fetchUserPosts(targetUserId);
+        }
         setLoading(false);
       } else if (user?.id && !activeWorkspace) {
         // Only redirect if we definitely don't have a profile and workspace isn't loading
@@ -1262,6 +1274,15 @@ function ProfileContent() {
                             </button>
                           </div>
                         )}
+
+                        <div className="flex justify-center mt-8">
+                          <button
+                            onClick={() => router.push("/")}
+                            className="px-10 py-4 bg-slate-900 text-white font-black rounded-2xl hover:bg-blue-600 transition-all shadow-xl uppercase tracking-widest text-xs"
+                          >
+                            Go to Tradewall
+                          </button>
+                        </div>
                       </div>
                     ) : (
                       <div className="text-center py-20 bg-slate-50 rounded-[3rem] border-4 border-dashed border-slate-100">
