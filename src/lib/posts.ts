@@ -213,6 +213,34 @@ export const getUserPosts = async (
 };
 
 /**
+ * Get posts by user ID with full populate (media, attachments, user relation)
+ * Uses /api/posts?filters[userId][$eq]=userId&populate=*&sort=createdAt:desc
+ */
+export const getPostsByUserId = async (userId: number): Promise<Post[]> => {
+  const token = getToken();
+  const params = new URLSearchParams();
+  params.set('filters[userId][$eq]', String(userId));
+  params.set('populate', '*');
+  params.set('sort', 'createdAt:desc');
+
+  try {
+    const response = await fetch(`${apiUrl}/api/posts?${params.toString()}`, {
+      method: 'GET',
+      headers: {
+        Authorization: token ? `Bearer ${token}` : '',
+      },
+    });
+
+    if (!response.ok) throw new Error('Failed to fetch user posts');
+    const result = await response.json();
+    return Array.isArray(result) ? result : result.data ?? [];
+  } catch (error) {
+    console.error('Error fetching user posts:', error);
+    throw error;
+  }
+};
+
+/**
  * Search posts by text and location
  */
 export const searchPosts = async (
