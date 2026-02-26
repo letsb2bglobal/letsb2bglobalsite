@@ -6,7 +6,7 @@ import ProtectedRoute, { useAuth } from "@/components/ProtectedRoute";
 import { getProfileByDocumentId, type UserProfile } from "@/lib/profile";
 import EnquiryModal from "@/components/EnquiryModal";
 import ContactInfoModal from "@/components/ContactInfoModal";
-import { getUserPosts, type Post } from "@/lib/posts";
+import { getTradeWallFeed, type Post } from "@/lib/posts";
 import { getOrCreateDirectThread } from "@/lib/enquiry";
 import { getOrCreateConversation } from "@/lib/messages";
 import FollowButton from "@/components/FollowButton";
@@ -68,8 +68,10 @@ export default function PublicProfilePage() {
   const fetchUserPosts = async (userId: number) => {
     setLoadingPosts(true);
     try {
-      const posts = await getUserPosts(userId);
-      setUserPosts(posts);
+      const response = await getTradeWallFeed(1, 50);
+      const items = response?.data || [];
+      const myItems = items.filter((item) => item.userId === userId);
+      setUserPosts(myItems);
     } catch (error) {
       console.error("Error fetching user posts:", error);
     } finally {
@@ -436,44 +438,65 @@ export default function PublicProfilePage() {
                   </div>
                 ) : userPosts.length > 0 ? (
                   <div className="space-y-4">
-                    {userPosts.map((post) => (
-                      <div
-                        key={post.id}
-                        className="p-4 rounded-xl border border-gray-100 hover:border-indigo-200 hover:bg-indigo-50/20 transition-all group"
-                      >
-                        <div className="flex justify-between items-start mb-2">
-                          <h4 className="font-bold text-gray-900 group-hover:text-indigo-600 transition-colors">
-                            {post.title}
-                          </h4>
-                          <span
-                            className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase ${
-                              post.intentType === "demand"
-                                ? "bg-red-50 text-red-600"
-                                : "bg-green-50 text-green-600"
-                            }`}
-                          >
-                            {post.intentType}
-                          </span>
-                        </div>
-                        <p className="text-xs text-gray-500 mb-2 truncate">
-                          {post.destinationCity} •{" "}
-                          {new Date(post.createdAt).toLocaleDateString()}
-                        </p>
-                        <div className="text-sm text-gray-600 line-clamp-2">
-                          {post.content && Array.isArray(post.content)
-                            ? post.content
-                                .map((block: any) =>
-                                  block.children
-                                    ?.map((child: any) => child.text)
+                    {userPosts.map((post) => {
+                      const media = post.custom_attachments || post.media;
+                      const hasMedia = media && media.length > 0;
+
+                      return (
+                        <div
+                          key={post.id}
+                          className="p-4 rounded-xl border border-gray-100 hover:border-indigo-200 hover:bg-indigo-50/20 transition-all group"
+                        >
+                          <div className="flex justify-between items-start mb-2">
+                            <h4 className="font-bold text-gray-900 group-hover:text-indigo-600 transition-colors">
+                              {post.user_profile?.company_name || post.title || "Tradewall Post"}
+                            </h4>
+                            {post.intentType && (
+                              <span
+                                className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase ${
+                                  post.intentType === "demand"
+                                    ? "bg-red-50 text-red-600"
+                                    : "bg-green-50 text-green-600"
+                                }`}
+                              >
+                                {post.intentType}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs text-gray-500 mb-2 truncate">
+                            {(post.destination || post.destinationCity) && (
+                              <>
+                                {post.destination || post.destinationCity} •{" "}
+                              </>
+                            )}
+                            {new Date(post.createdAt).toLocaleDateString()}
+                          </p>
+                          <div className="text-sm text-gray-600 line-clamp-3">
+                            {post.description
+                              || (Array.isArray(post.content)
+                                ? post.content
+                                    .map((block: any) =>
+                                      block.children
+                                        ?.map((child: any) => child.text)
+                                        .join(" ")
+                                    )
                                     .join(" ")
-                                )
-                                .join(" ")
-                            : typeof post.content === "string"
-                            ? post.content
-                            : ""}
+                                : typeof post.content === "string"
+                                ? post.content
+                                : "No description available.")}
+                          </div>
+                          {hasMedia && (
+                            <div className="mt-3 rounded-lg overflow-hidden border border-gray-100 bg-gray-50">
+                              <img
+                                src={media[0].url}
+                                alt="Media"
+                                className="w-full h-40 object-cover"
+                              />
+                            </div>
+                          )}
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 ) : (
                   <div className="text-center py-8 bg-gray-50 rounded-xl border border-dashed border-gray-200">
