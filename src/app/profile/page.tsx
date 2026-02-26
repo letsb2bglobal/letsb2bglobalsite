@@ -220,11 +220,10 @@ function ProfileContent() {
           google_map_link: (data as any).google_map_link || "",
         });
 
-        setAboutText(
-          data.about?.length
-            ? richTextToString(data.about)
-            : `${data.company_name} is a leading ${data.category_items?.[0]?.category || "business"} based in ${data.city}.`
-        );
+        const initialAbout = data.about?.length
+          ? richTextToString(data.about)
+          : "";
+        setAboutText(initialAbout);
 
         setContactForm({
           website: data.website || "",
@@ -632,9 +631,17 @@ function ProfileContent() {
                           setOnModalSave(() => async (data: any) => {
                             const updatedData = { ...data };
                             if (updatedData.about && typeof updatedData.about === 'string') {
-                              updatedData.about = [{ type: "paragraph", children: [{ type: "text", text: updatedData.about }] }];
+                              updatedData.about = [
+                                {
+                                  type: "paragraph",
+                                  children: [{ type: "text", text: updatedData.about }]
+                                }
+                              ];
                             }
-                            await handleUpdateProfile(updatedData);
+                            const success = await handleUpdateProfile(updatedData);
+                            if (success && typeof data.about === "string") {
+                              setAboutText(data.about);
+                            }
                           });
                           setIsEditModalOpen(true);
                         }}

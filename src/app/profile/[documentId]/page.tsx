@@ -1,12 +1,12 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import ProtectedRoute, { useAuth } from "@/components/ProtectedRoute";
 import { getProfileByDocumentId, type UserProfile } from "@/lib/profile";
 import EnquiryModal from "@/components/EnquiryModal";
 import ContactInfoModal from "@/components/ContactInfoModal";
-import { getTradeWallFeed, type Post } from "@/lib/posts";
+import { getPostsByUserId, type Post } from "@/lib/posts";
 import { getOrCreateDirectThread } from "@/lib/enquiry";
 import { getOrCreateConversation } from "@/lib/messages";
 import FollowButton from "@/components/FollowButton";
@@ -68,16 +68,23 @@ export default function PublicProfilePage() {
   const fetchUserPosts = async (userId: number) => {
     setLoadingPosts(true);
     try {
-      const response = await getTradeWallFeed(1, 50);
-      const items = response?.data || [];
-      const myItems = items.filter((item) => item.userId === userId);
-      setUserPosts(myItems);
+      const posts = await getPostsByUserId(userId);
+      setUserPosts(posts);
     } catch (error) {
       console.error("Error fetching user posts:", error);
+      setUserPosts([]);
     } finally {
       setLoadingPosts(false);
     }
   };
+
+  // Flatten media from all posts (post.media + post.custom_attachments) for Media Gallery
+  const mediaGallery = useMemo(() => {
+    return userPosts.flatMap((post) => [
+      ...(post.media || []),
+      ...(post.custom_attachments || []),
+    ]);
+  }, [userPosts]);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -220,6 +227,52 @@ export default function PublicProfilePage() {
                     <span className="px-2 py-0.5 bg-blue-50 text-blue-600 text-[10px] font-bold rounded border border-blue-100 ml-2 uppercase">
                       ID: {profile?.userId}
                     </span>
+                    {(profile as any)?.kyc_status && (
+                      <span
+                        className={`px-2 py-0.5 text-[10px] font-bold rounded border uppercase ${
+                          (profile as any).kyc_status === "Verified"
+                            ? "bg-green-50 text-green-600 border-green-100"
+                            : (profile as any).kyc_status === "Pending"
+                            ? "bg-amber-50 text-amber-600 border-amber-100"
+                            : (profile as any).kyc_status === "Rejected"
+                            ? "bg-red-50 text-red-600 border-red-100"
+                            : "bg-gray-50 text-gray-600 border-gray-100"
+                        }`}
+                      >
+                        {(profile as any).kyc_status}
+                      </span>
+                    )}
+                    {(profile as any)?.profile_tier && (
+                      <span
+                        className={`px-2 py-0.5 text-[10px] font-bold rounded border uppercase ${
+                          String((profile as any).profile_tier).toUpperCase() === "ENTRY"
+                            ? "bg-gray-50 text-gray-600 border-gray-100"
+                            : String((profile as any).profile_tier).toUpperCase() === "PREMIUM"
+                            ? "bg-blue-50 text-blue-600 border-blue-100"
+                            : String((profile as any).profile_tier).toUpperCase() === "GOLD"
+                            ? "bg-amber-50 text-amber-600 border-amber-100"
+                            : String((profile as any).profile_tier).toUpperCase() === "PLATINUM"
+                            ? "bg-purple-50 text-purple-600 border-purple-100"
+                            : "bg-gray-50 text-gray-600 border-gray-100"
+                        }`}
+                      >
+                        {String((profile as any).profile_tier).toUpperCase()}
+                      </span>
+                    )}
+                  </div>
+                  <div className="mt-1">
+                    {((profile as any)?.rating_average ?? 0) > 0 ? (
+                      <div className="text-sm text-gray-600 flex items-center gap-1">
+                        <span>⭐</span>
+                        <span>{Number((profile as any).rating_average).toFixed(1)}</span>
+                      </div>
+                    ) : (
+                      <div className="text-sm text-gray-500">No ratings yet</div>
+                    )}
+                  </div>
+                  <div className="text-sm text-gray-600 space-y-1 mt-1">
+                    <div>Profile Completion: {Math.round(((profile as any)?.completion_rate ?? 0) * 100)}%</div>
+                    <div>Response Rate: {Math.round(((profile as any)?.response_rate ?? 0) * 100)}%</div>
                   </div>
                   {profile && (profile as any).brand_tagline && (
                     <p className="text-gray-500 italic text-sm mt-0.5">"{ (profile as any).brand_tagline }"</p>
@@ -313,13 +366,14 @@ export default function PublicProfilePage() {
               <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
                 <h2 className="text-xl font-bold text-gray-900 mb-4">About</h2>
                 <p className="text-gray-700 whitespace-pre-wrap leading-relaxed">
-                  {profile.about?.length
-                    ? richTextToString(profile.about)
-                    : `${profile.company_name} is a leading ${
-                        profile.category_items?.[0]?.category || "business"
-                      } based in ${
-                        profile.city
-                      }. Connect with us for premium B2B services.`}
+                  {(() => {
+                    const aboutText = profile.about?.length
+                      ? richTextToString(profile.about)
+                      : "";
+                    return aboutText && aboutText.trim() !== ""
+                      ? aboutText
+                      : "No description added yet.";
+                  })()}
                 </p>
               </div>
 
@@ -331,87 +385,69 @@ export default function PublicProfilePage() {
                   </h2>
                 </div>
 
-                {!profile?.image_sections || profile.image_sections.length === 0 ? (
+                {mediaGallery.length === 0 ? (
                   <div className="text-center py-10 bg-gray-50 rounded-xl border border-dashed border-gray-200">
                     <p className="text-gray-500 text-sm">No media sections added yet.</p>
                   </div>
                 ) : (
-                  <div className="space-y-12">
-                    {profile.image_sections
-                      .sort((a, b) => a.order - b.order)
-                      .map((section) => (
-                        <div key={section.id}>
-                          <h3 className="text-lg font-semibold text-gray-800 mb-1">
-                            {section.Title}
-                          </h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                    {mediaGallery.map((item: any, index: number) => {
+                      const url = item?.url ?? item;
+                      if (!url || typeof url !== "string") return null;
+                      const isVideo = url.toLowerCase().match(/\.(mp4|webm|ogg|mov|m4v)$/) || url.includes("youtube.com") || url.includes("youtu.be") || url.includes("vimeo.com");
+                      const isFile = url.toLowerCase().match(/\.(pdf|doc|docx|xls|xlsx|ppt|pptx|txt|csv)$/);
 
-                          {section.description && (
-                            <p className="text-sm text-gray-500 mb-4">
-                              {section.description}
-                            </p>
-                          )}
-
-                          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-                            {section.imageUrls.map((url, index) => {
-                                const isVideo = url.toLowerCase().match(/\.(mp4|webm|ogg|mov|m4v)$/) || url.includes('youtube.com') || url.includes('youtu.be') || url.includes('vimeo.com');
-                                let videoContent = null;
-
-                                if (isVideo) {
-                                    // Check if YouTube
-                                    const ytMatch = url.match(/(?:youtube\.com\/(?:[^\/"\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
-                                    if (ytMatch) {
-                                        const videoId = ytMatch[1];
-                                        videoContent = (
-                                            <iframe 
-                                                src={`https://www.youtube.com/embed/${videoId}`} 
-                                                className="w-full h-full object-cover"
-                                                title="YouTube video player"
-                                                frameBorder="0"
-                                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                                                allowFullScreen
-                                            />
-                                        );
-                                    } else {
-                                        // Assume direct video or other
-                                        videoContent = (
-                                            <video controls className="w-full h-full object-cover bg-black rounded-xl">
-                                                <source src={url} />
-                                                Your browser does not support the video tag.
-                                            </video>
-                                        );
-                                    }
-                                }
-
-                                return (
-                                  <div
-                                    key={index}
-                                    className="relative aspect-video overflow-hidden rounded-xl border border-gray-100 bg-gray-50 shadow-sm group"
-                                  >
-                                    {isVideo ? (
-                                        videoContent
-                                    ) : (
-                                        <div 
-                                            className="w-full h-full relative cursor-pointer"
-                                            onClick={() => setPreviewImage(url)}
-                                        >
-                                            <img
-                                              src={url}
-                                              alt={`${section.Title}-${index}`}
-                                              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-                                            />
-                                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all flex items-center justify-center pointer-events-none">
-                                              <svg className="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
-                                              </svg>
-                                            </div>
-                                        </div>
-                                    )}
-                                  </div>
-                                );
-                            })}
+                      if (isVideo) {
+                        const ytMatch = url.match(/(?:youtube\.com\/(?:[^\/"\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+                        return (
+                          <div key={index} className="relative aspect-video overflow-hidden rounded-xl border border-gray-100 bg-gray-50 shadow-sm">
+                            {ytMatch ? (
+                              <iframe
+                                src={`https://www.youtube.com/embed/${ytMatch[1]}`}
+                                className="w-full h-full object-cover"
+                                title="YouTube video"
+                                frameBorder="0"
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                allowFullScreen
+                              />
+                            ) : (
+                              <video controls className="w-full h-full object-cover bg-black rounded-xl">
+                                <source src={url} />
+                                Your browser does not support the video tag.
+                              </video>
+                            )}
+                          </div>
+                        );
+                      }
+                      if (isFile) {
+                        return (
+                          <a key={index} href={url} download target="_blank" rel="noreferrer" className="relative aspect-video overflow-hidden rounded-xl border border-gray-100 bg-gray-50 shadow-sm flex flex-col items-center justify-center p-4 hover:bg-gray-100 transition-colors">
+                            <svg className="w-10 h-10 text-indigo-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            <span className="text-xs font-medium text-gray-600 truncate">{item?.name || "Document"}</span>
+                          </a>
+                        );
+                      }
+                      return (
+                        <div
+                          key={index}
+                          className="relative aspect-video overflow-hidden rounded-xl border border-gray-100 bg-gray-50 shadow-sm group cursor-pointer"
+                          onClick={() => setPreviewImage(url)}
+                        >
+                          <img
+                            src={url}
+                            alt={`Media ${index + 1}`}
+                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                          />
+                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all flex items-center justify-center pointer-events-none">
+                            <svg className="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
+                            </svg>
                           </div>
                         </div>
-                      ))}
+                      );
+                    })}
                   </div>
                 )}
               </div>
