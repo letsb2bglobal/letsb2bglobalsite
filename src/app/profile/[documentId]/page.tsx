@@ -1,12 +1,12 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import ProtectedRoute, { useAuth } from "@/components/ProtectedRoute";
 import { getProfileByDocumentId, type UserProfile } from "@/lib/profile";
 import EnquiryModal from "@/components/EnquiryModal";
 import ContactInfoModal from "@/components/ContactInfoModal";
-import { getUserPosts, type Post } from "@/lib/posts";
+import { getPostsByUserId, getTradeWallFeed, deletePost, type Post } from "@/lib/posts";
 import { getOrCreateDirectThread } from "@/lib/enquiry";
 import { getOrCreateConversation } from "@/lib/messages";
 import FollowButton from "@/components/FollowButton";
@@ -32,6 +32,15 @@ export default function PublicProfilePage() {
   // Posts states
   const [userPosts, setUserPosts] = useState<Post[]>([]);
   const [loadingPosts, setLoadingPosts] = useState(false);
+  const [openMenuPostId, setOpenMenuPostId] = useState<string | null>(null);
+  const [deletingPostId, setDeletingPostId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!openMenuPostId) return;
+    const close = () => setOpenMenuPostId(null);
+    document.addEventListener("click", close);
+    return () => document.removeEventListener("click", close);
+  }, [openMenuPostId]);
 
   // Networking States
   const [isConnectionsModalOpen, setIsConnectionsModalOpen] = useState(false);
@@ -68,14 +77,46 @@ export default function PublicProfilePage() {
   const fetchUserPosts = async (userId: number) => {
     setLoadingPosts(true);
     try {
-      const posts = await getUserPosts(userId);
+      // Try direct filter first; fall back to feed + client-side filter if empty
+      let posts = await getPostsByUserId(userId);
+      if (posts.length === 0) {
+        const feed = await getTradeWallFeed(1, 100);
+        posts = (feed?.data || []).filter((p) => p.userId === userId);
+      }
       setUserPosts(posts);
     } catch (error) {
       console.error("Error fetching user posts:", error);
+      setUserPosts([]);
     } finally {
       setLoadingPosts(false);
     }
   };
+
+  const handleDeletePost = async (postDocumentId: string) => {
+    if (!window.confirm("Are you sure you want to delete this post?")) return;
+    setDeletingPostId(postDocumentId);
+    try {
+      await deletePost(postDocumentId);
+      setUserPosts((prev) => prev.filter((p) => p.documentId !== postDocumentId));
+    } catch (err: any) {
+      console.error("Delete failed:", err);
+      alert(err?.message || "Failed to delete post.");
+    } finally {
+      setDeletingPostId(null);
+    }
+  };
+
+  // Media Gallery: sourced from profile.image_sections via /api/user-profiles/:documentId?populate=*
+  const mediaGallery = useMemo(() => {
+    const apiBase = process.env.NEXT_PUBLIC_API_URL || "https://api.letsb2b.com";
+    return (profile?.image_sections || []).flatMap((section) =>
+      (section.imageUrls || []).map((url) => ({
+        url: url.startsWith("http") ? url : `${apiBase}${url}`,
+        name: section.Title,
+        media_type: section.media_type,
+      }))
+    );
+  }, [profile?.image_sections]);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -218,6 +259,52 @@ export default function PublicProfilePage() {
                     <span className="px-2 py-0.5 bg-blue-50 text-blue-600 text-[10px] font-bold rounded border border-blue-100 ml-2 uppercase">
                       ID: {profile?.userId}
                     </span>
+                    {(profile as any)?.kyc_status && (
+                      <span
+                        className={`px-2 py-0.5 text-[10px] font-bold rounded border uppercase ${
+                          (profile as any).kyc_status === "Verified"
+                            ? "bg-green-50 text-green-600 border-green-100"
+                            : (profile as any).kyc_status === "Pending"
+                            ? "bg-amber-50 text-amber-600 border-amber-100"
+                            : (profile as any).kyc_status === "Rejected"
+                            ? "bg-red-50 text-red-600 border-red-100"
+                            : "bg-gray-50 text-gray-600 border-gray-100"
+                        }`}
+                      >
+                        {(profile as any).kyc_status}
+                      </span>
+                    )}
+                    {(profile as any)?.profile_tier && (
+                      <span
+                        className={`px-2 py-0.5 text-[10px] font-bold rounded border uppercase ${
+                          String((profile as any).profile_tier).toUpperCase() === "ENTRY"
+                            ? "bg-gray-50 text-gray-600 border-gray-100"
+                            : String((profile as any).profile_tier).toUpperCase() === "PREMIUM"
+                            ? "bg-blue-50 text-blue-600 border-blue-100"
+                            : String((profile as any).profile_tier).toUpperCase() === "GOLD"
+                            ? "bg-amber-50 text-amber-600 border-amber-100"
+                            : String((profile as any).profile_tier).toUpperCase() === "PLATINUM"
+                            ? "bg-purple-50 text-purple-600 border-purple-100"
+                            : "bg-gray-50 text-gray-600 border-gray-100"
+                        }`}
+                      >
+                        {String((profile as any).profile_tier).toUpperCase()}
+                      </span>
+                    )}
+                  </div>
+                  <div className="mt-1">
+                    {((profile as any)?.rating_average ?? 0) > 0 ? (
+                      <div className="text-sm text-gray-600 flex items-center gap-1">
+                        <span>⭐</span>
+                        <span>{Number((profile as any).rating_average).toFixed(1)}</span>
+                      </div>
+                    ) : (
+                      <div className="text-sm text-gray-500">No ratings yet</div>
+                    )}
+                  </div>
+                  <div className="text-sm text-gray-600 space-y-1 mt-1">
+                    <div>Profile Completion: {Math.round(((profile as any)?.completion_rate ?? 0) * 100)}%</div>
+                    <div>Response Rate: {Math.round(((profile as any)?.response_rate ?? 0) * 100)}%</div>
                   </div>
                   {profile && (profile as any).brand_tagline && (
                     <p className="text-gray-500 italic text-sm mt-0.5">"{ (profile as any).brand_tagline }"</p>
@@ -311,13 +398,14 @@ export default function PublicProfilePage() {
               <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
                 <h2 className="text-xl font-bold text-gray-900 mb-4">About</h2>
                 <p className="text-gray-700 whitespace-pre-wrap leading-relaxed">
-                  {profile.about?.length
-                    ? richTextToString(profile.about)
-                    : `${profile.company_name} is a leading ${
-                        profile.category_items?.[0]?.category || "business"
-                      } based in ${
-                        profile.city
-                      }. Connect with us for premium B2B services.`}
+                  {(() => {
+                    const aboutText = profile.about?.length
+                      ? richTextToString(profile.about)
+                      : "";
+                    return aboutText && aboutText.trim() !== ""
+                      ? aboutText
+                      : "No description added yet.";
+                  })()}
                 </p>
               </div>
 
@@ -329,87 +417,69 @@ export default function PublicProfilePage() {
                   </h2>
                 </div>
 
-                {!profile?.image_sections || profile.image_sections.length === 0 ? (
+                {mediaGallery.length === 0 ? (
                   <div className="text-center py-10 bg-gray-50 rounded-xl border border-dashed border-gray-200">
                     <p className="text-gray-500 text-sm">No media sections added yet.</p>
                   </div>
                 ) : (
-                  <div className="space-y-12">
-                    {profile.image_sections
-                      .sort((a, b) => a.order - b.order)
-                      .map((section) => (
-                        <div key={section.id}>
-                          <h3 className="text-lg font-semibold text-gray-800 mb-1">
-                            {section.Title}
-                          </h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                    {mediaGallery.map((item: any, index: number) => {
+                      const url = item?.url;
+                      if (!url || typeof url !== "string") return null;
+                      const isVideo = url.toLowerCase().match(/\.(mp4|webm|ogg|mov|m4v)$/) || url.includes("youtube.com") || url.includes("youtu.be") || url.includes("vimeo.com");
+                      const isFile = url.toLowerCase().match(/\.(pdf|doc|docx|xls|xlsx|ppt|pptx|txt|csv)$/);
 
-                          {section.description && (
-                            <p className="text-sm text-gray-500 mb-4">
-                              {section.description}
-                            </p>
-                          )}
-
-                          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-                            {section.imageUrls.map((url, index) => {
-                                const isVideo = url.toLowerCase().match(/\.(mp4|webm|ogg|mov|m4v)$/) || url.includes('youtube.com') || url.includes('youtu.be') || url.includes('vimeo.com');
-                                let videoContent = null;
-
-                                if (isVideo) {
-                                    // Check if YouTube
-                                    const ytMatch = url.match(/(?:youtube\.com\/(?:[^\/"\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
-                                    if (ytMatch) {
-                                        const videoId = ytMatch[1];
-                                        videoContent = (
-                                            <iframe 
-                                                src={`https://www.youtube.com/embed/${videoId}`} 
-                                                className="w-full h-full object-cover"
-                                                title="YouTube video player"
-                                                frameBorder="0"
-                                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                                                allowFullScreen
-                                            />
-                                        );
-                                    } else {
-                                        // Assume direct video or other
-                                        videoContent = (
-                                            <video controls className="w-full h-full object-cover bg-black rounded-xl">
-                                                <source src={url} />
-                                                Your browser does not support the video tag.
-                                            </video>
-                                        );
-                                    }
-                                }
-
-                                return (
-                                  <div
-                                    key={index}
-                                    className="relative aspect-video overflow-hidden rounded-xl border border-gray-100 bg-gray-50 shadow-sm group"
-                                  >
-                                    {isVideo ? (
-                                        videoContent
-                                    ) : (
-                                        <div 
-                                            className="w-full h-full relative cursor-pointer"
-                                            onClick={() => setPreviewImage(url)}
-                                        >
-                                            <img
-                                              src={url}
-                                              alt={`${section.Title}-${index}`}
-                                              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-                                            />
-                                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all flex items-center justify-center pointer-events-none">
-                                              <svg className="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
-                                              </svg>
-                                            </div>
-                                        </div>
-                                    )}
-                                  </div>
-                                );
-                            })}
+                      if (isVideo) {
+                        const ytMatch = url.match(/(?:youtube\.com\/(?:[^\/"\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+                        return (
+                          <div key={index} className="relative aspect-video overflow-hidden rounded-xl border border-gray-100 bg-gray-50 shadow-sm">
+                            {ytMatch ? (
+                              <iframe
+                                src={`https://www.youtube.com/embed/${ytMatch[1]}`}
+                                className="w-full h-full object-cover"
+                                title="YouTube video"
+                                frameBorder="0"
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                allowFullScreen
+                              />
+                            ) : (
+                              <video controls className="w-full h-full object-cover bg-black rounded-xl">
+                                <source src={url} />
+                                Your browser does not support the video tag.
+                              </video>
+                            )}
+                          </div>
+                        );
+                      }
+                      if (isFile) {
+                        return (
+                          <a key={index} href={url} download target="_blank" rel="noreferrer" className="relative aspect-video overflow-hidden rounded-xl border border-gray-100 bg-gray-50 shadow-sm flex flex-col items-center justify-center p-4 hover:bg-gray-100 transition-colors">
+                            <svg className="w-10 h-10 text-indigo-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            <span className="text-xs font-medium text-gray-600 truncate">{item?.name || "Document"}</span>
+                          </a>
+                        );
+                      }
+                      return (
+                        <div
+                          key={index}
+                          className="relative aspect-video overflow-hidden rounded-xl border border-gray-100 bg-gray-50 shadow-sm group cursor-pointer"
+                          onClick={() => setPreviewImage(url)}
+                        >
+                          <img
+                            src={url}
+                            alt={`Media ${index + 1}`}
+                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                          />
+                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all flex items-center justify-center pointer-events-none">
+                            <svg className="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
+                            </svg>
                           </div>
                         </div>
-                      ))}
+                      );
+                    })}
                   </div>
                 )}
               </div>
@@ -436,44 +506,102 @@ export default function PublicProfilePage() {
                   </div>
                 ) : userPosts.length > 0 ? (
                   <div className="space-y-4">
-                    {userPosts.map((post) => (
-                      <div
-                        key={post.id}
-                        className="p-4 rounded-xl border border-gray-100 hover:border-indigo-200 hover:bg-indigo-50/20 transition-all group"
-                      >
-                        <div className="flex justify-between items-start mb-2">
-                          <h4 className="font-bold text-gray-900 group-hover:text-indigo-600 transition-colors">
-                            {post.title}
-                          </h4>
-                          <span
-                            className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase ${
-                              post.intentType === "demand"
-                                ? "bg-red-50 text-red-600"
-                                : "bg-green-50 text-green-600"
-                            }`}
-                          >
-                            {post.intentType}
-                          </span>
-                        </div>
-                        <p className="text-xs text-gray-500 mb-2 truncate">
-                          {post.destinationCity} •{" "}
-                          {new Date(post.createdAt).toLocaleDateString()}
-                        </p>
-                        <div className="text-sm text-gray-600 line-clamp-2">
-                          {post.content && Array.isArray(post.content)
-                            ? post.content
-                                .map((block: any) =>
-                                  block.children
-                                    ?.map((child: any) => child.text)
+                    {userPosts.map((post) => {
+                      const media = post.custom_attachments || post.media;
+                      const hasMedia = media && media.length > 0;
+
+                      return (
+                        <div
+                          key={post.id}
+                          className="p-4 rounded-xl border border-gray-100 hover:border-indigo-200 hover:bg-indigo-50/20 transition-all group"
+                        >
+                          <div className="flex items-start gap-2 mb-2">
+                            <h4 className="flex-1 font-bold text-gray-900 group-hover:text-indigo-600 transition-colors">
+                              {post.user_profile?.company_name || post.title || "Tradewall Post"}
+                            </h4>
+                            {post.intentType && (
+                              <span
+                                className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase shrink-0 ${
+                                  post.intentType === "demand"
+                                    ? "bg-red-50 text-red-600"
+                                    : "bg-green-50 text-green-600"
+                                }`}
+                              >
+                                {post.intentType}
+                              </span>
+                            )}
+                            <div className="relative shrink-0">
+                              <button
+                                onClick={(e) => { e.stopPropagation(); setOpenMenuPostId(openMenuPostId === post.documentId ? null : post.documentId); }}
+                                className="p-1 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
+                              >
+                                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                  <path d="M10 6a2 2 0 110-4 2 2 0 010 4zm0 6a2 2 0 110-4 2 2 0 010 4zm0 6a2 2 0 110-4 2 2 0 010 4z"/>
+                                </svg>
+                              </button>
+                              {openMenuPostId === post.documentId && (
+                                <div
+                                  className="absolute right-0 top-7 z-50 w-36 bg-white border border-gray-100 rounded-xl shadow-lg overflow-hidden"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  <button
+                                    onClick={() => { setOpenMenuPostId(null); router.push(`/?editPost=${post.documentId}`); }}
+                                    className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                                  >
+                                    <svg className="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                    </svg>
+                                    Edit
+                                  </button>
+                                  <div className="h-px bg-gray-100" />
+                                  <button
+                                    onClick={() => { setOpenMenuPostId(null); handleDeletePost(post.documentId); }}
+                                    disabled={deletingPostId === post.documentId}
+                                    className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50"
+                                  >
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                    </svg>
+                                    {deletingPostId === post.documentId ? "Deleting..." : "Delete"}
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                          <p className="text-xs text-gray-500 mb-2 truncate">
+                            {(post.destination || post.destinationCity) && (
+                              <>
+                                {post.destination || post.destinationCity} •{" "}
+                              </>
+                            )}
+                            {new Date(post.createdAt).toLocaleDateString()}
+                          </p>
+                          <div className="text-sm text-gray-600 line-clamp-3">
+                            {post.description
+                              || (Array.isArray(post.content)
+                                ? post.content
+                                    .map((block: any) =>
+                                      block.children
+                                        ?.map((child: any) => child.text)
+                                        .join(" ")
+                                    )
                                     .join(" ")
-                                )
-                                .join(" ")
-                            : typeof post.content === "string"
-                            ? post.content
-                            : ""}
+                                : typeof post.content === "string"
+                                ? post.content
+                                : "No description available.")}
+                          </div>
+                          {hasMedia && (
+                            <div className="mt-3 rounded-lg overflow-hidden border border-gray-100 bg-gray-50">
+                              <img
+                                src={media[0].url}
+                                alt="Media"
+                                className="w-full h-40 object-cover"
+                              />
+                            </div>
+                          )}
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 ) : (
                   <div className="text-center py-8 bg-gray-50 rounded-xl border border-dashed border-gray-200">
