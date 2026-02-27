@@ -531,7 +531,7 @@ export const getProfileByDocumentId = async (
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://api.letsb2b.com";
 
   try {
-    const response = await fetch(`${apiUrl}/api/user-profiles/${documentId}`, {
+    const response = await fetch(`${apiUrl}/api/user-profiles/${documentId}?populate=*`, {
       method: "GET",
       headers: {
         Authorization: `Bearer ${token}`,
