@@ -238,20 +238,14 @@ export default function SignInPage() {
       placeholder="000000"
       maxLength={6}
       autoFocus
-      className="w-full px-4 py-4 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-center text-3xl font-black tracking-[0.5em] text-gray-800 bg-gray-50"
+      className="w-full px-4 py-4 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-center text-3xl font-black tracking-[0.5em] text-gray-800 bg-white"
     />
   );
 
   // ── Logo (shared) ─────────────────────────────────────────────────────
   const Logo = () => (
-    <div className="flex items-center justify-center mb-8">
-      <Image src="/images/logo.png" alt="LetsB2B" width={48} height={48} className="object-contain mr-3" />
-      <div className="flex flex-col">
-        <span className="text-2xl tracking-tight text-[#1e293b] leading-none mb-1">
-          <span className="font-normal">LET'S</span> <span className="font-bold">B2B</span>
-        </span>
-        <span className="text-[10px] tracking-[0.4em] text-blue-600 font-bold uppercase">Global</span>
-      </div>
+    <div className="flex items-center justify-center mb-6">
+      <Image src="/LetsB2B_logo.png" alt="LetsB2B" width={220} height={58} className="object-contain" />
     </div>
   );
 
@@ -266,22 +260,23 @@ export default function SignInPage() {
         {/* ── Normal login ─────────────────────────────────────────────── */}
         {loginStep === 'login' && (
           <form onSubmit={handleLogin} className="w-full space-y-4">
-            <div className="text-center mb-6">
-              <h2 className="text-2xl font-bold text-gray-900">Welcome back</h2>
-              <p className="text-sm text-gray-500 mt-1">Sign in to your B2B account</p>
+            <div className="mb-6">
+              <h2 className="text-2xl font-bold text-gray-900">Log In</h2>
+              <p className="text-sm text-gray-400 mt-1">Please enter your details below.</p>
             </div>
 
             {/* Identifier */}
             <div className="space-y-1">
+              <label className="text-xs font-semibold text-gray-600 uppercase tracking-wider">E-mail</label>
               <input
                 type="text"
                 name="identifier"
                 value={loginData.identifier}
                 onChange={handleLoginChange}
-                placeholder="Email or username"
+                placeholder="Enter your email"
                 autoComplete="username"
-                className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-800 placeholder-gray-400 bg-gray-50 transition-all ${
-                  errors.identifier ? 'border-red-400 bg-red-50/30' : 'border-gray-200'
+                className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-800 placeholder-gray-300 bg-white transition-all ${
+                  errors.identifier ? 'border-red-400 bg-red-50/30' : 'border-gray-200 hover:border-purple-300'
                 }`}
               />
               {errors.identifier && <p className="text-red-500 text-xs font-medium ml-1">{errors.identifier}</p>}
@@ -289,23 +284,24 @@ export default function SignInPage() {
 
             {/* Password */}
             <div className="space-y-1">
+              <label className="text-xs font-semibold text-gray-600 uppercase tracking-wider">Password</label>
               <div className="relative">
                 <input
                   type={showPassword ? 'text' : 'password'}
                   name="password"
                   value={loginData.password}
                   onChange={handleLoginChange}
-                  placeholder="Password"
+                  placeholder="Enter your password"
                   autoComplete="current-password"
-                  className={`w-full px-4 py-3 pr-11 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-800 placeholder-gray-400 bg-gray-50 transition-all ${
-                    errors.password ? 'border-red-400 bg-red-50/30' : 'border-gray-200'
+                  className={`w-full px-4 py-3 pr-11 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-800 placeholder-gray-300 bg-white transition-all ${
+                    errors.password ? 'border-red-400 bg-red-50/30' : 'border-gray-200 hover:border-purple-300'
                   }`}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword((v) => !v)}
                   tabIndex={-1}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-purple-600"
                 >
                   {showPassword ? (
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -324,9 +320,10 @@ export default function SignInPage() {
                 <button
                   type="button"
                   onClick={switchToForgot}
-                  className="text-xs font-bold text-blue-600 hover:text-blue-800 hover:underline mt-1"
+                  className="text-xs font-semibold hover:underline mt-1"
+                  style={{ color: "#612178" }}
                 >
-                  Forgot password?
+                  Forgot Password ?
                 </button>
               </div>
             </div>
@@ -336,16 +333,21 @@ export default function SignInPage() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full py-3.5 bg-blue-600 text-white font-bold text-sm rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-200 disabled:opacity-50 flex items-center justify-center gap-2"
+              className="w-full py-3.5 text-white font-bold text-sm transition-all disabled:opacity-50 flex items-center justify-center gap-2 mt-2"
+              style={{
+                background: "#612178",
+                borderRadius: "16px",
+                boxShadow: "0px 4px 10px -2px #00000040",
+              }}
             >
               {isLoading ? (
                 <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Signing in...</>
-              ) : 'SIGN IN'}
+              ) : 'Login'}
             </button>
 
-            <p className="text-center text-sm text-gray-500">
-              Don't have an account?{' '}
-              <Link href="/signup" className="text-blue-600 font-bold hover:underline">Create account</Link>
+            <p className="text-center text-sm text-gray-500 pt-1">
+              Don't Have An Account ?{' '}
+              <span className="font-bold" style={{ color: "#612178" }}>Sign Up</span>
             </p>
           </form>
         )}
@@ -372,10 +374,10 @@ export default function SignInPage() {
             <button
               onClick={handleResendVerification}
               disabled={resendCooldown > 0}
-              className={`w-full py-3.5 font-bold text-sm rounded-xl transition-all flex items-center justify-center gap-2 ${
+              className={`w-full py-3.5 font-bold text-sm rounded-lg transition-all flex items-center justify-center gap-2 ${
                 resendCooldown > 0
                   ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                  : 'bg-blue-600 text-white hover:bg-blue-700 shadow-lg shadow-blue-200'
+                  : 'bg-[#6c47ff] text-white hover:bg-[#5a35ee] shadow-lg shadow-purple-200'
               }`}
             >
               {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : 'Resend Verification Code'}
@@ -403,8 +405,8 @@ export default function SignInPage() {
       {forgotStep === 'email' && (
         <form onSubmit={handleForgotSendOtp} className="w-full space-y-5">
           <div className="text-center mb-2">
-            <div className="w-14 h-14 bg-blue-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <svg className="w-7 h-7 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="w-14 h-14 bg-purple-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <svg className="w-7 h-7 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
               </svg>
             </div>
@@ -419,8 +421,8 @@ export default function SignInPage() {
               onChange={(e) => { setForgotEmail(e.target.value); clearAll(); }}
               placeholder="Email address"
               autoFocus
-              className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-800 bg-gray-50 ${
-                errors.forgotEmail ? 'border-red-400' : 'border-gray-200'
+              className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-800 bg-white ${
+                errors.forgotEmail ? 'border-red-400' : 'border-gray-200 hover:border-purple-300'
               }`}
             />
             {errors.forgotEmail && <p className="text-red-500 text-xs font-medium ml-1">{errors.forgotEmail}</p>}
@@ -431,7 +433,7 @@ export default function SignInPage() {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full py-3.5 bg-blue-600 text-white font-bold text-sm rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-200 disabled:opacity-50 flex items-center justify-center gap-2"
+            className="w-full py-3.5 bg-[#6c47ff] text-white font-bold text-sm rounded-lg hover:bg-[#5a35ee] transition-all shadow-lg shadow-purple-200 disabled:opacity-50 flex items-center justify-center gap-2"
           >
             {isLoading ? (
               <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Sending...</>
@@ -452,8 +454,8 @@ export default function SignInPage() {
       {forgotStep === 'otp' && (
         <form onSubmit={handleForgotVerifyOtp} className="w-full space-y-5">
           <div className="text-center mb-2">
-            <div className="w-14 h-14 bg-blue-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <svg className="w-7 h-7 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="w-14 h-14 bg-purple-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <svg className="w-7 h-7 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
               </svg>
             </div>
@@ -472,7 +474,7 @@ export default function SignInPage() {
           <button
             type="submit"
             disabled={isLoading || forgotOtp.length < 6}
-            className="w-full py-3.5 bg-blue-600 text-white font-bold text-sm rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-200 disabled:opacity-50 flex items-center justify-center gap-2"
+            className="w-full py-3.5 bg-[#6c47ff] text-white font-bold text-sm rounded-lg hover:bg-[#5a35ee] transition-all shadow-lg shadow-purple-200 disabled:opacity-50 flex items-center justify-center gap-2"
           >
             {isLoading ? (
               <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Verifying...</>
@@ -492,7 +494,7 @@ export default function SignInPage() {
               onClick={handleResendResetOtp}
               disabled={resendCooldown > 0}
               className={`font-bold transition-colors ${
-                resendCooldown > 0 ? 'text-gray-300 cursor-not-allowed' : 'text-blue-600 hover:text-blue-800'
+                resendCooldown > 0 ? 'text-gray-300 cursor-not-allowed' : 'text-purple-600 hover:text-purple-800'
               }`}
             >
               {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : 'Resend Code'}
@@ -523,8 +525,8 @@ export default function SignInPage() {
                 onChange={(e) => { setNewPassword(e.target.value); if (errors.newPassword) setErrors((p) => ({ ...p, newPassword: '' })); }}
                 placeholder="New password (min 8 characters)"
                 autoFocus
-                className={`w-full px-4 py-3 pr-11 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-800 bg-gray-50 ${
-                  errors.newPassword ? 'border-red-400' : 'border-gray-200'
+                className={`w-full px-4 py-3 pr-11 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-800 bg-white ${
+                  errors.newPassword ? 'border-red-400' : 'border-gray-200 hover:border-purple-300'
                 }`}
               />
               <button type="button" onClick={() => setShowNewPassword((v) => !v)} tabIndex={-1}
@@ -547,8 +549,8 @@ export default function SignInPage() {
               value={confirmPassword}
               onChange={(e) => { setConfirmPassword(e.target.value); if (errors.confirmPassword) setErrors((p) => ({ ...p, confirmPassword: '' })); }}
               placeholder="Confirm new password"
-              className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-800 bg-gray-50 ${
-                errors.confirmPassword ? 'border-red-400' : 'border-gray-200'
+              className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-800 bg-white ${
+                errors.confirmPassword ? 'border-red-400' : 'border-gray-200 hover:border-purple-300'
               }`}
             />
             {errors.confirmPassword && <p className="text-red-500 text-xs font-medium ml-1">{errors.confirmPassword}</p>}

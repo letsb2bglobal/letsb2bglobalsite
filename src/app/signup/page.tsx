@@ -140,22 +140,16 @@ export default function SignUpPage() {
   return (
     <AuthLayout>
       {/* Logo */}
-      <div className="flex items-center justify-center mb-8">
-        <Image src="/images/logo.png" alt="LetsB2B" width={48} height={48} className="object-contain mr-3" />
-        <div className="flex flex-col">
-          <span className="text-2xl tracking-tight text-[#1e293b] leading-none mb-1">
-            <span className="font-normal">LET'S</span> <span className="font-bold">B2B</span>
-          </span>
-          <span className="text-[10px] tracking-[0.4em] text-blue-600 font-bold uppercase">Global</span>
-        </div>
+      <div className="flex items-center justify-center mb-6">
+        <Image src="/LetsB2B_logo.png" alt="LetsB2B" width={220} height={58} className="object-contain" />
       </div>
 
       {/* ── STEP: FORM ────────────────────────────────────────────────── */}
       {step === 'form' && (
         <form onSubmit={handleRegister} className="w-full space-y-4">
-          <div className="text-center mb-6">
-            <h2 className="text-2xl font-bold text-gray-900">Create Account</h2>
-            <p className="text-sm text-gray-500 mt-1">Join the B2B travel community</p>
+          <div className="mb-6">
+            <h2 className="text-2xl font-bold text-gray-900">Sign Up</h2>
+            <p className="text-sm text-gray-400 mt-1">Create your account to get started.</p>
           </div>
 
           {/* Username */}
@@ -167,8 +161,8 @@ export default function SignUpPage() {
               onChange={handleChange}
               placeholder="Username"
               autoComplete="username"
-              className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-800 placeholder-gray-400 bg-gray-50 transition-all ${
-                errors.username ? 'border-red-400 bg-red-50/30' : 'border-gray-200 hover:border-gray-300'
+              className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-800 placeholder-gray-300 bg-white transition-all ${
+                errors.username ? 'border-red-400 bg-red-50/30' : 'border-gray-200 hover:border-purple-300'
               }`}
             />
             {errors.username && <p className="text-red-500 text-xs font-medium ml-1">{errors.username}</p>}
@@ -183,8 +177,8 @@ export default function SignUpPage() {
               onChange={handleChange}
               placeholder="Email address"
               autoComplete="email"
-              className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-800 placeholder-gray-400 bg-gray-50 transition-all ${
-                errors.email ? 'border-red-400 bg-red-50/30' : 'border-gray-200 hover:border-gray-300'
+              className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-800 placeholder-gray-300 bg-white transition-all ${
+                errors.email ? 'border-red-400 bg-red-50/30' : 'border-gray-200 hover:border-purple-300'
               }`}
             />
             {errors.email && <p className="text-red-500 text-xs font-medium ml-1">{errors.email}</p>}
@@ -200,8 +194,8 @@ export default function SignUpPage() {
                 onChange={handleChange}
                 placeholder="Password"
                 autoComplete="new-password"
-                className={`w-full px-4 py-3 pr-11 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-800 placeholder-gray-400 bg-gray-50 transition-all ${
-                  errors.password ? 'border-red-400 bg-red-50/30' : 'border-gray-200 hover:border-gray-300'
+                className={`w-full px-4 py-3 pr-11 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-800 placeholder-gray-300 bg-white transition-all ${
+                  errors.password ? 'border-red-400 bg-red-50/30' : 'border-gray-200 hover:border-purple-300'
                 }`}
               />
               <button
@@ -251,7 +245,12 @@ export default function SignUpPage() {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full py-3.5 bg-blue-600 text-white font-bold text-sm rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            className="w-full py-3.5 text-white font-bold text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-2"
+            style={{
+              background: "#612178",
+              borderRadius: "16px",
+              boxShadow: "0px 4px 10px -2px #00000040",
+            }}
           >
             {isLoading ? (
               <>
@@ -261,9 +260,9 @@ export default function SignUpPage() {
             ) : 'CREATE ACCOUNT'}
           </button>
 
-          <p className="text-center text-sm text-gray-500">
+          <p className="text-center text-sm text-gray-500 pt-1">
             Already have an account?{' '}
-            <Link href="/signin" className="text-blue-600 font-bold hover:underline">Sign in</Link>
+            <Link href="/signin" className="font-bold hover:underline" style={{ color: "#612178" }}>Sign in</Link>
           </p>
         </form>
       )}
@@ -272,8 +271,8 @@ export default function SignUpPage() {
       {step === 'otp' && (
         <form onSubmit={handleVerify} className="w-full space-y-5">
           <div className="text-center mb-2">
-            <div className="w-14 h-14 bg-blue-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <svg className="w-7 h-7 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="w-14 h-14 bg-purple-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <svg className="w-7 h-7 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
               </svg>
             </div>
@@ -294,7 +293,7 @@ export default function SignUpPage() {
               placeholder="000000"
               maxLength={6}
               autoFocus
-              className={`w-full px-4 py-4 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-center text-3xl font-black tracking-[0.5em] text-gray-800 bg-gray-50 transition-all ${
+              className={`w-full px-4 py-4 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-center text-3xl font-black tracking-[0.5em] text-gray-800 bg-white transition-all ${
                 errors.otp ? 'border-red-400' : 'border-gray-200'
               }`}
             />
@@ -311,7 +310,7 @@ export default function SignUpPage() {
           <button
             type="submit"
             disabled={isLoading || otp.length < 6}
-            className="w-full py-3.5 bg-blue-600 text-white font-bold text-sm rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            className="w-full py-3.5 bg-[#6c47ff] text-white font-bold text-sm rounded-lg hover:bg-[#5a35ee] transition-all shadow-lg shadow-purple-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             {isLoading ? (
               <>
@@ -335,7 +334,7 @@ export default function SignUpPage() {
               onClick={handleResend}
               disabled={resendCooldown > 0}
               className={`font-bold transition-colors ${
-                resendCooldown > 0 ? 'text-gray-300 cursor-not-allowed' : 'text-blue-600 hover:text-blue-800'
+                resendCooldown > 0 ? 'text-gray-300 cursor-not-allowed' : 'text-purple-600 hover:text-purple-800'
               }`}
             >
               {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : 'Resend OTP'}
