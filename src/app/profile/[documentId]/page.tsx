@@ -6,7 +6,7 @@ import ProtectedRoute, { useAuth } from "@/components/ProtectedRoute";
 import { getProfileByDocumentId, type UserProfile } from "@/lib/profile";
 import EnquiryModal from "@/components/EnquiryModal";
 import ContactInfoModal from "@/components/ContactInfoModal";
-import { getPostsByUserId, type Post } from "@/lib/posts";
+import { getPostsByUserId, getTradeWallFeed, deletePost, type Post } from "@/lib/posts";
 import { getOrCreateDirectThread } from "@/lib/enquiry";
 import { getOrCreateConversation } from "@/lib/messages";
 import FollowButton from "@/components/FollowButton";
@@ -32,6 +32,15 @@ export default function PublicProfilePage() {
   // Posts states
   const [userPosts, setUserPosts] = useState<Post[]>([]);
   const [loadingPosts, setLoadingPosts] = useState(false);
+  const [openMenuPostId, setOpenMenuPostId] = useState<string | null>(null);
+  const [deletingPostId, setDeletingPostId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!openMenuPostId) return;
+    const close = () => setOpenMenuPostId(null);
+    document.addEventListener("click", close);
+    return () => document.removeEventListener("click", close);
+  }, [openMenuPostId]);
 
   // Networking States
   const [isConnectionsModalOpen, setIsConnectionsModalOpen] = useState(false);
@@ -68,7 +77,12 @@ export default function PublicProfilePage() {
   const fetchUserPosts = async (userId: number) => {
     setLoadingPosts(true);
     try {
-      const posts = await getPostsByUserId(userId);
+      // Try direct filter first; fall back to feed + client-side filter if empty
+      let posts = await getPostsByUserId(userId);
+      if (posts.length === 0) {
+        const feed = await getTradeWallFeed(1, 100);
+        posts = (feed?.data || []).filter((p) => p.userId === userId);
+      }
       setUserPosts(posts);
     } catch (error) {
       console.error("Error fetching user posts:", error);
@@ -78,13 +92,31 @@ export default function PublicProfilePage() {
     }
   };
 
-  // Flatten media from all posts (post.media + post.custom_attachments) for Media Gallery
+  const handleDeletePost = async (postDocumentId: string) => {
+    if (!window.confirm("Are you sure you want to delete this post?")) return;
+    setDeletingPostId(postDocumentId);
+    try {
+      await deletePost(postDocumentId);
+      setUserPosts((prev) => prev.filter((p) => p.documentId !== postDocumentId));
+    } catch (err: any) {
+      console.error("Delete failed:", err);
+      alert(err?.message || "Failed to delete post.");
+    } finally {
+      setDeletingPostId(null);
+    }
+  };
+
+  // Media Gallery: sourced from profile.image_sections via /api/user-profiles/:documentId?populate=*
   const mediaGallery = useMemo(() => {
-    return userPosts.flatMap((post) => [
-      ...(post.media || []),
-      ...(post.custom_attachments || []),
-    ]);
-  }, [userPosts]);
+    const apiBase = process.env.NEXT_PUBLIC_API_URL || "https://api.letsb2b.com";
+    return (profile?.image_sections || []).flatMap((section) =>
+      (section.imageUrls || []).map((url) => ({
+        url: url.startsWith("http") ? url : `${apiBase}${url}`,
+        name: section.Title,
+        media_type: section.media_type,
+      }))
+    );
+  }, [profile?.image_sections]);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -392,7 +424,7 @@ export default function PublicProfilePage() {
                 ) : (
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
                     {mediaGallery.map((item: any, index: number) => {
-                      const url = item?.url ?? item;
+                      const url = item?.url;
                       if (!url || typeof url !== "string") return null;
                       const isVideo = url.toLowerCase().match(/\.(mp4|webm|ogg|mov|m4v)$/) || url.includes("youtube.com") || url.includes("youtu.be") || url.includes("vimeo.com");
                       const isFile = url.toLowerCase().match(/\.(pdf|doc|docx|xls|xlsx|ppt|pptx|txt|csv)$/);
@@ -483,13 +515,13 @@ export default function PublicProfilePage() {
                           key={post.id}
                           className="p-4 rounded-xl border border-gray-100 hover:border-indigo-200 hover:bg-indigo-50/20 transition-all group"
                         >
-                          <div className="flex justify-between items-start mb-2">
-                            <h4 className="font-bold text-gray-900 group-hover:text-indigo-600 transition-colors">
+                          <div className="flex items-start gap-2 mb-2">
+                            <h4 className="flex-1 font-bold text-gray-900 group-hover:text-indigo-600 transition-colors">
                               {post.user_profile?.company_name || post.title || "Tradewall Post"}
                             </h4>
                             {post.intentType && (
                               <span
-                                className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase ${
+                                className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase shrink-0 ${
                                   post.intentType === "demand"
                                     ? "bg-red-50 text-red-600"
                                     : "bg-green-50 text-green-600"
@@ -498,6 +530,43 @@ export default function PublicProfilePage() {
                                 {post.intentType}
                               </span>
                             )}
+                            <div className="relative shrink-0">
+                              <button
+                                onClick={(e) => { e.stopPropagation(); setOpenMenuPostId(openMenuPostId === post.documentId ? null : post.documentId); }}
+                                className="p-1 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
+                              >
+                                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                  <path d="M10 6a2 2 0 110-4 2 2 0 010 4zm0 6a2 2 0 110-4 2 2 0 010 4zm0 6a2 2 0 110-4 2 2 0 010 4z"/>
+                                </svg>
+                              </button>
+                              {openMenuPostId === post.documentId && (
+                                <div
+                                  className="absolute right-0 top-7 z-50 w-36 bg-white border border-gray-100 rounded-xl shadow-lg overflow-hidden"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  <button
+                                    onClick={() => { setOpenMenuPostId(null); router.push(`/?editPost=${post.documentId}`); }}
+                                    className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                                  >
+                                    <svg className="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                    </svg>
+                                    Edit
+                                  </button>
+                                  <div className="h-px bg-gray-100" />
+                                  <button
+                                    onClick={() => { setOpenMenuPostId(null); handleDeletePost(post.documentId); }}
+                                    disabled={deletingPostId === post.documentId}
+                                    className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50"
+                                  >
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                    </svg>
+                                    {deletingPostId === post.documentId ? "Deleting..." : "Delete"}
+                                  </button>
+                                </div>
+                              )}
+                            </div>
                           </div>
                           <p className="text-xs text-gray-500 mb-2 truncate">
                             {(post.destination || post.destinationCity) && (

@@ -218,13 +218,12 @@ export const getUserPosts = async (
  */
 export const getPostsByUserId = async (userId: number): Promise<Post[]> => {
   const token = getToken();
-  const params = new URLSearchParams();
-  params.set('filters[userId][$eq]', String(userId));
-  params.set('populate', '*');
-  params.set('sort', 'createdAt:desc');
+
+  // Use a plain string — URLSearchParams encodes [] as %5B%5D which Strapi rejects with 400
+  const query = `filters[userId][$eq]=${userId}&populate=*&sort=createdAt:desc`;
 
   try {
-    const response = await fetch(`${apiUrl}/api/posts?${params.toString()}`, {
+    const response = await fetch(`${apiUrl}/api/posts?${query}`, {
       method: 'GET',
       headers: {
         Authorization: token ? `Bearer ${token}` : '',
