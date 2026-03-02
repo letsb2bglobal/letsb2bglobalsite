@@ -46,24 +46,52 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
           {/* ── Left Panel ─────────────────────────────────────────────── */}
           <div className="hidden lg:flex flex-col justify-between p-10">
             {/* Text block — top left */}
-            <div className="flex flex-col gap-1 pt-2">
+            <div className="flex flex-col gap-0 pt-2">
+              {/* 1. Lets B2B — Bold, Display Medium, #612178 */}
               <h2
                 style={{
                   color: "#612178",
                   fontFamily: "'Inter Display', 'Inter', sans-serif",
                   fontWeight: 700,
-                  fontSize: "28px",
-                  lineHeight: "34px",
-                  letterSpacing: "-0.01em",
+                  fontSize: "36px",
+                  lineHeight: "44px",
+                  letterSpacing: "-0.02em",
+                  width: "185px",
+                  height: "52px",
+                  display: "flex",
+                  alignItems: "center",
                 }}
               >Lets B2B</h2>
-              <p className="text-sm font-normal leading-relaxed" style={{ color: "#000000" }}>
+
+              {/* 2. Subtitle — Regular, Body Large, #000000 */}
+              <p
+                style={{
+                  color: "#000000",
+                  fontFamily: "'Inter Display', 'Inter', sans-serif",
+                  fontWeight: 400,
+                  fontSize: "16px",
+                  lineHeight: "24px",
+                  letterSpacing: "0em",
+                  marginTop: "6px",
+                }}
+              >
                 Where tourism &amp; hospitality professionals connect the right way.
               </p>
+
+              {/* 3. List Your Business — Regular, Body Large, #000000 */}
               <Link
                 href="/pricing"
-                className="text-sm font-semibold mt-0.5 hover:underline w-fit"
-                style={{ color: "#000000" }}
+                style={{
+                  color: "#000000",
+                  fontFamily: "'Inter Display', 'Inter', sans-serif",
+                  fontWeight: 400,
+                  fontSize: "16px",
+                  lineHeight: "24px",
+                  letterSpacing: "0em",
+                  marginTop: "4px",
+                  width: "fit-content",
+                }}
+                className="hover:underline"
               >
                 List Your Business
               </Link>
