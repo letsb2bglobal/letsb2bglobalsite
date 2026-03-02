@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import AuthLayout from '@/components/AuthLayout';
@@ -18,9 +18,12 @@ type Step = 'form' | 'otp';
 
 export default function SignUpPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   // ── Form state ────────────────────────────────────────────────────────
-  const [step, setStep] = useState<Step>('form');
+  const [step, setStep] = useState<Step>(() =>
+    searchParams.get('step') === 'otp' ? 'otp' : 'form'
+  );
   const [formData, setFormData] = useState({ username: '', email: '', password: '' });
   const [showPassword, setShowPassword] = useState(false);
   const [otp, setOtp] = useState('');
@@ -140,8 +143,8 @@ export default function SignUpPage() {
   return (
     <AuthLayout>
       {/* Logo */}
-      <div className="flex items-center justify-center mb-6">
-        <Image src="/LetsB2B_logo.png" alt="LetsB2B" width={220} height={58} className="object-contain" />
+      <div className="flex items-center justify-center mb-4">
+        <Image src="/LetsB2B_logo.png" alt="LetsB2B" width={460} height={122} className="object-contain max-w-full h-auto" />
       </div>
 
       {/* ── STEP: FORM ────────────────────────────────────────────────── */}
@@ -245,8 +248,9 @@ export default function SignUpPage() {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full py-3.5 text-white font-bold text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-2"
+            className="w-full text-white font-bold text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-2"
             style={{
+              height: "50px",
               background: "#612178",
               borderRadius: "16px",
               boxShadow: "0px 4px 10px -2px #00000040",
