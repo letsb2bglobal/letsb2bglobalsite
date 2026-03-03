@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { Suspense, useState, useEffect, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -19,7 +19,7 @@ import { checkUserProfile } from '@/lib/profile';
 type LoginStep = 'login' | 'unverified';
 type ForgotStep = 'email' | 'otp' | 'newPassword';
 
-export default function SignInPage() {
+function SigninContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -277,7 +277,7 @@ export default function SignInPage() {
 
             {/* Identifier */}
             <div className="space-y-1">
-              <label className="text-xs font-semibold text-gray-600 uppercase tracking-wider">E-mail</label>
+              <label style={{ fontFamily: "'Inter Display','Inter',sans-serif", fontWeight: 700, fontSize: "14px", lineHeight: "20px", letterSpacing: "0em", color: "#000000", display: "block" }}>E-mail</label>
               <input
                 type="text"
                 name="identifier"
@@ -294,7 +294,7 @@ export default function SignInPage() {
 
             {/* Password */}
             <div className="space-y-1">
-              <label className="text-xs font-semibold text-gray-600 uppercase tracking-wider">Password</label>
+              <label style={{ fontFamily: "'Inter Display','Inter',sans-serif", fontWeight: 700, fontSize: "14px", lineHeight: "20px", letterSpacing: "0em", color: "#000000", display: "block" }}>Password</label>
               <div className="relative">
                 <input
                   type={showPassword ? 'text' : 'password'}
@@ -330,8 +330,17 @@ export default function SignInPage() {
                 <button
                   type="button"
                   onClick={switchToForgot}
-                  className="text-xs font-semibold hover:underline mt-1"
-                  style={{ color: "#612178" }}
+                  style={{
+                    fontFamily: "'Inter Display','Inter',sans-serif",
+                    fontWeight: 700,
+                    fontSize: "14px",
+                    lineHeight: "20px",
+                    letterSpacing: "0em",
+                    color: "#612178",
+                    textDecoration: "underline",
+                    textDecorationStyle: "solid",
+                    marginTop: "4px",
+                  }}
                 >
                   Forgot Password ?
                 </button>
@@ -358,7 +367,7 @@ export default function SignInPage() {
 
             <p className="text-center text-sm text-gray-500 pt-1">
               Don't Have An Account ?{' '}
-              <span className="font-bold" style={{ color: "#612178" }}>Sign Up</span>
+              <Link href="/signup" className="font-bold hover:underline" style={{ color: "#612178" }}>Sign Up</Link>
             </p>
           </form>
         )}
@@ -414,7 +423,7 @@ export default function SignInPage() {
 
       {/* ── Step 1: Enter email ──────────────────────────────────────── */}
       {forgotStep === 'email' && (
-        <form onSubmit={handleForgotSendOtp} className="w-full flex flex-col" style={{ minHeight: "380px" }}>
+        <form onSubmit={handleForgotSendOtp} className="w-full flex flex-col min-h-[300px] sm:min-h-[380px]">
           {/* Top content */}
           <div className="flex flex-col gap-4 flex-1">
             <div className="mb-2">
@@ -469,14 +478,14 @@ export default function SignInPage() {
           {/* Bottom text — pushed to bottom */}
           <p className="text-center text-sm text-gray-500 mt-auto pt-8">
             Don&apos;t Have An Account ?{' '}
-            <span className="font-bold" style={{ color: "#612178" }}>Sign Up</span>
+            <Link href="/signup" className="font-bold hover:underline" style={{ color: "#612178" }}>Sign Up</Link>
           </p>
         </form>
       )}
 
       {/* ── Step 2: Enter OTP ────────────────────────────────────────── */}
       {forgotStep === 'otp' && (
-        <form onSubmit={handleForgotVerifyOtp} className="w-full flex flex-col" style={{ minHeight: "380px" }}>
+        <form onSubmit={handleForgotVerifyOtp} className="w-full flex flex-col min-h-[300px] sm:min-h-[380px]">
           <div className="flex flex-col gap-4 flex-1">
             {/* Title — left aligned, matches forgot-email style */}
             <div className="mb-2">
@@ -484,8 +493,8 @@ export default function SignInPage() {
               <p className="text-sm text-gray-400 mt-1">Please enter your OTP we have sent to your E-mail</p>
             </div>
 
-            {/* Individual OTP boxes */}
-            <div className="flex gap-3 justify-between">
+            {/* Individual OTP boxes — responsive */}
+            <div className="grid grid-cols-6 gap-2 sm:gap-3">
               {[0,1,2,3,4,5].map((i) => (
                 <input
                   key={i}
@@ -511,7 +520,7 @@ export default function SignInPage() {
                     }
                   }}
                   autoFocus={i === 0}
-                  className="w-12 h-12 text-center text-xl font-bold border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-800 bg-white transition-all hover:border-purple-300"
+                  className="w-full aspect-square min-w-0 text-center text-base sm:text-xl font-bold border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-800 bg-white transition-all"
                 />
               ))}
             </div>
@@ -554,14 +563,14 @@ export default function SignInPage() {
           {/* Bottom text */}
           <p className="text-center text-sm text-gray-500 mt-auto pt-8">
             Don&apos;t Have An Account ?{' '}
-            <span className="font-bold" style={{ color: "#612178" }}>Sign Up</span>
+            <Link href="/signup" className="font-bold hover:underline" style={{ color: "#612178" }}>Sign Up</Link>
           </p>
         </form>
       )}
 
       {/* ── Step 3: New password ─────────────────────────────────────── */}
       {forgotStep === 'newPassword' && (
-        <form onSubmit={handleUpdatePassword} className="w-full flex flex-col" style={{ minHeight: "380px" }}>
+        <form onSubmit={handleUpdatePassword} className="w-full flex flex-col min-h-[300px] sm:min-h-[380px]">
           <div className="flex flex-col gap-4 flex-1">
 
             {/* Title — left aligned */}
@@ -633,7 +642,7 @@ export default function SignInPage() {
           {/* Bottom text */}
           <p className="text-center text-sm text-gray-500 mt-auto pt-8">
             Don&apos;t Have An Account ?{' '}
-            <span className="font-bold" style={{ color: "#612178" }}>Sign Up</span>
+            <Link href="/signup" className="font-bold hover:underline" style={{ color: "#612178" }}>Sign Up</Link>
           </p>
         </form>
       )}
@@ -641,22 +650,15 @@ export default function SignInPage() {
       {/* ── Password Reset Success Modal ──────────────────────────────── */}
       {showPasswordResetModal && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
           style={{ background: "#0402119E" }}
         >
           <div
-            className="bg-white relative flex flex-col items-center text-center"
-            style={{
-              width: "666.88px",
-              height: "245.51px",
-              borderRadius: "24px",
-              padding: "36px 48px 32px",
-              background: "#FFFFFF",
-            }}
+            className="bg-white relative flex flex-col items-center text-center w-full max-w-[667px] rounded-2xl py-8 px-6 sm:py-10 sm:px-12"
           >
             {/* Close button */}
             <button
-              onClick={() => { setShowPasswordResetModal(false); router.push('/signin'); }}
+              onClick={() => { setShowPasswordResetModal(false); setMode('login'); clearAll(); router.replace('/signin'); }}
               className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
               aria-label="Close"
             >
@@ -667,48 +669,25 @@ export default function SignInPage() {
 
             {/* Title — Password Reset ! */}
             <h2
-              style={{
-                fontFamily: "'Inter Display', 'Inter', sans-serif",
-                fontWeight: 700,
-                fontSize: "36px",
-                lineHeight: "40px",
-                letterSpacing: "-0.02em",
-                textAlign: "center",
-                color: "#000000",
-                marginBottom: "10px",
-              }}
+              className="text-2xl sm:text-[36px] font-bold text-black mb-3 sm:mb-2.5"
+              style={{ fontFamily: "'Inter Display', 'Inter', sans-serif", lineHeight: "40px", letterSpacing: "-0.02em" }}
             >
               Password Reset !
             </h2>
 
             {/* Message */}
             <p
-              style={{
-                fontFamily: "'Inter Display', 'Inter', sans-serif",
-                fontWeight: 400,
-                fontSize: "16px",
-                lineHeight: "24px",
-                letterSpacing: "0em",
-                textAlign: "center",
-                color: "#000000",
-                marginBottom: "20px",
-                width: "100%",
-              }}
+              className="text-sm sm:text-base text-black mb-6 sm:mb-5"
+              style={{ fontFamily: "'Inter Display', 'Inter', sans-serif", lineHeight: "24px", letterSpacing: "0em" }}
             >
               Your password has been reset successfully. You can now Log In with your new password.
             </p>
 
             {/* Continue button */}
             <button
-              onClick={() => { setShowPasswordResetModal(false); router.push('/signin'); }}
-              className="text-white font-bold text-sm flex items-center justify-center transition-all"
-              style={{
-                width: "571.63px",
-                height: "50px",
-                background: "#612178",
-                borderRadius: "16px",
-                boxShadow: "0px 4px 10px -2px #00000040",
-              }}
+              onClick={() => { setShowPasswordResetModal(false); setMode('login'); clearAll(); router.replace('/signin'); }}
+              className="w-full max-w-[572px] h-[50px] text-white font-bold text-sm rounded-2xl flex items-center justify-center"
+              style={{ background: "#612178", boxShadow: "0px 4px 10px -2px #00000040" }}
             >
               Continue
             </button>
@@ -716,5 +695,13 @@ export default function SignInPage() {
         </div>
       )}
     </AuthLayout>
+  );
+}
+
+export default function SignInPage() {
+  return (
+    <Suspense fallback={null}>
+      <SigninContent />
+    </Suspense>
   );
 }

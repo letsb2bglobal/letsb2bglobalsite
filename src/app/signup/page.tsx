@@ -1,60 +1,36 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { Suspense, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import Image from 'next/image';
 import Link from 'next/link';
 import AuthLayout from '@/components/AuthLayout';
-import { setAuthData, register, verifySignupOtp, resendSignupOtp } from '@/lib/auth';
+import { checkEmail, register, setAuthData } from '@/lib/auth';
 
-// ── Password validation rules ────────────────────────────────────────────
 const validatePassword = (pw: string) => ({
-  length:    pw.length >= 8,
+  length: pw.length >= 8,
   uppercase: /[A-Z]/.test(pw),
-  number:    /[0-9]/.test(pw),
+  number: /[0-9]/.test(pw),
 });
 
-type Step = 'form' | 'otp';
+type Step = 'email' | 'form';
 
-export default function SignUpPage() {
+function SignupContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // ── Form state ────────────────────────────────────────────────────────
   const [step, setStep] = useState<Step>(() =>
-    searchParams.get('step') === 'otp' ? 'otp' : 'form'
+    searchParams.get('step') === 'form' ? 'form' : 'email'
   );
-  const [formData, setFormData] = useState({ username: '', email: '', password: '' });
+  const [formData, setFormData] = useState({ username: '', email: '', password: '', confirmPassword: '' });
   const [showPassword, setShowPassword] = useState(false);
-  const [otp, setOtp] = useState('');
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitError, setSubmitError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  // ── Resend countdown ──────────────────────────────────────────────────
-  const [resendCooldown, setResendCooldown] = useState(0);
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
-
-  const startCooldown = (seconds = 60) => {
-    setResendCooldown(seconds);
-    timerRef.current = setInterval(() => {
-      setResendCooldown((prev) => {
-        if (prev <= 1) {
-          clearInterval(timerRef.current!);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-  };
-
-  useEffect(() => () => { if (timerRef.current) clearInterval(timerRef.current); }, []);
-
-  // ── Derived ───────────────────────────────────────────────────────────
   const pwRules = validatePassword(formData.password);
   const pwStrong = pwRules.length && pwRules.uppercase && pwRules.number;
 
-  // ── Handlers ──────────────────────────────────────────────────────────
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -62,132 +38,145 @@ export default function SignUpPage() {
     setSubmitError('');
   };
 
-  const handleOtpChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value.replace(/\D/g, '').slice(0, 6);
-    setOtp(val);
-    if (errors.otp) setErrors((prev) => ({ ...prev, otp: '' }));
-    setSubmitError('');
-  };
-
-  const validateForm = () => {
+  // Step 1 — Email only, Continue → form (check-email API)
+  const handleEmailStep = async (e: React.FormEvent) => {
+    e.preventDefault();
     const newErrors: Record<string, string> = {};
-    if (!formData.username.trim()) newErrors.username = 'Username is required';
-    else if (formData.username.trim().length < 2) newErrors.username = 'Min 2 characters';
     if (!formData.email.trim()) newErrors.email = 'Email is required';
     else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = 'Invalid email address';
-    if (!formData.password) newErrors.password = 'Password is required';
-    else if (!pwStrong) newErrors.password = 'Password does not meet requirements';
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
+    if (Object.keys(newErrors).length > 0) return;
 
-  // Step 1 — Register → get OTP sent
-  const handleRegister = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!validateForm()) return;
     setIsLoading(true);
     setSubmitError('');
+    setErrors((prev) => ({ ...prev, email: '' }));
     try {
-      await register(formData.email, formData.username, formData.password);
-      setStep('otp');
-      startCooldown(60);
+      await checkEmail(formData.email.trim());
+      setStep('form');
     } catch (err: any) {
-      const msg: string = err.message || 'Registration failed';
-      if (msg.includes('already registered')) {
-        setErrors((p) => ({ ...p, email: 'Email already registered' }));
-        setSubmitError('This email is already registered. Please login instead.');
-      } else if (msg.includes('already taken')) {
-        setErrors((p) => ({ ...p, username: 'Username already taken' }));
-      } else {
-        setSubmitError(msg);
-      }
+      const msg = err?.message || 'Email check failed';
+      setErrors((prev) => ({ ...prev, email: msg }));
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Step 2 — Verify OTP
-  const handleVerify = async (e: React.FormEvent) => {
+  // Step 2 — Register (API)
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (otp.length !== 6) {
-      setErrors({ otp: 'Enter the 6-digit code' });
-      return;
-    }
+    const newErrors: Record<string, string> = {};
+    if (!formData.password) newErrors.password = 'Password is required';
+    else if (!pwStrong) newErrors.password = 'Password does not meet requirements';
+    if (formData.password !== formData.confirmPassword) newErrors.confirmPassword = 'Passwords do not match';
+    setErrors(newErrors);
+    if (Object.keys(newErrors).length > 0) return;
+
     setIsLoading(true);
     setSubmitError('');
+    setErrors((prev) => ({ ...prev, password: '' }));
     try {
-      const data = await verifySignupOtp(formData.email, otp);
+      const data = await register(formData.email.trim(), formData.password);
       setAuthData(data.jwt, data.user);
       router.push('/complete-profile');
     } catch (err: any) {
-      setSubmitError(err.message || 'Invalid or expired OTP');
+      const msg = err?.message || 'Registration failed';
+      setErrors((prev) => ({ ...prev, password: msg }));
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Resend OTP
-  const handleResend = async () => {
-    if (resendCooldown > 0) return;
-    setSubmitError('');
-    try {
-      await resendSignupOtp(formData.email);
-      setOtp('');
-      startCooldown(60);
-    } catch (err: any) {
-      setSubmitError(err.message || 'Failed to resend OTP');
-    }
-  };
-
-  // ── Render ────────────────────────────────────────────────────────────
   return (
-    <AuthLayout>
-      {/* Logo */}
-      <div className="flex items-center justify-center mb-4">
-        <Image src="/LetsB2B_logo.png" alt="LetsB2B" width={460} height={122} className="object-contain max-w-full h-auto" />
-      </div>
-
-      {/* ── STEP: FORM ────────────────────────────────────────────────── */}
-      {step === 'form' && (
-        <form onSubmit={handleRegister} className="w-full space-y-4">
-          <div className="mb-6">
-            <h2 className="text-2xl font-bold text-gray-900">Sign Up</h2>
-            <p className="text-sm text-gray-400 mt-1">Create your account to get started.</p>
+    <AuthLayout variant="signup">
+      {/* ── STEP 1: Email (new design) ───────────────────────────────────── */}
+      {step === 'email' && (
+        <form onSubmit={handleEmailStep} className="w-full max-w-full space-y-4 sm:space-y-5">
+          <div>
+            <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-black leading-tight">
+              <span style={{ color: '#612178' }}>Lets</span> grab some quick{' '}
+              <span style={{ color: '#612178' }}>info</span> to create
+              <br />
+              your account.
+            </h2>
+            <p className="text-sm text-black mt-3">Enter Your E-mail ID Below</p>
           </div>
 
-          {/* Username */}
           <div className="space-y-1">
-            <input
-              type="text"
-              name="username"
-              value={formData.username}
-              onChange={handleChange}
-              placeholder="Username"
-              autoComplete="username"
-              className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-800 placeholder-gray-300 bg-white transition-all ${
-                errors.username ? 'border-red-400 bg-red-50/30' : 'border-gray-200 hover:border-purple-300'
-              }`}
-            />
-            {errors.username && <p className="text-red-500 text-xs font-medium ml-1">{errors.username}</p>}
-          </div>
-
-          {/* Email */}
-          <div className="space-y-1">
-            <input
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              placeholder="Email address"
-              autoComplete="email"
-              className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-800 placeholder-gray-300 bg-white transition-all ${
-                errors.email ? 'border-red-400 bg-red-50/30' : 'border-gray-200 hover:border-purple-300'
-              }`}
-            />
+            <div className="relative">
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+              </span>
+              <input
+                type="email"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+                placeholder="E-mail ID"
+                autoComplete="email"
+                autoFocus
+                className={`w-full pl-12 pr-4 py-3 sm:py-3.5 border rounded-xl sm:rounded-lg focus:outline-none focus:ring-2 focus:ring-[#612178] text-base text-gray-800 placeholder-gray-400 bg-white transition-all ${
+                  errors.email ? 'border-red-400 bg-red-50/30' : 'border-gray-200 hover:border-gray-300'
+                }`}
+              />
+            </div>
             {errors.email && <p className="text-red-500 text-xs font-medium ml-1">{errors.email}</p>}
           </div>
 
-          {/* Password */}
+          {submitError && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm flex gap-2 items-start">
+              <span className="mt-0.5">⚠️</span>
+              <span>{submitError}</span>
+            </div>
+          )}
+
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="w-full text-white font-bold text-sm sm:text-base flex items-center justify-center transition-all min-h-[48px] sm:min-h-[50px] touch-manipulation disabled:opacity-50 disabled:cursor-not-allowed"
+            style={{
+              background: '#612178',
+              borderRadius: '16px',
+              boxShadow: '0px 4px 10px -2px #00000040',
+            }}
+          >
+            {isLoading ? (
+              <>
+                <span className="inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
+                Checking...
+              </>
+            ) : (
+              'Continue'
+            )}
+          </button>
+
+          <p className="text-center text-sm text-black pt-1 break-words">
+            Already Have An Account ?{' '}
+            <Link href="/signin" className="font-bold hover:underline touch-manipulation" style={{ color: '#612178' }}>
+              Log In
+            </Link>
+          </p>
+        </form>
+      )}
+
+      {/* ── STEP 2: Set Up Password (Figma design) ───────────────────────── */}
+      {step === 'form' && (
+        <form onSubmit={handleRegister} className="w-full max-w-full space-y-4 sm:space-y-5">
+          <div>
+            <button
+              type="button"
+              onClick={() => setStep('email')}
+              className="text-sm text-gray-500 hover:text-gray-700 active:text-gray-800 flex items-center gap-1 mb-3 sm:mb-4 touch-manipulation py-1"
+            >
+              ← Back
+            </button>
+            <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-black leading-tight">
+              <span style={{ color: '#612178' }}>Lets</span> Set Up Your Password
+            </h2>
+            <p className="text-sm text-black mt-3">Enter Your Password Below</p>
+          </div>
+
           <div className="space-y-1">
             <div className="relative">
               <input
@@ -195,10 +184,10 @@ export default function SignUpPage() {
                 name="password"
                 value={formData.password}
                 onChange={handleChange}
-                placeholder="Password"
+                placeholder="Enter Password"
                 autoComplete="new-password"
-                className={`w-full px-4 py-3 pr-11 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-800 placeholder-gray-300 bg-white transition-all ${
-                  errors.password ? 'border-red-400 bg-red-50/30' : 'border-gray-200 hover:border-purple-300'
+                className={`w-full px-4 py-3 sm:py-3.5 pr-11 border rounded-xl sm:rounded-lg focus:outline-none focus:ring-2 focus:ring-[#612178] text-base text-gray-800 placeholder-gray-400 bg-white transition-all ${
+                  errors.password ? 'border-red-400 bg-red-50/30' : 'border-gray-200'
                 }`}
               />
               <button
@@ -220,24 +209,46 @@ export default function SignUpPage() {
               </button>
             </div>
             {errors.password && <p className="text-red-500 text-xs font-medium ml-1">{errors.password}</p>}
-
-            {/* Password strength hints */}
-            {formData.password && (
-              <div className="flex gap-3 mt-2 ml-1">
-                {[
-                  { label: '8+ chars', ok: pwRules.length },
-                  { label: 'Uppercase', ok: pwRules.uppercase },
-                  { label: 'Number', ok: pwRules.number },
-                ].map(({ label, ok }) => (
-                  <span key={label} className={`text-[10px] font-bold flex items-center gap-1 ${ok ? 'text-green-600' : 'text-gray-400'}`}>
-                    <span>{ok ? '✓' : '○'}</span> {label}
-                  </span>
-                ))}
-              </div>
-            )}
+            <p className="flex items-center gap-2 text-xs text-gray-500 mt-1.5 ml-1">
+              <img src="/info-icon.png" alt="" className="w-4 h-4 flex-shrink-0" />
+              The password should have a number
+            </p>
           </div>
 
-          {/* Global error */}
+          <div className="space-y-1">
+            <div className="relative">
+              <input
+                type={showConfirmPassword ? 'text' : 'password'}
+                name="confirmPassword"
+                value={formData.confirmPassword}
+                onChange={handleChange}
+                placeholder="Confirm Password"
+                autoComplete="new-password"
+                className={`w-full px-4 py-3 sm:py-3.5 pr-11 border rounded-xl sm:rounded-lg focus:outline-none focus:ring-2 focus:ring-[#612178] text-base text-gray-800 placeholder-gray-400 bg-white transition-all ${
+                  errors.confirmPassword ? 'border-red-400 bg-red-50/30' : 'border-gray-200'
+                }`}
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword((v) => !v)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                tabIndex={-1}
+              >
+                {showConfirmPassword ? (
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                  </svg>
+                ) : (
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
+                )}
+              </button>
+            </div>
+            {errors.confirmPassword && <p className="text-red-500 text-xs font-medium ml-1">{errors.confirmPassword}</p>}
+          </div>
+
           {submitError && (
             <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm flex gap-2 items-start">
               <span className="mt-0.5">⚠️</span>
@@ -248,104 +259,39 @@ export default function SignUpPage() {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full text-white font-bold text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-2"
+            className="w-full text-white font-bold text-sm sm:text-base flex items-center justify-center transition-all disabled:opacity-50 disabled:cursor-not-allowed min-h-[48px] sm:min-h-[50px] touch-manipulation"
             style={{
-              height: "50px",
-              background: "#612178",
-              borderRadius: "16px",
-              boxShadow: "0px 4px 10px -2px #00000040",
+              background: '#612178',
+              borderRadius: '16px',
+              boxShadow: '0px 4px 10px -2px #00000040',
             }}
           >
             {isLoading ? (
               <>
                 <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                Sending OTP...
+                Registering...
               </>
-            ) : 'CREATE ACCOUNT'}
+            ) : (
+              'Register'
+            )}
           </button>
 
-          <p className="text-center text-sm text-gray-500 pt-1">
-            Already have an account?{' '}
-            <Link href="/signin" className="font-bold hover:underline" style={{ color: "#612178" }}>Sign in</Link>
+          <p className="text-center text-sm text-black pt-1 break-words">
+            Already Have An Account ?{' '}
+            <Link href="/signin" className="font-bold hover:underline touch-manipulation" style={{ color: '#612178' }}>
+              Log In
+            </Link>
           </p>
         </form>
       )}
-
-      {/* ── STEP: OTP ─────────────────────────────────────────────────── */}
-      {step === 'otp' && (
-        <form onSubmit={handleVerify} className="w-full space-y-5">
-          <div className="text-center mb-2">
-            <div className="w-14 h-14 bg-purple-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <svg className="w-7 h-7 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-              </svg>
-            </div>
-            <h2 className="text-2xl font-bold text-gray-900">Verify your email</h2>
-            <p className="text-sm text-gray-500 mt-1">
-              We sent a 6-digit code to<br />
-              <span className="font-bold text-gray-700">{formData.email}</span>
-            </p>
-          </div>
-
-          {/* OTP input — large digits */}
-          <div className="space-y-1">
-            <input
-              type="text"
-              inputMode="numeric"
-              value={otp}
-              onChange={handleOtpChange}
-              placeholder="000000"
-              maxLength={6}
-              autoFocus
-              className={`w-full px-4 py-4 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-center text-3xl font-black tracking-[0.5em] text-gray-800 bg-white transition-all ${
-                errors.otp ? 'border-red-400' : 'border-gray-200'
-              }`}
-            />
-            {errors.otp && <p className="text-red-500 text-xs font-medium text-center">{errors.otp}</p>}
-          </div>
-
-          {submitError && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm flex gap-2 items-start">
-              <span className="mt-0.5">⚠️</span>
-              <span>{submitError}</span>
-            </div>
-          )}
-
-          <button
-            type="submit"
-            disabled={isLoading || otp.length < 6}
-            className="w-full py-3.5 bg-[#6c47ff] text-white font-bold text-sm rounded-lg hover:bg-[#5a35ee] transition-all shadow-lg shadow-purple-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-          >
-            {isLoading ? (
-              <>
-                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                Verifying...
-              </>
-            ) : 'VERIFY & SIGN IN'}
-          </button>
-
-          {/* Resend & back */}
-          <div className="flex items-center justify-between text-sm">
-            <button
-              type="button"
-              onClick={() => { setStep('form'); setOtp(''); setSubmitError(''); }}
-              className="text-gray-400 hover:text-gray-600 font-medium"
-            >
-              ← Change email
-            </button>
-            <button
-              type="button"
-              onClick={handleResend}
-              disabled={resendCooldown > 0}
-              className={`font-bold transition-colors ${
-                resendCooldown > 0 ? 'text-gray-300 cursor-not-allowed' : 'text-purple-600 hover:text-purple-800'
-              }`}
-            >
-              {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : 'Resend OTP'}
-            </button>
-          </div>
-        </form>
-      )}
     </AuthLayout>
+  );
+}
+
+export default function SignupPage() {
+  return (
+    <Suspense fallback={null}>
+      <SignupContent />
+    </Suspense>
   );
 }

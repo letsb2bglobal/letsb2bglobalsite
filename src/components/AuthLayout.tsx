@@ -1,49 +1,29 @@
 import Image from "next/image";
 import Link from "next/link";
 
-export default function AuthLayout({ children }: { children: React.ReactNode }) {
+type AuthLayoutProps = { children: React.ReactNode; variant?: "signin" | "signup" };
+
+export default function AuthLayout({ children, variant = "signin" }: AuthLayoutProps) {
+  const hideLeftPanel = variant === "signup";
+
   return (
     /* White page background */
-    <div className="min-h-screen flex flex-col bg-white">
+    <div className="min-h-screen flex flex-col bg-white overflow-x-hidden">
 
-      {/* ── Row 1: Top Bar (white, full width) ───────────────────────────── */}
-      <div className="w-full bg-white h-20 flex items-center px-8 shrink-0 border-b border-gray-100 z-10">
-        <div className="flex items-center">
-          <Image src="/headerB2B_logo.png" alt="LetsB2B" width={202} height={62} className="object-contain" />
-        </div>
-        <div className="ml-auto flex items-center gap-3">
-          <Link
-            href="https://play.google.com/store"
-            target="_blank"
-            className="px-5 py-2 text-sm font-bold rounded-full transition-all flex items-center gap-2"
-            style={{ background: "#612178", color: "#FFFFFF" }}
-          >
-            <Image src="/androidLogo.png" alt="Android" width={18} height={18} className="object-contain" />
-            Download App
-          </Link>
-          <Link
-            href="/signup"
-            className="px-5 py-2 text-sm font-bold rounded-full transition-all"
-            style={{ background: "#FEA40C", color: "#FFFFFF" }}
-          >
-            Sign Up
-          </Link>
-        </div>
-      </div>
-
-      {/* ── Row 2: Pink card ─────────────────────────────────────────────── */}
-      <div className="flex-1 bg-white px-6 pb-6 pt-4">
+      {/* ── Content area ───────────────────────────────────────────────── */}
+      <div className="flex-1 bg-white px-3 py-4 sm:px-6 sm:py-6 md:px-8 md:py-8">
         <div
-          className="w-full h-full grid lg:grid-cols-2 grid-cols-1"
+          className={`w-full min-h-[calc(100vh-2rem)] sm:min-h-[calc(100vh-3rem)] rounded-2xl flex items-center justify-center overflow-x-hidden ${
+            hideLeftPanel ? "" : "grid lg:grid-cols-2 grid-cols-1"
+          }`}
           style={{
-            background: "#FFE6FBA3",
-            border: "1px solid #E3BFDD",
-            borderRadius: "24px",
-            minHeight: "calc(100vh - 80px - 40px)",
+            background: hideLeftPanel ? "transparent" : "#FFE6FBA3",
+            border: hideLeftPanel ? "none" : "1px solid #E3BFDD",
           }}
         >
 
-          {/* ── Left Panel ─────────────────────────────────────────────── */}
+          {/* ── Left Panel (signin only) ───────────────────────────────── */}
+          {!hideLeftPanel && (
           <div className="hidden lg:flex flex-col justify-between p-10">
             {/* Text block — top left */}
             <div className="flex flex-col gap-0 pt-2">
@@ -107,17 +87,21 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
               />
             </div>
           </div>
+          )}
 
-          {/* ── Right Panel (Login Card) ──────────────────────────────── */}
-          <div className="flex items-center justify-center p-8">
+          {/* ── Right Panel (Form Card) ────────────────────────────────── */}
+          <div className={`flex items-center justify-center p-3 sm:p-6 md:p-8 min-w-0 w-full overflow-x-hidden ${hideLeftPanel ? "w-full" : ""}`}>
             <div
-              className="bg-[#FFFEFE] overflow-y-auto w-full"
-              style={{
-                maxWidth: "460px",
-                borderRadius: "20px",
-                padding: "36px 40px",
-                boxShadow: "0px 4px 24px 0px rgba(180,100,200,0.13)",
-              }}
+              className={`bg-[#FFFFFF] overflow-y-auto w-full py-5 px-4 sm:py-8 sm:px-6 md:px-8 ${
+                hideLeftPanel
+                  ? "max-w-full sm:max-w-[540px] md:max-w-[680px] lg:max-w-[872px] min-h-0 sm:min-h-[393px] rounded-2xl sm:rounded-[24px]"
+                  : "max-w-[460px] rounded-xl sm:rounded-[20px]"
+              }`}
+              style={
+                hideLeftPanel
+                  ? { boxShadow: "2px 2px 6px 0px #00000040" }
+                  : { boxShadow: "0px 4px 24px 0px rgba(180,100,200,0.13)" }
+              }
             >
               {children}
             </div>
