@@ -117,22 +117,49 @@ export const login = async (
 // ─── Flow 1 — Sign Up ─────────────────────────────────────────────────────
 
 /**
- * Step 1: Register — send email + username + password.
- * Backend sends OTP to email on success.
+ * Check if email is available for signup.
+ * POST /api/auth/check-email
+ * Throws with backend message if email already registered (e.g. 400).
  */
-export const register = async (
-  email: string,
-  username: string,
-  password: string
-): Promise<{ message: string; email: string }> => {
-  const response = await fetch(`${API_URL}/api/auth/register`, {
+export const checkEmail = async (email: string): Promise<{ available: boolean }> => {
+  const response = await fetch(`${API_URL}/api/auth/check-email`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, username, password }),
+    body: JSON.stringify({ email }),
   });
 
   const data = await response.json();
-  if (!response.ok) throw new Error(data?.error?.message || 'Registration failed');
+
+  if (!response.ok) {
+    const msg: string = data?.error?.message || data?.message || 'Email check failed';
+    throw new Error(msg);
+  }
+
+  return data;
+};
+
+/**
+ * Register — send email + password.
+ * POST /api/auth/register
+ * Returns jwt + user on success. Throws with backend message on error.
+ */
+export const register = async (
+  email: string,
+  password: string
+): Promise<AuthResponse> => {
+  const response = await fetch(`${API_URL}/api/auth/register`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password }),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    const msg: string = data?.error?.message || data?.message || 'Registration failed';
+    throw new Error(msg);
+  }
+
   return data;
 };
 
