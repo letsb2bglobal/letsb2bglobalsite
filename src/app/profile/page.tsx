@@ -152,8 +152,8 @@ function ProfileContent() {
     if (!user?.id) return;
 
     if (!silent) {
-      setLoadingEnquiries(true);
-      setShowEnquiries(true);
+    setLoadingEnquiries(true);
+    setShowEnquiries(true);
     }
 
     try {
@@ -221,7 +221,7 @@ function ProfileContent() {
         });
 
         const initialAbout = data.about?.length
-          ? richTextToString(data.about)
+            ? richTextToString(data.about)
           : "";
         setAboutText(initialAbout);
 
@@ -238,7 +238,7 @@ function ProfileContent() {
           experience_years: data.experience_years || 0,
           market_focus: data.market_focus || "",
         });
-
+        
         // Load Tradewall posts for the authenticated user
         const targetUserId = user?.id ?? data.userId;
         if (targetUserId) {
@@ -386,7 +386,7 @@ function ProfileContent() {
         <div className="fixed inset-0 pointer-events-none">
           <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_0%_0%,_rgba(59,130,246,0.03)_0%,_transparent_50%)]" />
           <div className="absolute bottom-0 right-0 w-full h-full bg-[radial-gradient(circle_at_100%_100%,_rgba(99,102,241,0.03)_0%,_transparent_50%)]" />
-        </div>
+          </div>
         
         {/* Fancy Modals */}
         <MediaModal 
@@ -470,10 +470,10 @@ function ProfileContent() {
                   
                   <label className="absolute bottom-2 right-2 z-20 p-2.5 bg-white text-slate-600 rounded-xl shadow-lg hover:bg-slate-50 transition-all cursor-pointer border border-slate-100 scale-90 md:scale-100">
                     <input type="file" className="hidden" accept="image/*" onChange={handleProfileImageUpload} />
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                    </svg>
-                  </label>
+                      </svg>
+                    </label>
                 </div>
 
                 {/* Primary Identity Info - Now stacked below image */}
@@ -489,7 +489,7 @@ function ProfileContent() {
                         </svg>
                       </div>
                     )}
-                  </div>
+              </div>
 
                   <div className="text-lg font-bold text-slate-600 mb-4 tracking-tight uppercase">
                     {profile?.business_type} • {profile?.city}, {profile?.country}
@@ -503,17 +503,17 @@ function ProfileContent() {
                     <button onClick={() => { setConnectionsInitialTab("following"); setIsConnectionsModalOpen(true); }} className="text-sm font-black text-slate-600 hover:underline">
                       {networkingCounts.following} Network Size
                     </button>
-                  </div>
+                </div>
                 </div>
               </div>
 
               {/* Action Buttons Row */}
               <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 mt-6 px-4">
-                <button 
-                  onClick={() => {
+                  <button
+                    onClick={() => {
                     setModalTitle("Edit Primary Identity");
-                    setModalFields([
-                      { key: "company_name", label: "Business Name", type: "text" },
+                      setModalFields([
+                        { key: "company_name", label: "Business Name", type: "text" },
                       { key: "profile_type", label: "Profile Type", type: "select", options: ["Individual", "Company", "Association"] },
                       { key: "business_type", label: "Primary Business Type", type: "text" },
                       { key: "legal_entity_name", label: "Legal Entity Name", type: "text" },
@@ -521,8 +521,8 @@ function ProfileContent() {
                       { key: "about", label: "About Identity", type: "textarea" },
                       { key: "vision_mission", label: "Vision & Mission", type: "textarea" },
                       { key: "category_items", label: "Categories & Specialties", type: "categories" },
-                      { key: "city", label: "City", type: "text" },
-                      { key: "country", label: "Country", type: "text" },
+                        { key: "city", label: "City", type: "text" },
+                        { key: "country", label: "Country", type: "text" },
                     ]);
                     setModalInitialData({
                       company_name: profile?.company_name || "",
@@ -536,7 +536,7 @@ function ProfileContent() {
                       city: profile?.city || "",
                       country: profile?.country || "",
                     });
-                    setOnModalSave(() => async (data: any) => {
+                      setOnModalSave(() => async (data: any) => {
                       const updatedData = { ...data };
                       if (updatedData.about && typeof updatedData.about === 'string') {
                         updatedData.about = [{ type: "paragraph", children: [{ type: "text", text: updatedData.about }] }];
@@ -545,30 +545,30 @@ function ProfileContent() {
                         updatedData.vision_mission = [{ type: "paragraph", children: [{ type: "text", text: updatedData.vision_mission }] }];
                       }
                       await handleUpdateProfile(updatedData);
-                    });
-                    setIsEditModalOpen(true);
-                  }}
+                      });
+                      setIsEditModalOpen(true);
+                    }}
                   className="px-8 py-3 bg-blue-600 text-white font-black rounded-full hover:bg-blue-700 transition-all shadow-lg shadow-blue-200 uppercase tracking-widest text-[10px]"
-                >
+                  >
                   Edit profile
-                </button>
-                <button 
+                  </button>
+                    <button
                   onClick={() => setIsContactModalOpen(true)}
                   className="px-8 py-3 bg-white text-slate-700 font-black rounded-full hover:bg-slate-50 transition-all border-2 border-slate-200 uppercase tracking-widest text-[10px]"
                 >
                   Contact Info
-                </button>
-                <button 
+                    </button>
+                  <button
                   onClick={() => router.push('/enquiries')}
                   className="px-4 py-3 bg-slate-100 text-slate-600 font-black rounded-full hover:bg-slate-200 transition-all uppercase tracking-widest text-[10px] flex items-center gap-2"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
-                  </svg>
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                    </svg>
                   Inbox
-                </button>
+                  </button>
+                </div>
               </div>
-            </div>
           </div>
 
           <div className="mt-8 flex border-b border-gray-200">
@@ -599,8 +599,8 @@ function ProfileContent() {
             )}
           </div>
 
-          {activeProfileTab === "overview" ? (
-            <>
+            {activeProfileTab === "overview" ? (
+              <>
               <div className="flex flex-col gap-6 mt-6">
                 {/* Main Content Vertical Stack */}
                 <div className="flex flex-col gap-8">
@@ -615,8 +615,8 @@ function ProfileContent() {
                         <h2 className="text-2xl font-black text-slate-900 uppercase tracking-tight">About Identity</h2>
                         <p className="text-[10px] font-black text-blue-600 uppercase tracking-[0.3em] mt-1">Core Business Profile</p>
                       </div>
-                      <button
-                        onClick={() => {
+                  <button
+                    onClick={() => {
                           setModalTitle("Edit Identity & Legal");
                           setModalFields([
                             { key: "about", label: "About text", type: "textarea" },
@@ -628,78 +628,78 @@ function ProfileContent() {
                             legal_entity_name: profile?.legal_entity_name,
                             designation: profile?.designation
                           });
-                          setOnModalSave(() => async (data: any) => {
-                            const updatedData = { ...data };
-                            if (updatedData.about && typeof updatedData.about === 'string') {
-                              updatedData.about = [
-                                {
-                                  type: "paragraph",
+                      setOnModalSave(() => async (data: any) => {
+                        const updatedData = { ...data };
+                        if (updatedData.about && typeof updatedData.about === 'string') {
+                          updatedData.about = [
+                            {
+                              type: "paragraph",
                                   children: [{ type: "text", text: updatedData.about }]
                                 }
                               ];
                             }
                             const success = await handleUpdateProfile(updatedData);
                             if (success && typeof data.about === "string") {
-                              setAboutText(data.about);
+                        setAboutText(data.about);
                             }
-                          });
-                          setIsEditModalOpen(true);
-                        }}
+                      });
+                      setIsEditModalOpen(true);
+                    }}
                         className="p-4 bg-slate-50 text-slate-400 hover:bg-blue-600 hover:text-white rounded-2xl transition-all shadow-sm group-hover:scale-110"
-                      >
+                  >
                         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                        </svg>
-                      </button>
-                    </div>
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                    </svg>
+                  </button>
+                </div>
 
                     <div className="prose prose-slate max-w-none relative z-10">
                       <p className="text-lg font-bold text-slate-600 leading-[1.6] whitespace-pre-wrap italic decoration-blue-100 decoration-4">
                         {aboutText || "Describe your business legacy and vision..."}
-                      </p>
-                    </div>
-                    
+                </p>
+              </div>
+
                     <div className="mt-16 pt-10 border-t border-slate-100 relative z-10">
                       <div className="flex justify-between items-center mb-8">
                         <h3 className="text-2xl font-black text-slate-900 uppercase tracking-tight">Vision & Leadership Mission</h3>
-                        <button
-                          onClick={() => {
+                  <button
+                    onClick={() => {
                             setModalTitle("Edit Vision & Mission");
                             setModalFields([{ key: "vision_mission", label: "Vision & Mission", type: "textarea" }]);
-                            setModalInitialData({ 
+                        setModalInitialData({
                               vision_mission: Array.isArray(profile?.vision_mission) 
                                 ? richTextToString(profile?.vision_mission) 
                                 : profile?.vision_mission || "" 
-                            });
-                            setOnModalSave(() => async (data: any) => {
-                              const updatedData = { ...data };
-                              if (updatedData.vision_mission && typeof updatedData.vision_mission === 'string') {
+                        });
+                        setOnModalSave(() => async (data: any) => {
+                          const updatedData = { ...data };
+                          if (updatedData.vision_mission && typeof updatedData.vision_mission === 'string') {
                                 updatedData.vision_mission = [{ type: "paragraph", children: [{ type: "text", text: updatedData.vision_mission }] }];
                               }
-                              await handleUpdateProfile(updatedData);
-                            });
-                            setIsEditModalOpen(true);
-                          }}
+                          await handleUpdateProfile(updatedData);
+                        });
+                        setIsEditModalOpen(true);
+                    }}
                           className="p-2 text-blue-600 hover:bg-blue-50 rounded-xl transition-all"
-                        >
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                          </svg>
-                        </button>
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                    </svg>
+                  </button>
                       </div>
                       <p className="text-lg font-medium text-slate-500 italic bg-blue-50/30 p-8 rounded-3xl border border-blue-100/50 leading-relaxed">
                         {Array.isArray((profile as any)?.vision_mission) 
                           ? richTextToString((profile as any)?.vision_mission) 
                           : ((profile as any)?.vision_mission || "Define your path to global business excellence...")}
                       </p>
-                    </div>
-
+                </div>
+                
                     <div className="mt-12 grid grid-cols-1 md:grid-cols-2 gap-10 pt-10 border-t border-slate-100 relative z-10">
                       <div className="p-8 bg-slate-50 rounded-3xl group/sub shadow-sm transition-all hover:shadow-md hover:bg-white border-2 border-transparent hover:border-blue-100 flex justify-between items-start">
-                        <div>
+                  <div>
                           <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3">Legal Registration</p>
                           <p className="text-xl font-black text-slate-900 group-hover/sub:text-blue-700">{profile?.legal_entity_name || "N/A"}</p>
-                        </div>
+                  </div>
                         <button 
                           onClick={() => {
                             setModalTitle("Edit Legal Registration");
@@ -718,10 +718,10 @@ function ProfileContent() {
                         </button>
                       </div>
                       <div className="p-8 bg-slate-50 rounded-3xl group/sub shadow-sm transition-all hover:shadow-md hover:bg-white border-2 border-transparent hover:border-blue-100 flex justify-between items-start">
-                        <div>
+                  <div>
                           <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3">Principal Authority</p>
                           <p className="text-xl font-black text-slate-900 group-hover/sub:text-blue-700">{profile?.designation || "N/A"}</p>
-                        </div>
+                  </div>
                         <button 
                           onClick={() => {
                             setModalTitle("Edit Principal Authority");
@@ -738,9 +738,9 @@ function ProfileContent() {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                           </svg>
                         </button>
-                      </div>
-                    </div>
-                  </div>
+                </div>
+                </div>
+              </div>
 
                   {/* Market Reach - ORANGE Accent */}
                   <div className="premium-card p-6 relative group bg-white border-2 border-slate-100 hover:border-orange-400/30 transition-all duration-500 border-t-4 border-t-orange-600 overflow-hidden max-w-4xl">
@@ -748,44 +748,44 @@ function ProfileContent() {
                       <div>
                         <h2 className="text-sm font-black text-slate-400 uppercase tracking-[0.2em]">Marketplace Reach</h2>
                       </div>
-                      <button
-                        onClick={() => {
+                  <button 
+                    onClick={() => {
                           setModalTitle("Manage Market Reach");
-                          setModalFields([
+                        setModalFields([
                             { key: "experience_years", label: "Years of Experience", type: "number" },
                             { key: "market_focus", label: "Market Focus (Direct/B2B/etc)", type: "text" },
-                          ]);
-                          setModalInitialData({
+                        ]);
+                        setModalInitialData({
                             experience_years: (profile as any)?.experience_years || 0,
                             market_focus: (profile as any)?.market_focus || "",
-                          });
-                          setOnModalSave(() => async (data: any) => {
-                            await handleUpdateProfile(data);
-                          });
-                          setIsEditModalOpen(true);
-                        }}
+                        });
+                        setOnModalSave(() => async (data: any) => {
+                          await handleUpdateProfile(data);
+                        });
+                        setIsEditModalOpen(true);
+                    }}
                         className="p-2 text-slate-400 hover:text-orange-600 transition-colors"
-                      >
+                  >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                        </svg>
-                      </button>
-                    </div>
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                    </svg>
+                  </button>
+                </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 relative z-10">
                       <div className="p-5 bg-orange-50/30 rounded-2xl border border-orange-100/50 group/reach transition-all">
                         <p className="text-[8px] font-black text-orange-600 uppercase tracking-widest mb-1">Corporate Legacy</p>
                         <p className="text-2xl font-black text-slate-900 leading-none">{(profile as any)?.experience_years || "0"}</p>
                         <p className="text-[10px] font-bold text-slate-500 mt-2 uppercase tracking-tighter">Years of Industry Excellence</p>
-                      </div>
+              </div>
 
                       <div className="p-5 bg-slate-50/50 rounded-2xl border border-slate-100 group/reach transition-all">
                         <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Market Dominance</p>
                         <p className="text-2xl font-black text-slate-900 leading-tight uppercase tracking-tighter">{(profile as any)?.market_focus || "General Business"}</p>
                         <p className="text-[10px] font-bold text-slate-500 mt-2 uppercase tracking-tighter">Core Market Specialization</p>
-                      </div>
-                    </div>
                   </div>
+                </div>
+              </div>
 
                   {/* Portfolio Gallery - PURPLE Accent */}
                   <div className="premium-card p-12 relative group bg-white border-2 border-slate-100 hover:border-purple-400/30 transition-all duration-500 border-t-8 border-t-purple-600">
@@ -794,18 +794,18 @@ function ProfileContent() {
                         <h2 className="text-2xl font-black text-slate-900 uppercase tracking-tight">Visual Portfolio</h2>
                         <p className="text-[10px] font-black text-purple-600 uppercase tracking-[0.3em] mt-1">Showcasing Excellence</p>
                       </div>
-                      <button 
-                        onClick={() => setShowMediaModal(true)}
+                  <button 
+                    onClick={() => setShowMediaModal(true)}
                         className="p-4 bg-slate-50 text-slate-400 hover:bg-purple-600 hover:text-white rounded-2xl transition-all shadow-sm flex items-center gap-3 group/btn"
-                      >
+                  >
                         <svg className="w-6 h-6 group-hover/btn:rotate-12 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
+                    </svg>
                         <span className="text-sm font-black uppercase tracking-widest px-2 border-l border-slate-200">Manage Sections</span>
-                      </button>
-                    </div>
+                  </button>
+                </div>
 
-                    {!profile?.image_sections || profile.image_sections.length === 0 ? (
+                {!profile?.image_sections || profile.image_sections.length === 0 ? (
                       <div className="text-center py-24 bg-slate-50 rounded-[3rem] border-4 border-dashed border-slate-100 group-hover:bg-purple-50/30 transition-colors">
                         <div className="w-24 h-24 bg-white rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-xl text-slate-200 group-hover:text-purple-300 transition-colors">
                           <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -814,23 +814,23 @@ function ProfileContent() {
                         </div>
                         <p className="text-2xl font-black text-slate-900 uppercase tracking-tighter mb-2">No Media Assets Found</p>
                         <p className="text-slate-500 font-medium mb-10">Your visual narrative starts here. Add high-impact media to wow your network.</p>
-                        <button 
-                          onClick={() => setShowMediaModal(true)}
+                    <button 
+                      onClick={() => setShowMediaModal(true)}
                           className="px-10 py-4 bg-purple-600 text-white font-black rounded-2xl hover:bg-purple-700 transition-all shadow-xl shadow-purple-100 uppercase tracking-widest text-xs"
-                        >
+                    >
                           + Create First Section
-                        </button>
-                      </div>
-                    ) : (
+                    </button>
+                  </div>
+                ) : (
                       <div className="space-y-20">
-                        {profile.image_sections
-                          .sort((a, b) => a.order - b.order)
-                          .map((section) => (
+                    {profile.image_sections
+                      .sort((a, b) => a.order - b.order)
+                      .map((section) => (
                             <div key={section.id} className="group/section">
                               <div className="flex items-end gap-6 mb-8">
                                 <h3 className="text-3xl font-black text-slate-900 uppercase tracking-tighter">
-                                  {section.Title}
-                                </h3>
+                            {section.Title}
+                          </h3>
                                 <div className="h-0.5 flex-1 bg-slate-100 mb-2 transition-all group-hover/section:bg-purple-100" />
                                 {section.media_type && (
                                   <span className="px-3 py-1 bg-purple-50 text-purple-600 text-[10px] font-black uppercase tracking-[0.2em] rounded-lg border border-purple-100 mb-1">
@@ -839,116 +839,116 @@ function ProfileContent() {
                                 )}
                               </div>
 
-                              {section.description && (
+                          {section.description && (
                                 <p className="text-xl font-medium text-slate-500 mb-10 leading-relaxed italic border-l-4 border-purple-200 pl-6">
-                                  {section.description}
-                                </p>
-                              )}
+                              {section.description}
+                            </p>
+                          )}
 
                               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
-                                {section.imageUrls.map((url, index) => {
+                            {section.imageUrls.map((url, index) => {
                                     const isVideo = url.toLowerCase().match(/\.(mp4|webm|ogg|mov|m4v)$/) || url.includes('youtube.com') || url.includes('youtu.be') || url.includes('vimeo.com');
-                                    let videoContent = null;
+                                let videoContent = null;
 
-                                    if (isVideo) {
-                                        const ytMatch = url.match(/(?:youtube\.com\/(?:[^\/"\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
-                                        if (ytMatch) {
-                                            const videoId = ytMatch[1];
-                                            videoContent = (
-                                                <iframe 
-                                                    src={`https://www.youtube.com/embed/${videoId}`} 
-                                                    className="w-full h-full object-cover"
-                                                    title="YouTube video player"
-                                                    frameBorder="0"
-                                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                                                    allowFullScreen
-                                                />
-                                            );
-                                        } else {
-                                            videoContent = (
+                                if (isVideo) {
+                                    const ytMatch = url.match(/(?:youtube\.com\/(?:[^\/"\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+                                    if (ytMatch) {
+                                        const videoId = ytMatch[1];
+                                        videoContent = (
+                                            <iframe 
+                                                src={`https://www.youtube.com/embed/${videoId}`} 
+                                                className="w-full h-full object-cover"
+                                                title="YouTube video player"
+                                                frameBorder="0"
+                                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                                                allowFullScreen
+                                            />
+                                        );
+                                    } else {
+                                        videoContent = (
                                                 <video controls className="w-full h-full object-cover bg-black rounded-[2rem]">
-                                                    <source src={url} />
-                                                    Your browser does not support the video tag.
-                                                </video>
-                                            );
-                                        }
+                                                <source src={url} />
+                                                Your browser does not support the video tag.
+                                            </video>
+                                        );
                                     }
+                                }
 
-                                    return (
-                                      <div
-                                        key={index}
+                                return (
+                                  <div
+                                    key={index}
                                         className="relative aspect-[4/3] overflow-hidden rounded-[2.5rem] border-4 border-white shadow-lg shadow-slate-200 group/media transition-all hover:shadow-2xl hover:scale-[1.03] hover:-rotate-1"
-                                      >
-                                        {isVideo ? (
-                                            videoContent
-                                        ) : (
-                                            <div 
-                                                className="w-full h-full relative cursor-pointer"
-                                                onClick={() => setPreviewImage(url)}
-                                            >
-                                                <img
-                                                  src={url}
-                                                  alt={`${section.Title}-${index}`}
+                                  >
+                                    {isVideo ? (
+                                        videoContent
+                                    ) : (
+                                        <div 
+                                            className="w-full h-full relative cursor-pointer"
+                                            onClick={() => setPreviewImage(url)}
+                                        >
+                                            <img
+                                              src={url}
+                                              alt={`${section.Title}-${index}`}
                                                   className="w-full h-full object-cover group-hover/media:scale-110 transition-transform duration-1000"
-                                                />
+                                            />
                                                 <div className="absolute inset-0 bg-gradient-to-t from-purple-900/40 to-transparent opacity-0 group-hover/media:opacity-100 transition-all flex items-center justify-center pointer-events-none">
                                                   <div className="w-16 h-16 bg-white/20 backdrop-blur-xl rounded-2xl flex items-center justify-center border border-white/40 shadow-2xl scale-50 group-hover/media:scale-100 transition-all duration-500">
                                                     <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
-                                                    </svg>
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
+                                              </svg>
                                                   </div>
-                                                </div>
                                             </div>
-                                        )}
-                                      </div>
-                                    );
-                                })}
-                              </div>
-                            </div>
-                          ))}
-                      </div>
-                    )}
+                                        </div>
+                                    )}
+                                  </div>
+                                );
+                            })}
+                          </div>
+                        </div>
+                      ))}
                   </div>
+                )}
+              </div>
 
 
                   {/* Contact Information - GREEN Accent */}
                   <div className="premium-card p-6 relative group bg-white border-2 border-slate-100 hover:border-green-400/30 transition-all duration-500 border-t-4 border-t-green-600 max-w-4xl">
                     <div className="flex justify-between items-center mb-6">
-                      <div>
+                    <div>
                         <h2 className="text-sm font-black text-slate-400 uppercase tracking-[0.2em]">Direct Connections</h2>
-                      </div>
-                      <button
-                        onClick={() => {
-                          setModalTitle("Edit Contact Details");
-                          setModalFields([
-                            { key: "website", label: "Website", type: "text" },
-                            { key: "whatsapp", label: "WhatsApp Number", type: "text" },
-                            { key: "linkedin", label: "LinkedIn URL", type: "text" },
-                            { key: "twitter", label: "Twitter URL", type: "text" },
-                          ]);
-                          setModalInitialData({
-                            website: profile?.website || "",
-                            whatsapp: profile?.whatsapp || "",
-                            linkedin: contactForm.social_links?.linkedin || "",
-                            twitter: contactForm.social_links?.twitter || "",
-                          });
-                          setOnModalSave(() => async (data: any) => {
-                            const { website, whatsapp, linkedin, twitter } = data;
-                            await handleUpdateProfile({ 
-                              website, 
-                              whatsapp, 
-                              social_links: { ...contactForm.social_links, linkedin, twitter } 
-                            });
-                          });
-                          setIsEditModalOpen(true);
-                        }}
-                        className="p-2 text-slate-400 hover:text-green-600 transition-colors"
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                        </svg>
-                      </button>
                     </div>
+                <button
+                  onClick={() => {
+                    setModalTitle("Edit Contact Details");
+                    setModalFields([
+                      { key: "website", label: "Website", type: "text" },
+                      { key: "whatsapp", label: "WhatsApp Number", type: "text" },
+                      { key: "linkedin", label: "LinkedIn URL", type: "text" },
+                      { key: "twitter", label: "Twitter URL", type: "text" },
+                    ]);
+                    setModalInitialData({
+                      website: profile?.website || "",
+                      whatsapp: profile?.whatsapp || "",
+                      linkedin: contactForm.social_links?.linkedin || "",
+                      twitter: contactForm.social_links?.twitter || "",
+                    });
+                    setOnModalSave(() => async (data: any) => {
+                      const { website, whatsapp, linkedin, twitter } = data;
+                      await handleUpdateProfile({ 
+                        website, 
+                        whatsapp, 
+                        social_links: { ...contactForm.social_links, linkedin, twitter } 
+                      });
+                    });
+                    setIsEditModalOpen(true);
+                  }}
+                        className="p-2 text-slate-400 hover:text-green-600 transition-colors"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                    </svg>
+                  </button>
+                </div>
                     
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                       <div className="flex items-center gap-4 group/item">
@@ -957,7 +957,7 @@ function ProfileContent() {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
                           </svg>
                         </div>
-                        <div>
+                  <div>
                           <p className="text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">Web Interface</p>
                           {profile?.website ? (
                             <a href={profile.website} target="_blank" className="text-sm font-black text-slate-900 hover:text-blue-600 transition-colors tracking-tight">
@@ -974,15 +974,15 @@ function ProfileContent() {
                           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1.061a2.961 2.961 0 01-2.911-2.511 11.059 11.059 0 01-7.472-7.472A2.961 2.961 0 013 15.111V5z" />
                           </svg>
-                        </div>
-                        <div>
+                  </div>
+                  <div>
                           <p className="text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">B2B Messaging</p>
                           <p className="text-sm font-black text-slate-900 tracking-tight">
                             {profile?.whatsapp || "Not Linked"}
                           </p>
-                        </div>
-                      </div>
-                    </div>
+                  </div>
+                </div>
+              </div>
 
                     <div className="mt-6 pt-6 border-t border-slate-100 flex flex-wrap items-center gap-4">
                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Presence:</span>
@@ -1039,43 +1039,43 @@ function ProfileContent() {
                         <h2 className="text-2xl font-black text-slate-900 uppercase tracking-tight">Geographic Reach</h2>
                         <p className="text-[10px] font-black text-indigo-600 uppercase tracking-[0.3em] mt-1">Global Operating Footprint</p>
                       </div>
-                      <button 
-                        onClick={() => {
-                          setModalTitle("Manage Operating Footprint");
-                          setModalFields([
-                            { key: "operating_locations", label: "Locations", type: "locations" }
-                          ]);
-                          setModalInitialData({
-                            operating_locations: (profile as any)?.operating_locations || []
-                          });
-                          setOnModalSave(() => async (data: any) => {
-                            await handleUpdateProfile(data);
-                          });
-                          setIsEditModalOpen(true);
-                        }}
+                  <button 
+                    onClick={() => {
+                      setModalTitle("Manage Operating Footprint");
+                      setModalFields([
+                        { key: "operating_locations", label: "Locations", type: "locations" }
+                      ]);
+                      setModalInitialData({
+                        operating_locations: (profile as any)?.operating_locations || []
+                      });
+                      setOnModalSave(() => async (data: any) => {
+                        await handleUpdateProfile(data);
+                      });
+                      setIsEditModalOpen(true);
+                    }}
                         className="p-4 bg-slate-50 text-slate-400 hover:bg-indigo-600 hover:text-white rounded-2xl transition-all shadow-sm group-hover:scale-110"
-                      >
+                  >
                         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                        </svg>
-                      </button>
-                    </div>
+                    </svg>
+                  </button>
+                </div>
                     <div className="flex flex-wrap gap-4">
-                       { (profile as any)?.operating_locations && (profile as any).operating_locations.length > 0 ? (
-                         (profile as any).operating_locations.map((loc: any, i: number) => (
+                   { (profile as any)?.operating_locations && (profile as any).operating_locations.length > 0 ? (
+                     (profile as any).operating_locations.map((loc: any, i: number) => (
                             <div key={i} className="px-8 py-5 bg-slate-50 border-2 border-slate-100 rounded-[2rem] flex items-center gap-4 text-lg font-black text-slate-800 hover:border-indigo-200 hover:bg-white hover:shadow-xl hover:scale-105 transition-all cursor-default uppercase">
                               <div className="w-3 h-3 rounded-full bg-indigo-600 shadow-[0_0_20px_rgba(79,70,229,0.8)]" />
                               {loc.city}, <span className="text-slate-400 text-sm font-bold">{loc.country}</span>
-                            </div>
-                         ))
-                       ) : (
+                        </div>
+                     ))
+                   ) : (
                          <div className="w-full py-12 bg-slate-50 rounded-[2.5rem] border-2 border-dashed border-slate-100 flex flex-col items-center justify-center text-slate-400">
                            <p className="text-lg font-black uppercase tracking-tighter">Localized Operations</p>
                            <p className="text-sm font-bold mt-2 italic">Add international hubs to increase search visibility</p>
                          </div>
-                       )}
-                    </div>
-                  </div>
+                   )}
+                </div>
+              </div>
 
                   {/* Market Intelligence - SLATE Accent */}
                   <div className="premium-card p-12 relative group bg-white border-2 border-slate-200 hover:border-slate-900/10 transition-all duration-500 overflow-hidden">
@@ -1083,7 +1083,7 @@ function ProfileContent() {
                     <h2 className="text-2xl font-black text-slate-900 uppercase tracking-tight mb-12 flex items-center gap-4">
                       Market Intelligence
                       <span className="px-3 py-1 bg-slate-900 text-white text-[10px] rounded-lg animate-pulse">LIVE</span>
-                    </h2>
+                </h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12">
                       <div className="flex items-center gap-8 group/stat">
                         <div className="w-24 h-24 bg-slate-900 rounded-[2.5rem] flex flex-col items-center justify-center text-white shadow-2xl transition-transform group-hover/stat:rotate-6">
@@ -1159,7 +1159,7 @@ function ProfileContent() {
                                     </div>
                                     <svg className="w-4 h-4 text-slate-300 group-hover/thread:text-indigo-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
-                                    </svg>
+                  </svg>
                                  </div>
                               </div>
                             );
@@ -1171,14 +1171,14 @@ function ProfileContent() {
                   <div id="tradewall-posts"
   className="premium-card p-12 relative group bg-white border-2 border-slate-100 hover:border-blue-400/30 transition-all duration-500 border-t-8 border-t-blue-600">
                     <div className="flex justify-between items-center mb-10">
-                      <div>
+                  <div>
                         <h2 className="text-2xl font-black text-slate-900 uppercase tracking-tight">My Tradewall Posts</h2>
                         <p className="text-[10px] font-black text-blue-600 uppercase tracking-[0.3em] mt-1">Direct Market Activity</p>
-                      </div>
+                  </div>
                       <span className="bg-blue-50 text-blue-700 text-[10px] font-black px-5 py-2 rounded-full border border-blue-100 uppercase tracking-widest">
                         {userPosts.length} ACTIVE SIGNALS
                       </span>
-                    </div>
+                </div>
 
                     {loadingPosts ? (
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -1277,9 +1277,9 @@ function ProfileContent() {
                               See all {userPosts.length} insights
                               <svg className="w-4 h-4 ml-2 inline-block group-hover:translate-y-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                              </svg>
+                  </svg>
                             </button>
-                          </div>
+                </div>
                         )}
 
                         <div className="flex justify-center mt-8">
@@ -1303,22 +1303,22 @@ function ProfileContent() {
                         </button>
                       </div>
                     )}
-                  </div>
-                </div>
               </div>
-            </>
-          ) : (
-            <div className="md:col-span-3">
-              {profile?.documentId && (
-                <TeamManagement 
-                  companyProfileDocumentId={profile.documentId} 
-                  initOpenInvite={autoOpenInvite}
-                />
-              )}
             </div>
+          </div>
+        </>
+      ) : (
+        <div className="md:col-span-3">
+          {profile?.documentId && (
+            <TeamManagement 
+              companyProfileDocumentId={profile.documentId} 
+              initOpenInvite={autoOpenInvite}
+            />
           )}
         </div>
-      </div>
+      )}
+  </div>
+</div>
 
 
 {/* Enquiry Modal */}
@@ -1373,36 +1373,36 @@ function ProfileContent() {
                         key={thread.documentId}
                         onClick={() => router.push(`/enquiries?threadId=${thread.documentId}`)}
                         className="p-4 rounded-xl border border-gray-100 hover:border-indigo-200 hover:bg-indigo-50/30 transition-all group cursor-pointer"
-                      >
-                        <div className="flex justify-between items-start mb-2">
-                          <div className="flex items-center gap-3">
+                    >
+                      <div className="flex justify-between items-start mb-2">
+                        <div className="flex items-center gap-3">
                             <div className="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white font-black text-xs shadow-lg shadow-indigo-100">
                               {otherCompany?.company_name?.substring(0, 1).toUpperCase()}
-                            </div>
-                            <div>
+                          </div>
+                          <div>
                               <h4 className="font-black text-slate-900 tracking-tight">
                                 {otherCompany?.company_name || thread.title}
-                              </h4>
+                            </h4>
                               <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">
                                 {new Date(thread.last_message_at || thread.updatedAt).toLocaleString()}
-                              </p>
-                            </div>
+                            </p>
                           </div>
-                   
                         </div>
+                   
+                      </div>
                         <p className="text-slate-600 text-xs font-medium leading-relaxed mt-2 pl-2 border-l-2 border-slate-100">
                           {thread.last_message_preview || "No preview available"}
                         </p>
                         
-                        <div className="mt-3 flex justify-end">
+                      <div className="mt-3 flex justify-end">
                           <button className="text-[10px] font-black uppercase tracking-widest text-indigo-600 hover:text-indigo-800 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
                             Open Workspace
                             <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
-                            </svg>
-                          </button>
-                        </div>
+                          </svg>
+                        </button>
                       </div>
+                    </div>
                     );
                   })
                 ) : (
