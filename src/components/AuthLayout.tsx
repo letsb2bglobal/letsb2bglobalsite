@@ -7,20 +7,41 @@ export default function AuthLayout({ children, variant = "signin" }: AuthLayoutP
   const hideLeftPanel = variant === "signup";
 
   return (
-    /* White page background */
-    <div className="min-h-screen flex flex-col bg-white overflow-x-hidden">
-
+    <div
+      className={`flex flex-col overflow-x-hidden ${hideLeftPanel ? "h-screen overflow-y-auto" : "min-h-screen"}`}
+      style={{ background: hideLeftPanel ? "#fff" : "#FFE6FBA3" }}
+    >
       {/* ── Content area ───────────────────────────────────────────────── */}
-      <div className="flex-1 bg-white px-3 py-4 sm:px-6 sm:py-6 md:px-8 md:py-8">
+      <div
+        className={`flex-1 px-3 py-4 sm:px-6 sm:py-6 md:px-8 md:py-8 ${hideLeftPanel ? "min-h-0" : ""}`}
+        style={{ background: hideLeftPanel ? "#fff" : "#FFE6FBA3" }}
+      >
         <div
-          className={`w-full min-h-[calc(100vh-2rem)] sm:min-h-[calc(100vh-3rem)] rounded-2xl flex items-center justify-center overflow-x-hidden ${
+          className={`relative w-full flex items-center justify-center ${hideLeftPanel ? "min-h-full overflow-visible rounded-2xl" : "min-h-screen overflow-x-hidden"} ${
             hideLeftPanel ? "" : "grid lg:grid-cols-2 grid-cols-1"
           }`}
           style={{
             background: hideLeftPanel ? "transparent" : "#FFE6FBA3",
-            border: hideLeftPanel ? "none" : "1px solid #E3BFDD",
+            border: "none",
           }}
         >
+          {/* ── Signup: Ellipse 36 — localized blur (per Figma) ─────────── */}
+          {hideLeftPanel && (
+            <div
+              className="absolute pointer-events-none"
+              style={{
+                width: 728.83,
+                height: 728.83,
+                top: 147.59,
+                left: 355.59,
+                borderRadius: "50%",
+                background: "#F8EBFF",
+                filter: "blur(104px)",
+                WebkitFilter: "blur(104px)",
+              }}
+              aria-hidden
+            />
+          )}
 
           {/* ── Left Panel (signin only) ───────────────────────────────── */}
           {!hideLeftPanel && (
@@ -90,17 +111,17 @@ export default function AuthLayout({ children, variant = "signin" }: AuthLayoutP
           )}
 
           {/* ── Right Panel (Form Card) ────────────────────────────────── */}
-          <div className={`flex items-center justify-center p-3 sm:p-6 md:p-8 min-w-0 w-full overflow-x-hidden ${hideLeftPanel ? "w-full" : ""}`}>
+          <div className={`relative z-10 flex items-center justify-center p-3 sm:p-6 md:p-8 min-w-0 w-full overflow-x-hidden ${hideLeftPanel ? "w-full" : ""}`}>
             <div
-              className={`bg-[#FFFFFF] overflow-y-auto w-full py-5 px-4 sm:py-8 sm:px-6 md:px-8 ${
+              className={`w-full py-5 px-4 sm:py-8 sm:px-6 md:px-8 ${
                 hideLeftPanel
-                  ? "max-w-full sm:max-w-[540px] md:max-w-[680px] lg:max-w-[872px] min-h-0 sm:min-h-[393px] rounded-2xl sm:rounded-[24px]"
-                  : "max-w-[460px] rounded-xl sm:rounded-[20px]"
+                  ? "max-w-full sm:max-w-[540px] md:max-w-[680px] lg:max-w-[872px] min-h-0 sm:min-h-[393px] rounded-2xl sm:rounded-[24px] bg-[#FFFFFF]"
+                  : "max-w-[460px] rounded-xl sm:rounded-[20px] overflow-y-auto"
               }`}
               style={
                 hideLeftPanel
                   ? { boxShadow: "2px 2px 6px 0px #00000040" }
-                  : { boxShadow: "0px 4px 24px 0px rgba(180,100,200,0.13)" }
+                  : { background: "#FFFFFF", boxShadow: "0px 4px 24px 0px rgba(180,100,200,0.13)" }
               }
             >
               {children}

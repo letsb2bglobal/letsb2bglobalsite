@@ -33,8 +33,7 @@ export const metadata: Metadata = {
 import { ToastProvider } from "@/components/Toast";
 import { TeamProvider } from "@/context/TeamContext";
 import { MembershipProvider } from "@/context/MembershipContext";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
+import AppShell from "@/components/AppShell";
 
 export default function RootLayout({
   children,
@@ -49,13 +48,9 @@ export default function RootLayout({
         <ToastProvider>
           <TeamProvider>
             <MembershipProvider>
-              <div className="flex flex-col min-h-screen">
-                <Header />
-                <main className="flex-grow">
-                  {children}
-                </main>
-                <Footer />
-              </div>
+              <AppShell>
+                {children}
+              </AppShell>
             </MembershipProvider>
           </TeamProvider>
         </ToastProvider>
