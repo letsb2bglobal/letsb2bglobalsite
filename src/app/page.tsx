@@ -14,7 +14,7 @@ import Cookies from "js-cookie";
 import EnquiryModal from "@/components/EnquiryModal";
 import PostModal from "@/components/PostModal";
 import { getOrCreateConversation } from "@/lib/messages";
-import { getTradeWallFeed, searchTradeWall, logActivity, deletePost, type Post } from "@/lib/posts";
+import { getTradeWallFeed, searchTradeWall, deletePost, type Post } from "@/lib/posts";
 import WorkspaceSwitcher from "@/components/WorkspaceSwitcher";
 import { useTeam } from "@/context/TeamContext";
 import { Search, MapPin } from "lucide-react";
@@ -104,18 +104,6 @@ useEffect(() => {
       const response = await getTradeWallFeed();
       if (response && response.data) {
         setPosts(response.data);
-        
-        // Log view for initial items
-        if (user?.id) {
-          response.data.forEach(item => {
-            logActivity({
-              user: user.id,
-              action_type: "view",
-              item_id: item.documentId,
-              item_type: item._type || "post"
-            });
-          });
-        }
       }
     } catch (error) {
       console.error("Error fetching TradeWall:", error);
@@ -269,37 +257,6 @@ useEffect(() => {
 
   return (
     <div className="min-h-screen bg-[#f3f2ef]">
-      {/* Search Bar section relocated to top of content or integrated into header */}
-      <div className="bg-white border-b border-gray-100 py-4 px-4 md:px-20">
-        <div className="max-w-6xl mx-auto flex bg-gray-100 rounded-lg overflow-hidden w-full items-center gap-0 border border-transparent focus-within:border-blue-500 transition-all shadow-sm">
-          <div className="flex-1 flex items-center gap-2 px-3 py-2 border-r border-gray-200">
-            <Search className="w-4 h-4 text-gray-400 shrink-0" />
-            <input
-              type="text"
-              placeholder="Business name or service..."
-              className="bg-transparent border-none outline-none text-sm w-full placeholder:text-gray-400"
-              value={searchText}
-              onChange={(e) => setSearchText(e.target.value)}
-            />
-          </div>
-          <div className="w-1/3 flex items-center gap-2 px-3 py-2 bg-gray-50/50">
-            <MapPin className="w-4 h-4 text-gray-400 shrink-0" />
-            <input
-              type="text"
-              placeholder="Destination..."
-              className="bg-transparent border-none outline-none text-sm w-full placeholder:text-gray-400"
-              value={locationText}
-              onChange={(e) => setLocationText(e.target.value)}
-            />
-          </div>
-          {isSearching && (
-            <div className="pr-3">
-              <div className="animate-spin h-4 w-4 border-2 border-blue-500 border-t-transparent rounded-full" />
-            </div>
-          )}
-        </div>
-      </div>
-
       <div className="max-w-6xl mx-auto mt-6 px-4 grid grid-cols-1 md:grid-cols-4 gap-6 pb-10">
         {/* Main Feed */}
         <div className="md:col-span-3 space-y-4">
@@ -726,7 +683,6 @@ useEffect(() => {
 
                 <div className="pt-2 border-t border-gray-50 flex items-center gap-4">
                   <button
-                    onClick={() => user?.id && logActivity({ user: user.id, action_type: 'click', item_id: post.documentId, item_type: post._type || 'post' })}
                     className="text-xs font-bold text-gray-500 hover:text-indigo-600 uppercase tracking-wider flex items-center gap-1"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -735,7 +691,6 @@ useEffect(() => {
                     Connect
                   </button>
                   <button
-                    onClick={() => user?.id && logActivity({ user: user.id, action_type: 'reply', item_id: post.documentId, item_type: post._type || 'post' })}
                     className="text-xs font-bold text-gray-500 hover:text-indigo-600 uppercase tracking-wider flex items-center gap-1"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
