@@ -18,12 +18,22 @@ export interface Post {
   custom_attachments?: any[];
   _type?: 'post' | 'enquiry';
   _score?: number;
+  type?: string;
   // Legacy fields kept for backward-compat during transition
   title?: string;
   content?: any;
   roleType?: 'seller' | 'buyer';
   intentType?: 'demand' | 'offer';
   destinationCity?: string;
+  enquiry_details?: any[];
+  budget?: {
+    amount: number;
+    currency: string;
+    budgetType: string;
+  };
+  media_items?: any[];
+  is_edited?: boolean;
+  last_edited_at?: string;
 }
 
 export interface PostResponse {
@@ -285,6 +295,8 @@ export const logActivity = async (data: {
   item_id: string; // documentId
   item_type: 'post' | 'enquiry';
 }): Promise<void> => {
+  // Disabled as per user request
+  /*
   const token = getToken();
   try {
     await fetch(`${apiUrl}/api/activity-logs`, {
@@ -298,6 +310,7 @@ export const logActivity = async (data: {
   } catch (error) {
     console.error("Activity logging failed:", error);
   }
+  */
 };
 
 /**
