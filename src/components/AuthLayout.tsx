@@ -1,14 +1,14 @@
 import Image from "next/image";
 import Link from "next/link";
 
-type AuthLayoutProps = { children: React.ReactNode; variant?: "signin" | "signup" };
+type AuthLayoutProps = { children: React.ReactNode; variant?: "signin" | "signup"; header?: React.ReactNode };
 
-export default function AuthLayout({ children, variant = "signin" }: AuthLayoutProps) {
+export default function AuthLayout({ children, variant = "signin", header }: AuthLayoutProps) {
   const hideLeftPanel = variant === "signup";
 
   return (
     <div
-      className={`flex flex-col overflow-x-hidden ${hideLeftPanel ? "h-screen overflow-y-auto" : "min-h-screen"}`}
+      className="flex flex-col overflow-x-hidden min-h-screen"
       style={{ background: hideLeftPanel ? "#fff" : "#FFE6FBA3" }}
     >
       {/* ── Content area ───────────────────────────────────────────────── */}
@@ -111,16 +111,21 @@ export default function AuthLayout({ children, variant = "signin" }: AuthLayoutP
           )}
 
           {/* ── Right Panel (Form Card) ────────────────────────────────── */}
-          <div className={`relative z-10 flex items-center justify-center p-3 sm:p-6 md:p-8 min-w-0 w-full overflow-x-hidden ${hideLeftPanel ? "w-full" : ""}`}>
+          <div className={`relative z-10 flex flex-col items-center p-3 sm:p-6 md:p-8 min-w-0 w-full overflow-x-hidden ${hideLeftPanel ? "w-full" : ""}`}>
+            {hideLeftPanel && header && (
+              <div className="w-full max-w-full sm:max-w-[540px] md:max-w-[680px] lg:max-w-[872px] px-4 sm:px-6 md:px-8 mb-6 sm:mb-8">
+                {header}
+              </div>
+            )}
             <div
               className={`w-full py-5 px-4 sm:py-8 sm:px-6 md:px-8 ${
                 hideLeftPanel
-                  ? "max-w-full sm:max-w-[540px] md:max-w-[680px] lg:max-w-[872px] min-h-0 sm:min-h-[393px] rounded-2xl sm:rounded-[24px] bg-[#FFFFFF]"
+                  ? "max-w-full sm:max-w-[540px] md:max-w-[680px] lg:max-w-[872px] min-h-0 sm:min-h-[663px] rounded-2xl sm:rounded-[24px] bg-[#FFFFFF]"
                   : "max-w-[460px] rounded-xl sm:rounded-[20px] overflow-y-auto"
               }`}
               style={
                 hideLeftPanel
-                  ? { boxShadow: "2px 2px 6px 0px #00000040" }
+                  ? { boxShadow: "2px 5px 13px 0px #E1C0EC" }
                   : { background: "#FFFFFF", boxShadow: "0px 4px 24px 0px rgba(180,100,200,0.13)" }
               }
             >

@@ -7,8 +7,8 @@ import {
   completeOnboardingStep,
   getMyProfile,
 } from "@/lib/profile";
-import AuthLayout from "@/components/AuthLayout";
 import Image from "next/image";
+import AuthLayout from "@/components/AuthLayout";
 import { useToast } from "@/components/Toast";
 import { useTeam } from "@/context/TeamContext";
 
@@ -22,6 +22,28 @@ const BUSINESS_TYPES = [
   "Adventure Activity",
   "Ayurveda Centre"
 ];
+
+const BUSINESS_TYPE_IMAGES: Record<string, string> = {
+  Restaurant: "/Restaurant.png",
+  Hotel: "/hotel.png",
+  "Taxi Business": "/taxi_business.png",
+  DMC: "/DMC.png",
+  "Tour Guide": "/tour_guid.png",
+  "TT Bus Services": "/tt_busservies.png",
+  "Adventure Activity": "/adventure_activity.png",
+  "Ayurveda Centre": "/Ayurveda_Centre.png",
+};
+
+const STEP_LABELS = [
+  "Business Type",
+  "Business Information",
+  "Preference",
+  "Preview"
+];
+
+const PURPLE = "#612178";
+const PURPLE_LIGHT = "#E0CCF0";   // light purple circle for inactive steps
+const PURPLE_DARK = "#8C4D9F";    // dark purple for inactive number & text
 
 export default function CompleteProfileContent() {
   const router = useRouter();
@@ -380,79 +402,116 @@ export default function CompleteProfileContent() {
     return 100;
   };
 
-  return (
-    <AuthLayout>
-      <div className="flex flex-col items-center mb-8">
-        <div className="flex items-center mb-2">
-          <Image src="/headerB2B_logo.png" alt="Logo" width={100} height={40} className="object-contain mr-3" />
-        </div>
-        <p className="text-gray-500 text-sm font-medium">Build your professional B2B identity</p>
+  const stepper = !isInitializing && (
+      <div className="flex flex-wrap items-center justify-between w-full gap-2 sm:gap-1">
+        {STEP_LABELS.map((label, idx) => {
+          const stepNum = idx + 1;
+          const isActive = currentStep === stepNum;
+          const isCompleted = currentStep > stepNum;
+          return (
+            <React.Fragment key={stepNum}>
+              {idx > 0 && (
+                <span className="text-gray-400 text-sm mx-1 hidden sm:inline">&gt;</span>
+              )}
+              <div className="flex items-center gap-2">
+                <span
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-bold transition-all duration-300"
+                  style={
+                    isActive
+                      ? { backgroundColor: PURPLE, color: "white" }
+                      : isCompleted
+                        ? { backgroundColor: PURPLE, color: "white" }
+                        : { backgroundColor: PURPLE_LIGHT, color: PURPLE_DARK }
+                  }
+                >
+                  {isCompleted ? "✓" : stepNum}
+                </span>
+                <span
+                  className="text-sm font-medium"
+                  style={
+                    isActive
+                      ? { color: "#9b6ea8" }
+                      : isCompleted
+                        ? { color: PURPLE }
+                        : { color: PURPLE_DARK }
+                  }
+                >
+                  {label}
+                </span>
+              </div>
+            </React.Fragment>
+          );
+        })}
       </div>
+    );
 
+  return (
+    <AuthLayout variant="signup" header={stepper}>
       {isInitializing ? (
         <div className="flex flex-col items-center justify-center py-20 space-y-4">
           <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
           <p className="text-gray-500 text-sm font-medium animate-pulse">Loading onboarding data...</p>
         </div>
       ) : (
-        <>
-          <div className="mb-8">
-            <div className="flex items-center justify-between mb-4">
-              <span className="text-sm font-bold text-blue-600 bg-blue-50 px-3 py-1 rounded-full">
-                Step {currentStep} of 4
-              </span>
-            </div>
-            
-            {/* Dynamic Progress Indicator */}
-            <div className="flex items-center justify-between relative mb-6">
-              <div className="absolute left-0 top-1/2 -z-10 h-1 w-full -translate-y-1/2 bg-gray-200 rounded-full"></div>
-              <div 
-                className="absolute left-0 top-1/2 -z-10 h-1 -translate-y-1/2 bg-blue-600 rounded-full transition-all duration-500"
-                style={{ width: `${((currentStep - 1) / 3) * 100}%` }}
-              ></div>
-              
-              {[1, 2, 3, 4].map((step) => (
-                <div 
-                  key={step} 
-                  className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold transition-all duration-300 ${
-                    step < currentStep 
-                    ? "bg-blue-600 text-white shadow-md" 
-                    : step === currentStep
-                      ? "bg-white border-2 border-blue-600 text-blue-600 shadow-md scale-110"
-                      : "bg-white border-2 border-gray-200 text-gray-400"
-                  }`}
-                >
-                  {step < currentStep ? "✓" : step}
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="bg-white rounded-3xl border border-gray-100 shadow-lg p-6 md:p-8">
+        <div className="pt-2">
             {currentStep === 1 && (
               <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
-                <h3 className="text-2xl font-bold text-gray-900 mb-6 text-center">Who Are You? Select Your Business</h3>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
+                  <div>
+                    <h3 className="text-2xl md:text-3xl font-bold text-gray-900">Who Are You ?</h3>
+                    <p className="text-gray-600 text-sm mt-1">Select Your Business</p>
+                  </div>
+                  <button
+                    type="button"
+                    className="flex items-center justify-center gap-2 text-white font-semibold text-sm whitespace-nowrap"
+                    style={{ width: 220.75, height: 50, borderRadius: 16, backgroundColor: PURPLE }}
+                    onClick={() => {}}
+                  >
+                    <span className="text-lg">+</span> Add Your Business
+                  </button>
+                </div>
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 w-full max-w-full min-w-0 overflow-x-hidden">
                   {BUSINESS_TYPES.map(type => {
                     const isSelected = formData.business_type.includes(type);
                     return (
                       <div 
                         key={type}
                         onClick={() => toggleBusinessType(type)}
-                        className={`p-4 rounded-2xl border-2 transition-all cursor-pointer flex flex-col items-center justify-center text-center gap-3 relative ${
-                          isSelected 
-                            ? "border-blue-600 bg-blue-50/50 shadow-md" 
-                            : "border-gray-100 bg-white hover:border-blue-200 hover:shadow-sm"
+                        className={`rounded-[16px] border-2 transition-all cursor-pointer flex flex-col overflow-hidden shrink-0 ${
+                          isSelected ? "shadow-md" : "bg-white hover:shadow-sm"
                         }`}
+                        style={
+                          isSelected
+                            ? {
+                                width: 172.31,
+                                height: 174.97,
+                                borderColor: PURPLE,
+                                background: "linear-gradient(114.72deg, #612178 16.64%, #801E7C 50.66%, #801E7C 94.01%)",
+                              }
+                            : {
+                                width: 172.31,
+                                height: 174.97,
+                                borderColor: PURPLE_LIGHT,
+                                backgroundColor: "#FFFFFF",
+                              }
+                        }
                       >
-                        <h4 className={`font-bold text-sm ${isSelected ? "text-blue-900" : "text-gray-700"}`}>{type}</h4>
-                        {isSelected && (
-                          <div className="absolute top-2 right-2 flex items-center justify-center w-5 h-5 bg-blue-600 rounded-full text-white">
-                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
-                            </svg>
+                        {BUSINESS_TYPE_IMAGES[type] && (
+                          <div
+                            className="relative overflow-hidden shrink-0 rounded-t-[16px]"
+                            style={{ width: 172.31, height: 139.68 }}
+                          >
+                            <Image
+                              src={BUSINESS_TYPE_IMAGES[type]!}
+                              alt={type}
+                              fill
+                              className="object-cover object-center"
+                            />
                           </div>
                         )}
+                        <div className="flex-1 flex items-center justify-center min-h-[35px] px-2 py-1">
+                          <h4 className={`font-bold text-sm text-center leading-tight ${isSelected ? "text-white" : "text-gray-900"}`}>{type}</h4>
+                        </div>
                       </div>
                     )
                   })}
@@ -475,13 +534,14 @@ export default function CompleteProfileContent() {
                         onClick={() => togglePreference(type)}
                         className={`p-4 rounded-xl border-2 transition-all cursor-pointer flex items-center justify-between ${
                           isSelected
-                            ? "border-blue-600 bg-blue-50/50" 
-                            : "border-gray-100 bg-white hover:border-blue-200"
+                            ? ""
+                            : "border-gray-100 bg-white hover:border-purple-200"
                         }`}
+                        style={isSelected ? { borderColor: PURPLE, backgroundColor: `${PURPLE}15` } : {}}
                       >
-                        <span className={`text-sm font-semibold ${isSelected ? 'text-blue-900' : 'text-gray-700'}`}>{type}</span>
+                        <span className={`text-sm font-semibold ${isSelected ? 'text-gray-900' : 'text-gray-700'}`}>{type}</span>
                         {isSelected && (
-                          <svg className="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                          <svg className="w-5 h-5" style={{ color: PURPLE }} fill="currentColor" viewBox="0 0 20 20">
                             <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                           </svg>
                         )}
@@ -564,19 +624,30 @@ export default function CompleteProfileContent() {
               </div>
             )}
 
-            <div className="pt-8 flex flex-col md:flex-row gap-4">
-              {currentStep > 1 && (
-                <button
-                  onClick={() => setCurrentStep(currentStep - 1)}
-                  disabled={isLoading}
-                  className="w-full md:w-auto px-6 py-4 bg-gray-100 text-gray-700 font-bold text-sm rounded-xl hover:bg-gray-200 transition-all disabled:opacity-50"
-                >
-                  GO BACK
-                </button>
-              )}
-              
+            {/* Progress bar */}
+            <div className="mt-6 mb-4">
+              <div className="h-1.5 w-full bg-gray-200 rounded-full overflow-hidden">
+                <div
+                  className="h-full rounded-full transition-all duration-500"
+                  style={{ width: String(calculateCompletionPercentage()) + "%", backgroundColor: PURPLE }}
+                />
+              </div>
+            </div>
+
+            <div className="pt-4 flex flex-col md:flex-row gap-4 md:justify-between md:items-center">
+              <div>
+                {currentStep > 1 && (
+                  <button
+                    onClick={() => setCurrentStep(currentStep - 1)}
+                    disabled={isLoading}
+                    className="px-6 py-3 bg-gray-100 text-gray-700 font-semibold text-sm rounded-full hover:bg-gray-200 transition-all disabled:opacity-50"
+                  >
+                    GO BACK
+                  </button>
+                )}
+              </div>
               {currentStep < 4 ? (
-                <div className="flex gap-2 w-full">
+                <div className="flex gap-3 w-full md:w-auto justify-end">
                   <button
                     onClick={() => {
                       if(currentStep === 1 && formData.business_type.length === 0) {
@@ -585,39 +656,42 @@ export default function CompleteProfileContent() {
                       submitStep();
                     }}
                     disabled={isLoading}
-                    className="flex-1 py-4 bg-white border-2 border-gray-200 text-gray-600 font-bold text-sm rounded-xl hover:bg-gray-50 transition-all disabled:opacity-50"
+                    className="flex items-center justify-center text-gray-700 font-semibold text-sm hover:opacity-90 transition-all disabled:opacity-50"
+                    style={{ width: 144.51, height: 50, borderRadius: 16, backgroundColor: "#E6E6E6" }}
                   >
-                    SKIP
+                    Skip
                   </button>
                   <button
                     onClick={() => submitStep()}
                     disabled={isLoading}
-                    className="flex-[2] py-4 bg-blue-600 text-white font-bold text-sm rounded-xl hover:bg-blue-700 transition-all shadow-lg hover:shadow-blue-200 disabled:opacity-50"
+                    className="flex items-center justify-center text-white font-semibold text-sm transition-all disabled:opacity-50"
+                    style={{ width: 144.51, height: 50, borderRadius: 16, backgroundColor: PURPLE, boxShadow: "0px 4px 10px -2px #00000040" }}
                   >
-                    {isLoading ? "PROCESSING..." : "NEXT →"}
+                    {isLoading ? "PROCESSING..." : "Next"}
                   </button>
                 </div>
               ) : (
-                <div className="flex flex-col md:flex-row gap-3 w-full">
+                <div className="flex flex-col md:flex-row gap-3 w-full md:justify-end">
                   <button
                     onClick={() => setCurrentStep(2)}
                     disabled={isLoading}
-                    className="flex-1 py-4 bg-white border-2 border-blue-200 text-blue-600 font-bold text-sm rounded-xl hover:bg-blue-50 transition-all disabled:opacity-50"
+                    className="px-6 py-3 bg-white border-2 font-semibold text-sm rounded-full hover:bg-gray-50 transition-all disabled:opacity-50"
+                    style={{ borderColor: PURPLE, color: PURPLE }}
                   >
                     Add Additional Info
                   </button>
                   <button
                     onClick={() => submitStep()}
                     disabled={isLoading}
-                    className="flex-1 py-4 bg-blue-600 text-white font-bold text-sm rounded-xl hover:bg-blue-700 transition-all shadow-lg hover:shadow-blue-200 disabled:opacity-50"
+                    className="px-6 py-3 text-white font-semibold text-sm rounded-full transition-all disabled:opacity-50"
+                    style={{ backgroundColor: PURPLE }}
                   >
                     {isLoading ? "PROCESSING..." : "Lets Find Other Business"}
                   </button>
                 </div>
               )}
             </div>
-          </div>
-        </>
+        </div>
       )}
     </AuthLayout>
   );

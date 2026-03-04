@@ -3,9 +3,9 @@
 import Image from 'next/image';
 import Link from 'next/link';
 
-export default function SignupHeader() {
+export default function SignupHeader({ sticky = true }: { sticky?: boolean }) {
   return (
-    <header className="sticky top-0 z-50 bg-white border-b border-gray-100 shadow-sm">
+    <header className={`z-50 bg-white border-b border-gray-100 shadow-sm ${sticky ? 'sticky top-0' : ''}`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
