@@ -255,7 +255,7 @@ function SigninContent() {
   // ── Logo (shared) ─────────────────────────────────────────────────────
   const Logo = () => (
     <div className="flex items-center justify-center mb-4">
-      <Image src="/LetsB2B_logo.png" alt="LetsB2B" width={460} height={122} className="object-contain max-w-full h-auto" />
+      <Image src="/LetsB2B_logo1.png" alt="LetsB2B" width={456} height={118} className="object-contain max-w-full h-auto" />
     </div>
   );
 

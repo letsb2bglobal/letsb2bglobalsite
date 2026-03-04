@@ -3,6 +3,7 @@
 import { usePathname } from 'next/navigation';
 import Header from './Header';
 import Footer from './Footer';
+import SignupHeader from './SignupHeader';
 
 const AUTH_PATHS = ['/signin', '/signup'];
 
@@ -13,7 +14,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className={`flex flex-col min-h-screen ${isSignupPage ? "h-screen overflow-hidden" : ""}`}>
-      {!isAuthPage && <Header />}
+      {isSignupPage ? <SignupHeader /> : !isAuthPage && <Header />}
       <main className={`flex-grow ${isSignupPage ? "min-h-0 overflow-hidden" : ""}`}>{children}</main>
       {!isAuthPage && <Footer />}
     </div>
