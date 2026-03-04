@@ -4,28 +4,23 @@ import React, { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/components/ProtectedRoute";
 import { 
-  completeProfileStep,
+  completeOnboardingStep,
   getMyProfile,
 } from "@/lib/profile";
 import AuthLayout from "@/components/AuthLayout";
 import Image from "next/image";
 import { useToast } from "@/components/Toast";
 import { useTeam } from "@/context/TeamContext";
-import CategorySelect from "@/components/CategorySelect";
 
-type ProfileType = "Individual" | "Company" | "Association";
-
-interface Category {
-  category: string;
-  sub_categories: string[];
-  description: string;
-}
-
-
-const TARGET_BUYER_TYPES = [
-  "B2B",
-  "B2C",
-  "Both"
+const BUSINESS_TYPES = [
+  "Restaurant",
+  "Hotel",
+  "Taxi Business",
+  "DMC",
+  "Tour Guide",
+  "TT Bus Services",
+  "Adventure Activity",
+  "Ayurveda Centre"
 ];
 
 export default function CompleteProfileContent() {
@@ -37,41 +32,19 @@ export default function CompleteProfileContent() {
   
   // State for flow control
   const [currentStep, setCurrentStep] = useState(1);
-  const [profileType, setProfileType] = useState<ProfileType | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [submitError, setSubmitError] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isInitializing, setIsInitializing] = useState(true);
-  const [showCategoryModal, setShowCategoryModal] = useState(false);
 
   // Form State
   const [formData, setFormData] = useState({
-    // Step 2: Identity
-    full_name: "",
-    email: "",
-    mobile_number: "",
+    business_type: [] as string[],
     company_name: "",
-    contact_person_name: "",
-    
-    // Step 3: Classification
-    business_type: "",
-    target_buyer_type: "",
-    category_items: [] as Category[],
-
-    // Step 4: Location
-    address: "",
-    city: "",
-    country: "",
-    pincode: "",
-    google_map_link: "",
+    business_details: {} as Record<string, unknown>,
+    preferred_collaborations: [] as string[],
+    email: ""
   });
-
-  const [currentCategory, setCurrentCategory] = useState<Category>({
-    category: "",
-    sub_categories: [],
-    description: ""
-  });
-  const [subCategoryInput, setSubCategoryInput] = useState("");
 
   // Check if profile exists and potentially resume
   useEffect(() => {
@@ -81,44 +54,44 @@ export default function CompleteProfileContent() {
           const { exists, profile } = await getMyProfile(user.id);
           
           if (exists && profile) {
-            if (profile.profile_status === "active") {
+            if (profile.profile_status === "active" || profile.profile_status === "ACTIVE" as string) {
               router.push("/");
               return;
             }
 
-            // Resume logic
-            const p = profile as any;
-            setProfileType(p.profile_type as ProfileType);
-            
-            // Map existing data
+            // Map existing data (business_type is now an array of strings in Strapi DB)
+            const rawTypes = profile.business_type;
+            let initialBusinessTypes: string[] = [];
+            if (Array.isArray(rawTypes)) {
+              initialBusinessTypes = rawTypes as string[];
+            } else if (typeof rawTypes === "string" && rawTypes) {
+              // Backward compatibility if it was saved as a string
+              try {
+                 initialBusinessTypes = JSON.parse(rawTypes);
+                 if (!Array.isArray(initialBusinessTypes)) initialBusinessTypes = [rawTypes];
+              } catch {
+                 initialBusinessTypes = [rawTypes];
+              }
+            }
+
             setFormData(prev => ({
               ...prev,
-              full_name: p.full_name || "",
-              email: p.email || user.email || "",
-              mobile_number: p.mobile_number || (user as any)?.mobile_number || "",
-              company_name: p.company_name || "",
-              contact_person_name: p.contact_person_name || "",
-              business_type: p.business_type || "",
-              target_buyer_type: p.target_buyer_type || "",
-              category_items: p.category_items || [],
-              address: p.address_text || p.address || "",
-              city: p.city || "",
-              country: p.country || "",
-              pincode: p.pincode || "",
-              google_map_link: p.google_map_link || "",
+              business_type: initialBusinessTypes,
+              company_name: profile.company_name || "",
+              business_details: ((profile as unknown) as Record<string, unknown>).business_details as Record<string, unknown> || {},
+              preferred_collaborations: ((profile as unknown) as { preferred_collaborations: string[] }).preferred_collaborations || [],
+              email: profile.email || user.email || ""
             }));
 
-            // Logic to determine which step to resume from
-            if (!p.profile_type) setCurrentStep(1);
-            else if (!p.full_name && !p.company_name) setCurrentStep(2);
-            else if (!p.business_type) setCurrentStep(3);
-            else setCurrentStep(4);
+            const step = ((profile as unknown) as { onboarding_step?: number }).onboarding_step 
+              ? Math.min(((profile as unknown) as { onboarding_step: number }).onboarding_step, 4) 
+              : 1;
+            setCurrentStep(step);
           } else {
-            // New user - pre-fill email and mobile from auth even if profile doesn't exist yet
+            // New user - pre-fill email
             setFormData(prev => ({
               ...prev,
-              email: user.email || "",
-              mobile_number: (user as any)?.mobile_number || "",
+              email: user.email || ""
             }));
           }
         } catch (err) {
@@ -131,9 +104,7 @@ export default function CompleteProfileContent() {
     initProfile();
   }, [user, router]);
 
-  const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
-  ) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
     if (errors[name]) {
@@ -141,29 +112,96 @@ export default function CompleteProfileContent() {
     }
   };
 
+  const updateDetails = (key: string, value: unknown) => {
+    setFormData((prev) => ({
+      ...prev,
+      business_details: { ...prev.business_details, [key]: value }
+    }));
+    if (errors[key]) {
+      setErrors((prev) => ({ ...prev, [key]: "" }));
+    }
+  };
+
+  const toggleBusinessType = (type: string) => {
+    setFormData((prev) => {
+      const isSelected = prev.business_type.includes(type);
+      if (isSelected) {
+        return {
+          ...prev,
+          business_type: prev.business_type.filter(t => t !== type)
+        };
+      } else {
+        return {
+          ...prev,
+          business_type: [...prev.business_type, type]
+        };
+      }
+    });
+    if (errors.business_type) {
+      setErrors((prev) => ({ ...prev, business_type: "" }));
+    }
+  };
+
+  const togglePreference = (type: string) => {
+    setFormData((prev) => {
+      const isSelected = prev.preferred_collaborations.includes(type);
+      if (isSelected) {
+        return {
+          ...prev,
+          preferred_collaborations: prev.preferred_collaborations.filter(t => t !== type)
+        };
+      } else {
+        return {
+          ...prev,
+          preferred_collaborations: [...prev.preferred_collaborations, type]
+        };
+      }
+    });
+    if (errors.preferred_collaborations) {
+      setErrors((prev) => ({ ...prev, preferred_collaborations: "" }));
+    }
+  };
+
   const validateStep = () => {
     const newErrors: Record<string, string> = {};
     
     if (currentStep === 1) {
-      if (!profileType) {
-        newErrors.profileType = "Please select a profile type";
+      if (formData.business_type.length === 0) {
+        newErrors.business_type = "Please select at least one business type";
       }
     } else if (currentStep === 2) {
-      if (profileType === "Individual") {
-        if (!formData.full_name) newErrors.full_name = "Full Name is required";
-      } else {
-        if (!formData.company_name) newErrors.company_name = "Company Name is required";
+      if (!formData.company_name) {
+        newErrors.company_name = "Establishment name is required";
       }
-      if (!formData.email) newErrors.email = "Email is required";
-      if (!formData.mobile_number) newErrors.mobile_number = "Mobile Number is required";
+      const bts = formData.business_type;
+      const details = formData.business_details;
+
+      if (bts.includes("DMC")) {
+        if (!details.areas_serviced || (details.areas_serviced as string[]).length === 0) {
+          newErrors.areas_serviced = "Areas serviced is required for DMC";
+        }
+      }
+      if (bts.includes("Restaurant") || bts.includes("Ayurveda Centre")) {
+        if (!details.location) newErrors.location = "Location is required for your Restaurant / Centre";
+        if (!details.capacity) newErrors.capacity = "Capacity is required for your Restaurant / Centre";
+      }
+      if (bts.includes("Hotel")) {
+        if (!details.hotel_type) newErrors.hotel_type = "Hotel type is required";
+        if (!details.number_of_rooms) newErrors.number_of_rooms = "Number of rooms is required";
+      }
+      
+      const requiresLocationAndCapacity = bts.includes("Restaurant") || bts.includes("Ayurveda Centre");
+      const requiresHotelDetails = bts.includes("Hotel");
+      const requiresDMC = bts.includes("DMC");
+
+      if (!requiresLocationAndCapacity && !requiresHotelDetails && !requiresDMC) {
+         if (!details.location) newErrors.location = "Location is required";
+      }
+
     } else if (currentStep === 3) {
-      if (!formData.business_type) newErrors.business_type = "Business Type is required";
-      if (formData.category_items.length === 0) newErrors.category_items = "At least one category is required";
-    } else if (currentStep === 4) {
-      if (!formData.address) newErrors.address = "Address is required";
-      if (!formData.city) newErrors.city = "City is required";
-      if (!formData.country) newErrors.country = "Country is required";
-      if (!formData.pincode) newErrors.pincode = "Pincode is required";
+      if (formData.preferred_collaborations.length === 0) {
+         newErrors.preferred_collaborations = "Please select at least one preferred collaboration";
+      }
     }
 
     setErrors(newErrors);
@@ -178,48 +216,26 @@ export default function CompleteProfileContent() {
     setSubmitError("");
 
     try {
-      let data: any = {};
+      const payloadData: Record<string, unknown> = { step };
+
       if (step === 1) {
-        data = { profile_type: profileType };
+        payloadData.business_type = formData.business_type;
       } else if (step === 2) {
-        if (profileType === "Individual") {
-          data = {
-            full_name: formData.full_name,
-            email: formData.email,
-            mobile_number: formData.mobile_number,
-          };
-        } else {
-          data = {
-            company_name: formData.company_name,
-            contact_person_name: formData.contact_person_name,
-            email: formData.email,
-            mobile_number: formData.mobile_number,
-          };
-        }
+        payloadData.company_name = formData.company_name;
+        payloadData.business_details = formData.business_details;
       } else if (step === 3) {
-        data = {
-          business_type: formData.business_type,
-          target_buyer_type: profileType === "Individual" ? "" : formData.target_buyer_type,
-          category_items: formData.category_items,
-        };
+        payloadData.preferred_collaborations = formData.preferred_collaborations;
       } else if (step === 4) {
-        data = {
-          address_text: formData.address,
-          city: formData.city,
-          country: formData.country,
-          pincode: formData.pincode,
-          google_map_link: formData.google_map_link,
-        };
+        // Nothing extra for 4, it just confirms completion
       }
 
-      const result = await completeProfileStep(step, data);
+      await completeOnboardingStep(payloadData);
 
       if (step < 4) {
         setCurrentStep(step + 1);
       } else {
-        // Refresh the workspaces list to include the newly created profile
         await refreshWorkspaces();
-        
+        showToast("Profile set up successfully", "success");
         const redirectTo = searchParams.get("redirect") || "/";
         router.push(redirectTo);
       }
@@ -231,90 +247,144 @@ export default function CompleteProfileContent() {
     }
   };
 
-  const addCategory = () => {
-    if (!currentCategory.category) return;
-    
-    // Add any pending input as a subcategory
-    let subs = [...currentCategory.sub_categories];
-    if (subCategoryInput.trim()) {
-        subs.push(subCategoryInput.trim());
-    }
+  const renderStep2Fields = () => {
+    const bts = formData.business_type;
+    const details = formData.business_details;
 
-    setFormData(prev => ({
-      ...prev,
-      category_items: [...prev.category_items, { ...currentCategory, sub_categories: subs }]
-    }));
-    setCurrentCategory({ category: "", sub_categories: [], description: "" });
-    setSubCategoryInput("");
-    if (errors.category_items) setErrors(p => ({ ...p, category_items: "" }));
-  };
+    const hasDMC = bts.includes("DMC");
+    const hasRestaurantOrCentre = bts.includes("Restaurant") || bts.includes("Ayurveda Centre");
+    const hasHotel = bts.includes("Hotel");
+    const requiresDefaultLocation = !hasDMC && !hasRestaurantOrCentre && !hasHotel;
 
-  const addSubQuery = () => {
-      if (!subCategoryInput.trim()) return;
-      if (!currentCategory.sub_categories.includes(subCategoryInput.trim())) {
-          setCurrentCategory(prev => ({
-              ...prev,
-              sub_categories: [...prev.sub_categories, subCategoryInput.trim()]
-          }));
-      }
-      setSubCategoryInput("");
-  };
-
-  const removeSubCategory = (sub: string) => {
-      setCurrentCategory(prev => ({
-          ...prev,
-          sub_categories: prev.sub_categories.filter(s => s !== sub)
-      }));
-  };
-
-  const removeCategory = (index: number) => {
-    setFormData(prev => ({
-      ...prev,
-      category_items: prev.category_items.filter((_, i) => i !== index)
-    }));
-  };
-
-  const ProfileTypeCard = ({ type, title, icon, description }: { type: ProfileType, title: string, icon: string, description: string }) => (
-    <div 
-      onClick={() => setProfileType(type)}
-      className={`relative p-6 rounded-2xl border-2 transition-all cursor-pointer group ${
-        profileType === type 
-          ? "border-blue-600 bg-blue-50/50 shadow-md" 
-          : "border-gray-100 bg-white hover:border-blue-200 hover:shadow-sm"
-      }`}
-    >
-      <div className={`w-12 h-12 rounded-xl mb-4 flex items-center justify-center text-2xl transition-transform group-hover:scale-110 ${
-        profileType === type ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-500"
-      }`}>
-        {icon}
-      </div>
-      <h3 className={`text-lg font-bold mb-1 ${profileType === type ? "text-blue-900" : "text-gray-800"}`}>
-        {title}
-      </h3>
-      <p className="text-sm text-gray-500 leading-relaxed">
-        {description}
-      </p>
-      {profileType === type && (
-        <div className="absolute top-4 right-4 text-blue-600">
-          <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-          </svg>
+    return (
+      <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+        <h3 className="text-xl font-bold text-gray-900 mb-4 text-center">Let&apos;s learn more about your business. Enter Your Business Details Below</h3>
+        
+        <div className="space-y-1">
+          <label className="text-xs font-bold text-gray-500 uppercase ml-1">Establishment / Company Name</label>
+          <input
+            type="text"
+            name="company_name"
+            value={formData.company_name}
+            onChange={handleInputChange}
+            placeholder="e.g. Grand Palace Hotel"
+            className={`w-full px-4 py-3.5 bg-gray-50 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all ${errors.company_name ? "border-red-500" : "border-gray-200"}`}
+          />
+          {errors.company_name && <p className="text-red-500 text-[10px] font-bold ml-1">{errors.company_name}</p>}
         </div>
-      )}
-    </div>
-  );
+
+        {hasDMC && (
+          <div className="p-5 bg-gradient-to-br from-blue-50 to-indigo-50/50 border border-blue-100 rounded-2xl space-y-4 shadow-sm">
+            <h4 className="font-bold text-blue-900 flex items-center gap-2">
+               <span className="text-xl">🌍</span> DMC Details
+            </h4>
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-gray-500 uppercase ml-1">Areas You Service</label>
+              <input
+                type="text"
+                value={(details.areas_serviced as string[] || []).join(", ")}
+                onChange={(e) => updateDetails('areas_serviced', e.target.value.split(',').map(s=>s.trim()).filter(Boolean))}
+                placeholder="e.g. Kochi, Kuwait, Dubai"
+                className={`w-full px-4 py-3.5 bg-white border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all ${errors.areas_serviced ? "border-red-500" : "border-blue-200"}`}
+              />
+              {errors.areas_serviced && <p className="text-red-500 text-[10px] font-bold ml-1">{errors.areas_serviced}</p>}
+            </div>
+          </div>
+        )}
+
+        {hasRestaurantOrCentre && (
+          <div className="p-5 bg-gradient-to-br from-orange-50 to-amber-50/50 border border-orange-100 rounded-2xl space-y-4 shadow-sm">
+            <h4 className="font-bold text-orange-900 flex items-center gap-2">
+               <span className="text-xl">🍽️</span> Restaurant / Centre Details
+            </h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-gray-500 uppercase ml-1">Location</label>
+                <input
+                  type="text"
+                  value={details.location as string || ""}
+                  onChange={(e) => updateDetails('location', e.target.value)}
+                  placeholder="e.g. MG Road, Bengaluru"
+                  className={`w-full px-4 py-3.5 bg-white border rounded-xl focus:ring-2 focus:ring-orange-500 outline-none transition-all ${errors.location ? "border-red-500" : "border-orange-200"}`}
+                />
+                {errors.location && <p className="text-red-500 text-[10px] font-bold ml-1">{errors.location}</p>}
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-gray-500 uppercase ml-1">Capacity</label>
+                <input
+                  type="number"
+                  value={details.capacity as string || ""}
+                  onChange={(e) => updateDetails('capacity', e.target.value)}
+                  placeholder="e.g. 150"
+                  className={`w-full px-4 py-3.5 bg-white border rounded-xl focus:ring-2 focus:ring-orange-500 outline-none transition-all ${errors.capacity ? "border-red-500" : "border-orange-200"}`}
+                />
+                {errors.capacity && <p className="text-red-500 text-[10px] font-bold ml-1">{errors.capacity}</p>}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {hasHotel && (
+          <div className="p-5 bg-gradient-to-br from-purple-50 to-pink-50/50 border border-purple-100 rounded-2xl space-y-4 shadow-sm">
+            <h4 className="font-bold text-purple-900 flex items-center gap-2">
+               <span className="text-xl">🏨</span> Hotel Details
+            </h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-gray-500 uppercase ml-1">Hotel Type</label>
+                <input
+                  type="text"
+                  placeholder="e.g. 5 Star, Resort, Boutique"
+                  value={details.hotel_type as string || ""}
+                  onChange={(e) => updateDetails('hotel_type', e.target.value)}
+                  className={`w-full px-4 py-3.5 bg-white border rounded-xl focus:ring-2 focus:ring-purple-500 outline-none transition-all ${errors.hotel_type ? "border-red-500" : "border-purple-200"}`}
+                />
+                {errors.hotel_type && <p className="text-red-500 text-[10px] font-bold ml-1">{errors.hotel_type}</p>}
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-gray-500 uppercase ml-1">No. Of Rooms</label>
+                <input
+                  type="number"
+                  value={details.number_of_rooms as string || ""}
+                  onChange={(e) => updateDetails('number_of_rooms', e.target.value)}
+                  placeholder="e.g. 45"
+                  className={`w-full px-4 py-3.5 bg-white border rounded-xl focus:ring-2 focus:ring-purple-500 outline-none transition-all ${errors.number_of_rooms ? "border-red-500" : "border-purple-200"}`}
+                />
+                {errors.number_of_rooms && <p className="text-red-500 text-[10px] font-bold ml-1">{errors.number_of_rooms}</p>}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {requiresDefaultLocation && (
+          <div className="space-y-1">
+            <label className="text-xs font-bold text-gray-500 uppercase ml-1">Location / Service Area</label>
+            <input
+              type="text"
+              value={details.location as string || ""}
+              onChange={(e) => updateDetails('location', e.target.value)}
+              placeholder="e.g. Mumbai"
+              className={`w-full px-4 py-3.5 bg-gray-50 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all ${errors.location ? "border-red-500" : "border-gray-200"}`}
+            />
+            {errors.location && <p className="text-red-500 text-[10px] font-bold ml-1">{errors.location}</p>}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const calculateCompletionPercentage = () => {
+    if (currentStep === 1) return 25;
+    if (currentStep === 2) return 50;
+    if (currentStep === 3) return 75;
+    return 100;
+  };
 
   return (
     <AuthLayout>
-      <div className="flex flex-col items-center mb-10">
+      <div className="flex flex-col items-center mb-8">
         <div className="flex items-center mb-2">
-          <Image src="/images/logo.png" alt="Logo" width={48} height={48} className="object-contain mr-3" />
-          <div className="flex flex-col">
-            <span className="text-2xl tracking-tight text-[#1e293b] leading-none mb-1">
-              <span className="font-normal">LET'S</span> <span className="font-bold">B2B</span>
-            </span>
-            <span className="text-[10px] tracking-[0.4em] text-blue-600 font-bold uppercase ml-0.5">Global</span>
-          </div>
+          <Image src="/headerB2B_logo.png" alt="Logo" width={100} height={40} className="object-contain mr-3" />
         </div>
         <p className="text-gray-500 text-sm font-medium">Build your professional B2B identity</p>
       </div>
@@ -322,399 +392,232 @@ export default function CompleteProfileContent() {
       {isInitializing ? (
         <div className="flex flex-col items-center justify-center py-20 space-y-4">
           <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
-          <p className="text-gray-500 text-sm font-medium animate-pulse">Loading profile data...</p>
+          <p className="text-gray-500 text-sm font-medium animate-pulse">Loading onboarding data...</p>
         </div>
       ) : (
         <>
-          <div className="mb-10">
-            <div className="flex items-center justify-between mb-2">
-              <h2 className="text-2xl font-bold text-gray-900">
-                {currentStep === 1 && "Choose Profile Type"}
-                {currentStep === 2 && "Identity Details"}
-                {currentStep === 3 && "Business Classification"}
-                {currentStep === 4 && "Location & Launch"}
-              </h2>
+          <div className="mb-8">
+            <div className="flex items-center justify-between mb-4">
               <span className="text-sm font-bold text-blue-600 bg-blue-50 px-3 py-1 rounded-full">
                 Step {currentStep} of 4
               </span>
             </div>
-            <div className="flex gap-2">
-              {[1, 2, 3, 4].map((s) => (
-                <div key={s} className={`h-1.5 flex-1 rounded-full transition-all duration-500 ${s <= currentStep ? "bg-blue-600 shadow-[0_0_8px_rgba(37,99,235,0.3)]" : "bg-gray-100"}`} />
+            
+            {/* Dynamic Progress Indicator */}
+            <div className="flex items-center justify-between relative mb-6">
+              <div className="absolute left-0 top-1/2 -z-10 h-1 w-full -translate-y-1/2 bg-gray-200 rounded-full"></div>
+              <div 
+                className="absolute left-0 top-1/2 -z-10 h-1 -translate-y-1/2 bg-blue-600 rounded-full transition-all duration-500"
+                style={{ width: `${((currentStep - 1) / 3) * 100}%` }}
+              ></div>
+              
+              {[1, 2, 3, 4].map((step) => (
+                <div 
+                  key={step} 
+                  className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold transition-all duration-300 ${
+                    step < currentStep 
+                    ? "bg-blue-600 text-white shadow-md" 
+                    : step === currentStep
+                      ? "bg-white border-2 border-blue-600 text-blue-600 shadow-md scale-110"
+                      : "bg-white border-2 border-gray-200 text-gray-400"
+                  }`}
+                >
+                  {step < currentStep ? "✓" : step}
+                </div>
               ))}
             </div>
           </div>
 
-          <div className="space-y-6">
-        {currentStep === 1 && (
-          <div className="grid grid-cols-1 gap-4">
-            <ProfileTypeCard 
-              type="Individual"
-              title="Individual"
-              icon="👤"
-              description="For freelancers, solo consultants, and independent agents."
-            />
-            <ProfileTypeCard 
-              type="Company"
-              title="Company"
-              icon="🏢"
-              description="For registered firms, agencies, and large corporations."
-            />
-            <ProfileTypeCard 
-              type="Association"
-              title="Association"
-              icon="🤝"
-              description="For industry bodies, chambers, and non-profit groups."
-            />
-            {errors.profileType && <p className="text-red-500 text-xs font-bold mt-2 ml-1">⚠️ {errors.profileType}</p>}
-          </div>
-        )}
+          <div className="bg-white rounded-3xl border border-gray-100 shadow-lg p-6 md:p-8">
+            {currentStep === 1 && (
+              <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+                <h3 className="text-2xl font-bold text-gray-900 mb-6 text-center">Who Are You? Select Your Business</h3>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {BUSINESS_TYPES.map(type => {
+                    const isSelected = formData.business_type.includes(type);
+                    return (
+                      <div 
+                        key={type}
+                        onClick={() => toggleBusinessType(type)}
+                        className={`p-4 rounded-2xl border-2 transition-all cursor-pointer flex flex-col items-center justify-center text-center gap-3 relative ${
+                          isSelected 
+                            ? "border-blue-600 bg-blue-50/50 shadow-md" 
+                            : "border-gray-100 bg-white hover:border-blue-200 hover:shadow-sm"
+                        }`}
+                      >
+                        <h4 className={`font-bold text-sm ${isSelected ? "text-blue-900" : "text-gray-700"}`}>{type}</h4>
+                        {isSelected && (
+                          <div className="absolute top-2 right-2 flex items-center justify-center w-5 h-5 bg-blue-600 rounded-full text-white">
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
+                            </svg>
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+                {errors.business_type && <p className="text-red-500 text-sm font-bold mt-4 text-center">{errors.business_type}</p>}
+              </div>
+            )}
 
-        {currentStep === 2 && (
-          !formData.email ? (
-            <div className="p-10 bg-gray-50 rounded-2xl border border-gray-100 flex flex-col items-center text-center space-y-4">
-              <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center text-3xl">📧</div>
-              <div>
-                <h3 className="text-xl font-bold text-gray-900">Email Required</h3>
-                <p className="text-gray-500 text-sm mt-1">Your email address is required to proceed. Please ensure you are signed in correctly.</p>
-              </div>
-            </div>
-          ) : (
-            <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
-              {profileType === "Individual" ? (
-                <div className="space-y-4">
-                  <div className="space-y-1">
-                    <label className="text-xs font-bold text-gray-500 uppercase ml-1">Full Name</label>
-                    <input
-                      type="text"
-                      name="full_name"
-                      value={formData.full_name}
-                      onChange={handleInputChange}
-                      placeholder="Enter your full name"
-                      className={`w-full px-4 py-3.5 bg-gray-50 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all ${errors.full_name ? "border-red-500" : "border-gray-200"}`}
-                    />
-                    {errors.full_name && <p className="text-red-500 text-[10px] font-bold ml-1">{errors.full_name}</p>}
-                  </div>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  <div className="space-y-1">
-                    <label className="text-xs font-bold text-gray-500 uppercase ml-1">{profileType} Name</label>
-                    <input
-                      type="text"
-                      name="company_name"
-                      value={formData.company_name}
-                      onChange={handleInputChange}
-                      placeholder={`Enter ${profileType?.toLowerCase()} name`}
-                      className={`w-full px-4 py-3.5 bg-gray-50 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all ${errors.company_name ? "border-red-500" : "border-gray-200"}`}
-                    />
-                    {errors.company_name && <p className="text-red-500 text-[10px] font-bold ml-1">{errors.company_name}</p>}
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-xs font-bold text-gray-500 uppercase ml-1">Contact Person</label>
-                    <input
-                      type="text"
-                      name="contact_person_name"
-                      value={formData.contact_person_name}
-                      onChange={handleInputChange}
-                      placeholder="Full name of contact person"
-                      className="w-full px-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
-                    />
-                  </div>
-                </div>
-              )}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-gray-500 uppercase ml-1">Email Address</label>
-                  <input
-                    type="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleInputChange}
-                    readOnly={!!user?.email}
-                    placeholder="contact@example.com"
-                    className={`w-full px-4 py-3.5 bg-gray-50 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all ${errors.email ? "border-red-500" : "border-gray-200"} ${user?.email ? "opacity-60 cursor-not-allowed text-gray-500" : ""}`}
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-gray-500 uppercase ml-1">Mobile Number</label>
-                  <input
-                    type="tel"
-                    name="mobile_number"
-                    value={formData.mobile_number}
-                    onChange={handleInputChange}
-                    readOnly={!!(user as any)?.mobile_number}
-                    placeholder="+1 234 567 890"
-                    className={`w-full px-4 py-3.5 bg-gray-50 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all ${errors.mobile_number ? "border-red-500" : "border-gray-200"} ${(user as any)?.mobile_number ? "opacity-60 cursor-not-allowed text-gray-500" : ""}`}
-                  />
-                </div>
-              </div>
-            </div>
-          )
-        )}
+            {currentStep === 2 && renderStep2Fields()}
 
-        {currentStep === 3 && (
-          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-gray-500 uppercase ml-1">Business Type</label>
-                <CategorySelect
-                  value={formData.business_type}
-                  onChange={(val) => {
-                    setFormData((prev) => ({ ...prev, business_type: val }));
-                    if (errors.business_type) setErrors((p) => ({ ...p, business_type: '' }));
-                  }}
-                  placeholder="Select Business Type"
-                  className={`w-full px-4 py-3.5 bg-gray-50 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm disabled:opacity-60 ${
-                    errors.business_type ? 'border-red-500' : 'border-gray-200'
-                  }`}
-                />
-                {errors.business_type && <p className="text-red-500 text-[10px] font-bold ml-1">{errors.business_type}</p>}
-              </div>
-              {profileType !== "Individual" && (
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-gray-500 uppercase ml-1">Target Buyer Type</label>
-                  <select
-                    name="target_buyer_type"
-                    value={formData.target_buyer_type}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
-                  >
-                    <option value="">Select Buyer Type</option>
-                    {TARGET_BUYER_TYPES.map(type => (
-                        <option key={type} value={type}>{type}</option>
-                    ))}
-                  </select>
+            {currentStep === 3 && (
+              <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+                <h3 className="text-xl font-bold text-gray-900 mb-4 text-center">Business You Are Looking For. Select business you want to collaborate with</h3>
+                <div className="grid grid-cols-2 gap-3 mt-6">
+                  {BUSINESS_TYPES.map(type => {
+                    const isSelected = formData.preferred_collaborations.includes(type);
+                    return (
+                      <div 
+                        key={type}
+                        onClick={() => togglePreference(type)}
+                        className={`p-4 rounded-xl border-2 transition-all cursor-pointer flex items-center justify-between ${
+                          isSelected
+                            ? "border-blue-600 bg-blue-50/50" 
+                            : "border-gray-100 bg-white hover:border-blue-200"
+                        }`}
+                      >
+                        <span className={`text-sm font-semibold ${isSelected ? 'text-blue-900' : 'text-gray-700'}`}>{type}</span>
+                        {isSelected && (
+                          <svg className="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                          </svg>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
-              )}
-            </div>
-
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <label className="text-xs font-bold text-gray-500 uppercase ml-1">Business Categories</label>
-                <button 
-                  onClick={() => setShowCategoryModal(true)}
-                  className="text-xs font-bold text-blue-600 hover:text-blue-700 underline"
-                >
-                  + Add New
-                </button>
+                {errors.preferred_collaborations && <p className="text-red-500 text-sm font-bold mt-4 text-center">{errors.preferred_collaborations}</p>}
               </div>
-              
-              {formData.category_items.length > 0 ? (
-                <div className="flex flex-wrap gap-2">
-                  {formData.category_items.map((cat, i) => (
-                    <div key={i} className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 text-blue-700 rounded-full text-xs font-bold border border-blue-100">
-                      <span>{cat.category} {cat.sub_categories.length > 0 && `(${cat.sub_categories.join(', ')})`}</span>
-                      <button onClick={() => removeCategory(i)} className="text-blue-400 hover:text-red-500 transition-colors">
-                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                      </button>
+            )}
+
+            {currentStep === 4 && (
+              <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+                <h3 className="text-xl font-bold text-gray-900 mb-6 text-center">We Are Ready For You. Check The Details You Have Filled Till Now</h3>
+                
+                {/* Profile Card Summary */}
+                <div className="p-6 bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-100 rounded-3xl shadow-sm relative overflow-hidden">
+                  <div className="absolute top-0 right-0 p-4">
+                    <span className="inline-block bg-white text-blue-800 text-xs font-bold px-3 py-1 rounded-full shadow-sm">
+                      Setup {calculateCompletionPercentage()}%
+                    </span>
+                  </div>
+                  
+                  <div className="flex flex-col gap-2 mb-6 pt-2">
+                    <h4 className="text-2xl font-bold text-blue-900">{formData.company_name || "Company Name"}</h4>
+                    <span className="text-sm font-medium text-gray-500 bg-white/60 self-start px-2 py-0.5 rounded-md">{formData.email || user?.email}</span>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-1 col-span-1 md:col-span-2">
+                      <p className="text-xs font-bold text-blue-400 uppercase tracking-wide">Category</p>
+                      <div className="flex flex-wrap gap-2 mt-1">
+                        {formData.business_type.map(type => (
+                           <span key={type} className="text-sm font-semibold text-gray-800 bg-white px-2 py-1 rounded border border-blue-100">{type}</span>
+                        ))}
+                      </div>
                     </div>
-                  ))}
+                    
+                    {formData.business_type.includes('Hotel') && (
+                       <div className="space-y-1">
+                         <p className="text-xs font-bold text-blue-400 uppercase tracking-wide">Hotel Stats</p>
+                         <p className="text-sm font-semibold text-gray-800">{formData.business_details?.hotel_type as string || '-'}, {formData.business_details?.number_of_rooms as string || '-'} Rooms</p>
+                       </div>
+                    )}
+                    {formData.business_type.includes('DMC') && (
+                       <div className="space-y-1">
+                         <p className="text-xs font-bold text-blue-400 uppercase tracking-wide">Areas Serviced</p>
+                         <p className="text-sm font-semibold text-gray-800">{(formData.business_details?.areas_serviced as string[] || []).join(', ') || '-'}</p>
+                       </div>
+                    )}
+                    {(formData.business_type.includes('Restaurant') || formData.business_type.includes('Ayurveda Centre')) && (
+                       <div className="space-y-1">
+                         <p className="text-xs font-bold text-blue-400 uppercase tracking-wide">Restaurant / Centre Stats</p>
+                         <p className="text-sm font-semibold text-gray-800">{formData.business_details?.location as string || '-'}, Capacity: {formData.business_details?.capacity as string || '-'}</p>
+                       </div>
+                    )}
+
+                    <div className="space-y-1 md:col-span-2 mt-2">
+                      <p className="text-xs font-bold text-blue-400 uppercase tracking-wide">Business You Are Finding For</p>
+                      <div className="flex flex-wrap gap-2 mt-1">
+                        {formData.preferred_collaborations.map(type => (
+                          <span key={type} className="px-2 py-1 bg-white text-blue-700 text-xs font-bold rounded-md shadow-sm border border-blue-50">
+                            {type}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="mt-8 pt-4 border-t border-blue-200/50">
+                     <p className="text-sm text-center text-blue-800 font-medium">Complete profile now to get verified, or start finding businesses.</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {submitError && (
+              <div className="p-4 bg-red-50 border border-red-100 text-red-700 rounded-xl text-xs font-bold flex items-center gap-2 mt-4">
+                <span>⚠️</span> {submitError}
+              </div>
+            )}
+
+            <div className="pt-8 flex flex-col md:flex-row gap-4">
+              {currentStep > 1 && (
+                <button
+                  onClick={() => setCurrentStep(currentStep - 1)}
+                  disabled={isLoading}
+                  className="w-full md:w-auto px-6 py-4 bg-gray-100 text-gray-700 font-bold text-sm rounded-xl hover:bg-gray-200 transition-all disabled:opacity-50"
+                >
+                  GO BACK
+                </button>
+              )}
+              
+              {currentStep < 4 ? (
+                <div className="flex gap-2 w-full">
+                  <button
+                    onClick={() => {
+                      if(currentStep === 1 && formData.business_type.length === 0) {
+                         setFormData({...formData, business_type: [BUSINESS_TYPES[0]]}); 
+                      }
+                      submitStep();
+                    }}
+                    disabled={isLoading}
+                    className="flex-1 py-4 bg-white border-2 border-gray-200 text-gray-600 font-bold text-sm rounded-xl hover:bg-gray-50 transition-all disabled:opacity-50"
+                  >
+                    SKIP
+                  </button>
+                  <button
+                    onClick={() => submitStep()}
+                    disabled={isLoading}
+                    className="flex-[2] py-4 bg-blue-600 text-white font-bold text-sm rounded-xl hover:bg-blue-700 transition-all shadow-lg hover:shadow-blue-200 disabled:opacity-50"
+                  >
+                    {isLoading ? "PROCESSING..." : "NEXT →"}
+                  </button>
                 </div>
               ) : (
-                <div 
-                  onClick={() => setShowCategoryModal(true)}
-                  className={`p-4 border-2 border-dashed rounded-xl cursor-pointer text-center group transition-colors ${errors.category_items ? "border-red-200 bg-red-50/30" : "border-gray-100 hover:border-blue-200 hover:bg-blue-50/20"}`}
-                >
-                  <p className="text-sm text-gray-400 font-medium group-hover:text-blue-500">Add categories to describe your expertise</p>
+                <div className="flex flex-col md:flex-row gap-3 w-full">
+                  <button
+                    onClick={() => setCurrentStep(2)}
+                    disabled={isLoading}
+                    className="flex-1 py-4 bg-white border-2 border-blue-200 text-blue-600 font-bold text-sm rounded-xl hover:bg-blue-50 transition-all disabled:opacity-50"
+                  >
+                    Add Additional Info
+                  </button>
+                  <button
+                    onClick={() => submitStep()}
+                    disabled={isLoading}
+                    className="flex-1 py-4 bg-blue-600 text-white font-bold text-sm rounded-xl hover:bg-blue-700 transition-all shadow-lg hover:shadow-blue-200 disabled:opacity-50"
+                  >
+                    {isLoading ? "PROCESSING..." : "Lets Find Other Business"}
+                  </button>
                 </div>
               )}
-            </div>
-          </div>
-        )}
-
-        {currentStep === 4 && (
-          <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
-            <div className="space-y-1">
-              <label className="text-xs font-bold text-gray-500 uppercase ml-1">Office Address</label>
-              <textarea
-                name="address"
-                value={formData.address}
-                onChange={handleInputChange}
-                placeholder="Full street address"
-                rows={2}
-                className={`w-full px-4 py-3 bg-gray-50 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none resize-none ${errors.address ? "border-red-500" : "border-gray-200"}`}
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-gray-500 uppercase ml-1">City</label>
-                <input
-                  type="text"
-                  name="city"
-                  value={formData.city}
-                  onChange={handleInputChange}
-                  placeholder="City"
-                  className={`w-full px-4 py-3.5 bg-gray-50 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none ${errors.city ? "border-red-500" : "border-gray-200"}`}
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-gray-500 uppercase ml-1">Country</label>
-                <input
-                  type="text"
-                  name="country"
-                  value={formData.country}
-                  onChange={handleInputChange}
-                  placeholder="Country"
-                  className={`w-full px-4 py-3.5 bg-gray-50 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none ${errors.country ? "border-red-500" : "border-gray-200"}`}
-                />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-gray-500 uppercase ml-1">Pincode / ZIP</label>
-                <input
-                  type="text"
-                  name="pincode"
-                  value={formData.pincode}
-                  onChange={handleInputChange}
-                  placeholder="Pincode"
-                  className={`w-full px-4 py-3.5 bg-gray-50 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none ${errors.pincode ? "border-red-500" : "border-gray-200"}`}
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-gray-500 uppercase ml-1">Google Maps (Optional)</label>
-                <input
-                  type="url"
-                  name="google_map_link"
-                  value={formData.google_map_link}
-                  onChange={handleInputChange}
-                  placeholder="https://maps.google..."
-                  className="w-full px-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
-                />
-              </div>
-            </div>
-            <div className="p-4 bg-green-50 border border-green-100 rounded-xl flex gap-3 mt-4">
-              <div className="w-10 h-10 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-xl shadow-sm">🚀</div>
-              <div>
-                <h4 className="text-sm font-bold text-green-900">Ready to go!</h4>
-                <p className="text-xs text-green-700 leading-tight">Your profile will be activated immediately after finishing this step.</p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {submitError && (
-          <div className="p-4 bg-red-50 border border-red-100 text-red-700 rounded-xl text-xs font-bold flex items-center gap-2">
-            <span>⚠️</span> {submitError}
-          </div>
-        )}
-
-        <div className="pt-4 space-y-3">
-          <button
-            onClick={() => submitStep()}
-            disabled={isLoading}
-            className="w-full py-4.5 bg-blue-600 text-white font-bold text-sm rounded-xl hover:bg-blue-700 transition-all shadow-lg hover:shadow-blue-200 disabled:opacity-50 flex items-center justify-center gap-2"
-          >
-            {isLoading ? "PROCESSSING..." : currentStep === 4 ? "COMPLETE & LAUNCH 🚀" : "NEXT STEP →"}
-          </button>
-          
-          {currentStep > 1 && (
-            <button
-              onClick={() => setCurrentStep(currentStep - 1)}
-              disabled={isLoading}
-              className="w-full py-2.5 text-gray-400 text-xs font-bold hover:text-gray-600 hover:bg-gray-50 rounded-lg transition-all"
-            >
-              ← GO BACK
-            </button>
-          )}
             </div>
           </div>
         </>
-      )}
-
-      {/* Category Modal */}
-      {showCategoryModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full overflow-hidden flex flex-col max-h-[90vh]">
-            <div className="p-6 bg-gray-50/50 border-b border-gray-100 flex justify-between items-center">
-              <div>
-                <h3 className="text-xl font-bold text-gray-900">Add Business Category</h3>
-                <p className="text-xs text-gray-500 font-medium">Select categories that match your services</p>
-              </div>
-              <button 
-                onClick={() => setShowCategoryModal(false)}
-                className="p-2 hover:bg-white hover:shadow-sm rounded-full transition-all"
-              >
-                <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-
-            <div className="p-8 space-y-5">
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-gray-500 uppercase ml-1">Category Title</label>
-                <CategorySelect
-                  value={currentCategory.category}
-                  onChange={(val) => setCurrentCategory({ ...currentCategory, category: val })}
-                  placeholder="Select Category"
-                  className="w-full px-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-medium disabled:opacity-60"
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-gray-500 uppercase ml-1">Sub-Categories</label>
-                
-                {/* Visual Chips */}
-                {currentCategory.sub_categories.length > 0 && (
-                    <div className="flex flex-wrap gap-2 mb-2">
-                        {currentCategory.sub_categories.map((sub, idx) => (
-                            <span key={idx} className="px-2 py-1 bg-blue-50 text-blue-700 text-xs font-bold rounded flex items-center gap-1">
-                                {sub}
-                                <button onClick={() => removeSubCategory(sub)} className="hover:text-red-500">×</button>
-                            </span>
-                        ))}
-                    </div>
-                )}
-
-                <div className="flex gap-2">
-                    <input
-                      type="text"
-                      placeholder="Type & Press Enter..."
-                      value={subCategoryInput}
-                      onChange={(e) => setSubCategoryInput(e.target.value)}
-                      onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
-                              e.preventDefault();
-                              addSubQuery();
-                          }
-                      }}
-                      className="flex-1 px-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-medium"
-                    />
-                    <button 
-                        onClick={addSubQuery}
-                        type="button"
-                        className="px-4 py-2 bg-gray-100 text-gray-600 rounded-xl font-bold hover:bg-gray-200"
-                    >
-                        +
-                    </button>
-                </div>
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-gray-500 uppercase ml-1">Description (Optional)</label>
-                <textarea
-                  placeholder="Briefly describe what you offer in this category..."
-                  value={currentCategory.description}
-                  onChange={(e) => setCurrentCategory({...currentCategory, description: e.target.value})}
-                  className="w-full px-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-medium h-24 resize-none"
-                />
-              </div>
-              
-              <button 
-                onClick={() => {
-                  addCategory();
-                  setShowCategoryModal(false);
-                }}
-                disabled={!currentCategory.category}
-                className="w-full py-4 bg-blue-600 text-white font-bold text-sm rounded-xl hover:bg-blue-700 transition-all shadow-lg hover:shadow-blue-100 disabled:opacity-50 disabled:bg-gray-300 mt-2"
-              >
-                ADD CATEGORY
-              </button>
-            </div>
-          </div>
-        </div>
       )}
     </AuthLayout>
   );
