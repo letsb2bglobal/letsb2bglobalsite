@@ -44,7 +44,7 @@ export interface UserProfile {
 
   // Organization fields
   legal_entity_name?: string;
-  business_type?: string;
+  business_type?: any; // was string, now can be string[]
   category_items?: CategoryItem[];
   market_focus?: string;
   languages_supported?: string[];
@@ -117,7 +117,7 @@ export interface CreateProfileData {
 
   // Organization fields
   legal_entity_name?: string;
-  business_type?: string;
+  business_type?: any; // was string, now can be string[]
   category_items?: CategoryItem[];
   market_focus?: string;
   languages_supported?: string[];
@@ -853,6 +853,40 @@ export const completeProfileStep = async (
     return result;
   } catch (error) {
     console.error(`Error completing step ${step}:`, error);
+    throw error;
+  }
+};
+
+/**
+ * Complete a profile onboarding step using the new 4-part flow API
+ */
+export const completeOnboardingStep = async (
+  data: any
+): Promise<{ success: boolean; data: any; nextStep?: number; userType?: string }> => {
+  const token = getToken();
+  if (!token) throw new Error("No authentication token found");
+
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://api.letsb2b.com";
+
+  try {
+    const response = await fetch(`${apiUrl}/api/user-profiles/onboarding-step`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ data }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData?.error?.message || `Failed to complete onboarding step`);
+    }
+
+    const result = await response.json();
+    return result;
+  } catch (error) {
+    console.error(`Error completing onboarding step:`, error);
     throw error;
   }
 };
