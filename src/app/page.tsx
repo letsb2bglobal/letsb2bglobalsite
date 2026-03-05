@@ -302,7 +302,7 @@ useEffect(() => {
               Less Noise, Pure Business B2B
             </div>
             <h1 className="text-3xl font-black text-white tracking-tight leading-tight sm:text-4xl md:text-5xl lg:text-6xl">
-              Global Tourism &; Hospitality
+              Global Tourism and Hospitality
             </h1>
             <h2 className="text-3xl font-black text-white tracking-tight leading-tight mt-0.5 sm:mt-1 sm:text-4xl md:text-5xl lg:text-6xl">
               B2B Trade Network
