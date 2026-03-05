@@ -6,6 +6,7 @@ import { useAuth } from "@/components/ProtectedRoute";
 import { getMyProfile } from "@/lib/profile";
 import Image from "next/image";
 import AuthLayout from "@/components/AuthLayout";
+import SignupHeader from "@/components/SignupHeader";
 import { useToast } from "@/components/Toast";
 
 const BUSINESS_TYPES = [
@@ -50,6 +51,22 @@ const PURPLE = "#612178";
 const PURPLE_LIGHT = "#E0CCF0";   // light purple circle for inactive steps
 const PURPLE_DARK = "#8C4D9F";    // dark purple for inactive number & text
 
+interface FormData {
+  business_type: string[];
+  company_name: string;
+  business_details: Record<string, unknown>;
+  preferred_collaborations: string[];
+  email: string;
+}
+
+const initialFormData: FormData = {
+  business_type: [],
+  company_name: "",
+  business_details: {},
+  preferred_collaborations: [],
+  email: "",
+};
+
 export default function CompleteProfileContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -68,15 +85,35 @@ export default function CompleteProfileContent() {
   const [cameFromAddFlow, setCameFromAddFlow] = useState(false);
   const [addBusinessForm, setAddBusinessForm] = useState({ businessName: "", description: "" });
   const [areaInputValue, setAreaInputValue] = useState("");
+  const [showAddAdditionalDetailsModal, setShowAddAdditionalDetailsModal] = useState(false);
+  const [additionalDetailsForm, setAdditionalDetailsForm] = useState({
+    companyName: "",
+    businessType: "",
+    capacity: "",
+    description: "",
+    languages: [] as string[],
+    languageInput: "",
+    website: "",
+    country: "",
+    state: "",
+    city: "",
+    contactPerson: "",
+    designation: "",
+    email: "",
+    phoneCode: "+91",
+    phone: "",
+  });
 
   // Form State
-  const [formData, setFormData] = useState({
-    business_type: [] as string[],
-    company_name: "",
-    business_details: {} as Record<string, unknown>,
-    preferred_collaborations: [] as string[],
-    email: ""
-  });
+  const [formData, setFormData] = useState<FormData>(initialFormData);
+
+  // Open Add Additional Details when ?view=additional-details
+  useEffect(() => {
+    if (searchParams.get("view") === "additional-details") {
+      setCurrentStep(4);
+      setShowAddAdditionalDetailsModal(true);
+    }
+  }, [searchParams]);
 
   // Check if profile exists and potentially resume
   useEffect(() => {
@@ -109,10 +146,10 @@ export default function CompleteProfileContent() {
             setFormData(prev => ({
               ...prev,
               business_type: initialBusinessTypes,
-              company_name: profile.company_name || "",
+              company_name: String(profile.company_name ?? ""),
               business_details: ((profile as unknown) as Record<string, unknown>).business_details as Record<string, unknown> || {},
               preferred_collaborations: ((profile as unknown) as { preferred_collaborations: string[] }).preferred_collaborations || [],
-              email: profile.email || user.email || ""
+              email: String(profile.email ?? user.email ?? "")
             }));
 
             const step = ((profile as unknown) as { onboarding_step?: number }).onboarding_step 
@@ -123,7 +160,7 @@ export default function CompleteProfileContent() {
             // New user - pre-fill email
             setFormData(prev => ({
               ...prev,
-              email: user.email || ""
+              email: String(user.email ?? "")
             }));
           }
         } catch (err) {
@@ -908,66 +945,115 @@ export default function CompleteProfileContent() {
 
             {currentStep === 4 && (
               <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
-                <h3 className="text-xl font-bold text-gray-900 mb-6 text-center">We Are Ready For You. Check The Details You Have Filled Till Now</h3>
-                
-                {/* Profile Card Summary */}
-                <div className="p-6 bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-100 rounded-3xl shadow-sm relative overflow-hidden">
-                  <div className="absolute top-0 right-0 p-4">
-                    <span className="inline-block bg-white text-blue-800 text-xs font-bold px-3 py-1 rounded-full shadow-sm">
-                      Setup {calculateCompletionPercentage()}%
-                    </span>
-                  </div>
-                  
-                  <div className="flex flex-col gap-2 mb-6 pt-2">
-                    <h4 className="text-2xl font-bold text-blue-900">{formData.company_name || "Company Name"}</h4>
-                    <span className="text-sm font-medium text-gray-500 bg-white/60 self-start px-2 py-0.5 rounded-md">{formData.email || user?.email}</span>
-                  </div>
+                <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">We Are Ready For You</h3>
+                <p className="text-gray-600 text-sm mb-6">Check The Details You Have Filled Till Now</p>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-1 col-span-1 md:col-span-2">
-                      <p className="text-xs font-bold text-blue-400 uppercase tracking-wide">Category</p>
-                      <div className="flex flex-wrap gap-2 mt-1">
-                        {formData.business_type.length > 0
-                          ? formData.business_type.map(type => (
-                              <span key={type} className="text-sm font-semibold text-gray-800 bg-white px-2 py-1 rounded border border-blue-100">{type}</span>
-                            ))
-                          : <span className="text-sm font-semibold text-gray-800 bg-white px-2 py-1 rounded border border-blue-100">Custom Business</span>}
-                      </div>
-                    </div>
-                    
-                    {formData.business_type.includes('Hotel') && (
-                       <div className="space-y-1">
-                         <p className="text-xs font-bold text-blue-400 uppercase tracking-wide">Hotel Stats</p>
-                         <p className="text-sm font-semibold text-gray-800">{formData.business_details?.hotel_type as string || '-'}, {formData.business_details?.number_of_rooms as string || '-'} Rooms</p>
-                       </div>
+                {/* Profile visuals - cover banner + profile pic */}
+                <div className="relative rounded-2xl overflow-hidden mb-6">
+                  <div className="h-32 sm:h-40 w-full relative" style={{ backgroundColor: PURPLE_LIGHT }}>
+                    <button type="button" className="absolute top-3 right-3 w-10 h-10 rounded-full flex items-center justify-center overflow-hidden" style={{ backgroundColor: PURPLE }} aria-label="Edit cover">
+                      <Image src="/cover_cameralogo.png" alt="" width={20} height={20} className="object-contain" />
+                    </button>
+                  </div>
+                  <div className="absolute -bottom-10 left-6 w-20 h-20 rounded-full bg-white border-4 border-white shadow-lg flex items-center justify-center overflow-hidden">
+                    <Image src="/profile_cameralogo.png" alt="" width={40} height={40} className="object-contain" />
+                  </div>
+                </div>
+
+                {/* Business info - company name with Edit */}
+                <div className="pt-14 sm:pt-12 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 mb-4">
+                  <div>
+                    <h4 className="text-xl sm:text-2xl font-bold text-gray-900">{String(formData.company_name || "Company Name")}</h4>
+                    <span className="text-sm text-gray-600">{String(formData.email || (user?.email != null ? user.email : ""))}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setCurrentStep(2)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full font-semibold text-sm shrink-0"
+                    style={{ backgroundColor: PURPLE_LIGHT, color: PURPLE, border: `2px solid ${PURPLE}` }}
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                    </svg>
+                    Edit
+                  </button>
+                </div>
+
+                {/* Business stats - Hotel/DMC/Restaurant details */}
+                {(formData.business_type.length > 0 || !!(formData.business_details?.hotel_type || formData.business_details?.areas_serviced)) && (
+                  <div className="flex flex-wrap items-center gap-2 text-sm font-semibold text-gray-800 mb-6">
+                    {formData.business_type.includes("Hotel") && (
+                      <>
+                        <span>{String(formData.business_details?.hotel_type ?? "-")}</span>
+                        <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: PURPLE }} />
+                        <span>{String(formData.business_details?.number_of_rooms ?? "-")} Rooms</span>
+                      </>
                     )}
                     {DMC_STYLE_TYPES.some((t) => formData.business_type.includes(t)) && (
-                       <div className="space-y-1">
-                         <p className="text-xs font-bold text-blue-400 uppercase tracking-wide">Areas Serviced</p>
-                         <p className="text-sm font-semibold text-gray-800">{(formData.business_details?.areas_serviced as string[] || []).join(', ') || '-'}</p>
-                       </div>
+                      <span>{((formData.business_details?.areas_serviced as string[] | undefined) ?? []).join(", ") || "-"}</span>
                     )}
-                    {(formData.business_type.includes('Restaurant') || formData.business_type.includes('Ayurveda Centre')) && (
-                       <div className="space-y-1">
-                         <p className="text-xs font-bold text-blue-400 uppercase tracking-wide">Restaurant / Centre Stats</p>
-                         <p className="text-sm font-semibold text-gray-800">{formData.business_details?.location as string || '-'}, Capacity: {formData.business_details?.capacity as string || '-'}</p>
-                       </div>
+                    {(formData.business_type.includes("Restaurant") || formData.business_type.includes("Ayurveda Centre")) && (
+                      <>
+                        <span>{String(formData.business_details?.location ?? "-")}</span>
+                        <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: PURPLE }} />
+                        <span>Capacity: {String(formData.business_details?.capacity ?? "-")}</span>
+                      </>
                     )}
-
-                    <div className="space-y-1 md:col-span-2 mt-2">
-                      <p className="text-xs font-bold text-blue-400 uppercase tracking-wide">Business You Are Finding For</p>
-                      <div className="flex flex-wrap gap-2 mt-1">
-                        {formData.preferred_collaborations.map(type => (
-                          <span key={type} className="px-2 py-1 bg-white text-blue-700 text-xs font-bold rounded-md shadow-sm border border-blue-50">
-                            {type}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
                   </div>
-                  
-                  <div className="mt-8 pt-4 border-t border-blue-200/50">
-                     <p className="text-sm text-center text-blue-800 font-medium">Complete profile now to get verified, or start finding businesses.</p>
+                )}
+
+                {/* Business You Are Finding For - tags with x and + */}
+                <div className="mb-8">
+                  <p className="text-base font-bold text-gray-900 mb-3">Business You Are Finding For</p>
+                  <div className="flex flex-wrap items-center gap-2">
+                    {formData.preferred_collaborations.map((type) => (
+                      <span
+                        key={type}
+                        className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold text-gray-800 bg-gray-100"
+                      >
+                        {type}
+                        <button
+                          type="button"
+                          onClick={() => setFormData((prev) => ({ ...prev, preferred_collaborations: prev.preferred_collaborations.filter((t) => t !== type) }))}
+                          className="hover:opacity-70 text-gray-600"
+                          aria-label={`Remove ${type}`}
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </span>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={() => setCurrentStep(3)}
+                      className="w-10 h-10 rounded-full flex items-center justify-center shrink-0"
+                      style={{ backgroundColor: PURPLE }}
+                      aria-label="Add business type"
+                    >
+                      <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Profile completion + message */}
+                <div className="flex flex-col sm:flex-row sm:items-center gap-4 py-6 border-t" style={{ borderColor: PURPLE_LIGHT }}>
+                  <div className="flex items-center gap-3">
+                    <div className="relative w-14 h-14">
+                      <svg className="w-14 h-14 -rotate-90" viewBox="0 0 36 36">
+                        <path fill="none" stroke="#E5E7EB" strokeWidth="3" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                        <path fill="none" strokeWidth="3" strokeDasharray={`${calculateCompletionPercentage()}, 100`} strokeLinecap="round" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" style={{ stroke: PURPLE }} />
+                      </svg>
+                      <span className="absolute inset-0 flex items-center justify-center text-xs font-bold" style={{ color: PURPLE }}>
+                        {calculateCompletionPercentage()}%
+                      </span>
+                    </div>
+                    <div>
+                      <p className="font-bold text-gray-900">Profile Completed</p>
+                      <p className="text-sm text-gray-600">Complete profile now to get verified, or start finding businesses.</p>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1030,11 +1116,14 @@ export default function CompleteProfileContent() {
                 ) : (
                 <div className="flex flex-col sm:flex-row gap-3 w-full sm:justify-end">
                   <button
-                    onClick={() => setCurrentStep(2)}
+                    onClick={() => setShowAddAdditionalDetailsModal(true)}
                     disabled={isLoading}
-                    className="px-6 py-3 bg-white border-2 font-semibold text-sm rounded-full hover:bg-gray-50 transition-all disabled:opacity-50"
+                    className="inline-flex items-center gap-2 px-6 py-3 bg-white border-2 font-semibold text-sm rounded-full hover:bg-gray-50 transition-all disabled:opacity-50"
                     style={{ borderColor: PURPLE, color: PURPLE }}
                   >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                    </svg>
                     Add Additional Info
                   </button>
                   <button
@@ -1050,6 +1139,156 @@ export default function CompleteProfileContent() {
               </div>
             </div>
             </>
+            )}
+
+            {/* Add Additional Details modal */}
+            {showAddAdditionalDetailsModal && (
+              <div className="fixed inset-0 z-50 flex flex-col bg-white overflow-y-auto">
+                <SignupHeader sticky={false} />
+                <div className="flex flex-1 min-h-0">
+                  {/* Left Sidebar */}
+                  <div className="hidden lg:flex flex-col w-64 shrink-0 p-6 border-r border-gray-200" style={{ backgroundColor: "#FAFAFA" }}>
+                    <div className="flex flex-col items-center gap-2 mb-8">
+                      <div className="relative w-20 h-20">
+                        <svg className="w-20 h-20 -rotate-90" viewBox="0 0 36 36">
+                          <path fill="none" stroke="#E5E7EB" strokeWidth="2" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                          <path fill="none" strokeWidth="2" strokeDasharray="25, 100" strokeLinecap="round" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" style={{ stroke: PURPLE }} />
+                        </svg>
+                        <span className="absolute inset-0 flex items-center justify-center text-sm font-bold" style={{ color: PURPLE }}>25%</span>
+                      </div>
+                      <p className="text-sm font-semibold text-center" style={{ color: PURPLE }}>Profile Completed</p>
+                      <p className="text-xs text-gray-500 text-center">Complete Your Profile To Be Verified</p>
+                    </div>
+                    <nav className="space-y-1">
+                      <a href="#" className="block px-3 py-2 rounded-lg text-sm font-semibold" style={{ backgroundColor: PURPLE_LIGHT, color: PURPLE }}>Company Information</a>
+                      <a href="#" className="block px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100">Business Information</a>
+                      <a href="#" className="block px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100">KYC Verification</a>
+                    </nav>
+                  </div>
+
+                  {/* Main content */}
+                  <div className="flex-1 flex flex-col min-w-0">
+                    <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200">
+                      <div>
+                        <h2 className="text-xl font-bold text-gray-900">Add Additional Details</h2>
+                        <p className="text-sm text-gray-600 mt-0.5">This Info will be shown on your public profile.</p>
+                      </div>
+                      <div className="flex gap-3">
+                        <button type="button" onClick={() => setShowAddAdditionalDetailsModal(false)} className="px-4 py-2 rounded-lg font-semibold text-sm text-gray-600 bg-gray-100 hover:bg-gray-200">Cancel</button>
+                        <button type="button" onClick={() => { setShowAddAdditionalDetailsModal(false); showToast("Details saved", "success"); }} className="px-4 py-2 rounded-lg font-semibold text-sm text-white" style={{ backgroundColor: PURPLE }}>Save</button>
+                      </div>
+                    </div>
+
+                    <div className="flex-1 p-4 sm:p-6 overflow-y-auto">
+                      <div className="max-w-2xl">
+                        <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+                          {/* Profile/Logo area */}
+                          <div className="relative h-32 sm:h-40 rounded-xl mb-6 overflow-hidden" style={{ backgroundColor: PURPLE_LIGHT }}>
+                            <button type="button" className="absolute top-3 right-3 w-10 h-10 rounded-full flex items-center justify-center overflow-hidden" style={{ backgroundColor: PURPLE }} aria-label="Add cover">
+                              <Image src="/cover_cameralogo.png" alt="" width={20} height={20} className="object-contain" />
+                            </button>
+                            <div className="absolute bottom-4 left-6 w-20 h-20 rounded-full bg-white flex items-center justify-center shadow overflow-hidden">
+                              <Image src="/profile_cameralogo.png" alt="" width={40} height={40} className="object-contain" />
+                            </div>
+                          </div>
+
+                          <div className="space-y-4">
+                            <div>
+                              <input type="text" value={additionalDetailsForm.companyName || formData.company_name} onChange={(e) => setAdditionalDetailsForm(p => ({ ...p, companyName: e.target.value }))} placeholder="Company Name" className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-[#612178] text-gray-800 placeholder-gray-400" />
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                              <select value={additionalDetailsForm.businessType || formData.business_type[0]} onChange={(e) => setAdditionalDetailsForm(p => ({ ...p, businessType: e.target.value }))} className="px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-[#612178] text-gray-800 bg-white">
+                                <option value="">Business Type</option>
+                                {BUSINESS_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                              </select>
+                              <input type="text" value={additionalDetailsForm.capacity || (formData.business_details?.number_of_rooms as string) || (formData.business_details?.capacity as string)} onChange={(e) => setAdditionalDetailsForm(p => ({ ...p, capacity: e.target.value }))} placeholder="24 Rooms" className="px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-[#612178] text-gray-800 placeholder-gray-400" />
+                            </div>
+                            <div>
+                              <textarea value={additionalDetailsForm.description || (formData.business_details?.description as string)} onChange={(e) => setAdditionalDetailsForm(p => ({ ...p, description: e.target.value }))} rows={4} placeholder="Provide A Description Of Your Company" className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-[#612178] text-gray-800 placeholder-gray-400 resize-none" />
+                            </div>
+                            <div>
+                              <select value={additionalDetailsForm.languageInput} onChange={(e) => { const v = e.target.value; if (v) { setAdditionalDetailsForm(p => ({ ...p, languages: [...p.languages, v], languageInput: "" })); } }} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-[#612178] text-gray-800 bg-white">
+                                <option value="">Select Languages Preferred</option>
+                                <option value="English">English</option>
+                                <option value="Hindi">Hindi</option>
+                                <option value="Arabic">Arabic</option>
+                                <option value="Malayalam">Malayalam</option>
+                              </select>
+                              {additionalDetailsForm.languages.length > 0 && (
+                                <div className="flex flex-wrap gap-2 mt-2">
+                                  {additionalDetailsForm.languages.map((l, i) => (
+                                    <span key={i} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-sm bg-gray-100 text-gray-800">
+                                      {l}
+                                      <button type="button" onClick={() => setAdditionalDetailsForm(p => ({ ...p, languages: p.languages.filter((_, idx) => idx !== i) }))} className="hover:opacity-70">×</button>
+                                    </span>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                            <div>
+                              <input type="text" value={additionalDetailsForm.website} onChange={(e) => setAdditionalDetailsForm(p => ({ ...p, website: e.target.value }))} placeholder="Enter Website Link (Optional)" className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-[#612178] text-gray-800 placeholder-gray-400" />
+                            </div>
+                            <button type="button" className="inline-flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-sm" style={{ color: PURPLE, border: `2px solid ${PURPLE}` }}>
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+                              Add Social Media Profile
+                            </button>
+                          </div>
+
+                          <div className="mt-8 pt-6 border-t border-gray-200">
+                            <p className="font-bold text-gray-900 mb-4">Location</p>
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                              <select value={additionalDetailsForm.country} onChange={(e) => setAdditionalDetailsForm(p => ({ ...p, country: e.target.value }))} className="px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-[#612178] text-gray-800 bg-white">
+                                <option value="">Country</option>
+                                <option value="India">India</option>
+                                <option value="UAE">UAE</option>
+                                <option value="Kuwait">Kuwait</option>
+                              </select>
+                              <select value={additionalDetailsForm.state} onChange={(e) => setAdditionalDetailsForm(p => ({ ...p, state: e.target.value }))} className="px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-[#612178] text-gray-800 bg-white">
+                                <option value="">State</option>
+                                <option value="Kerala">Kerala</option>
+                                <option value="Karnataka">Karnataka</option>
+                              </select>
+                              <select value={additionalDetailsForm.city} onChange={(e) => setAdditionalDetailsForm(p => ({ ...p, city: e.target.value }))} className="px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-[#612178] text-gray-800 bg-white">
+                                <option value="">City</option>
+                                <option value="Kochi">Kochi</option>
+                                <option value="Bangalore">Bangalore</option>
+                              </select>
+                            </div>
+                          </div>
+
+                          <div className="mt-8 pt-6 border-t border-gray-200">
+                            <p className="font-bold text-gray-900 mb-4">Contact Information</p>
+                            <div className="space-y-4">
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <input type="text" value={additionalDetailsForm.contactPerson} onChange={(e) => setAdditionalDetailsForm(p => ({ ...p, contactPerson: e.target.value }))} placeholder="Enter The Contact Person" className="px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-[#612178] text-gray-800 placeholder-gray-400" />
+                                <select value={additionalDetailsForm.designation} onChange={(e) => setAdditionalDetailsForm(p => ({ ...p, designation: e.target.value }))} className="px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-[#612178] text-gray-800 bg-white">
+                                  <option value="">Select Designation</option>
+                                  <option value="Manager">Manager</option>
+                                  <option value="Owner">Owner</option>
+                                  <option value="Director">Director</option>
+                                </select>
+                              </div>
+                              <input type="email" value={additionalDetailsForm.email || formData.email || (user ? String(user.email) : "")} onChange={(e) => setAdditionalDetailsForm(p => ({ ...p, email: e.target.value }))} placeholder="Email" className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-[#612178] text-gray-800 placeholder-gray-400" />
+                              <div className="flex gap-2">
+                                <select value={additionalDetailsForm.phoneCode} onChange={(e) => setAdditionalDetailsForm(p => ({ ...p, phoneCode: e.target.value }))} className="w-24 px-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-[#612178] text-gray-800 bg-white">
+                                  <option value="+91">+91</option>
+                                  <option value="+971">+971</option>
+                                  <option value="+965">+965</option>
+                                </select>
+                                <input type="tel" value={additionalDetailsForm.phone} onChange={(e) => setAdditionalDetailsForm(p => ({ ...p, phone: e.target.value }))} placeholder="Enter Phone No." className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-[#612178] text-gray-800 placeholder-gray-400" />
+                              </div>
+                              <button type="button" className="inline-flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-sm" style={{ color: PURPLE, border: `2px solid ${PURPLE}` }}>
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+                                Add Phone Number
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             )}
 
             {/* Business Added success modal */}
