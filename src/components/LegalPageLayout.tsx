@@ -14,7 +14,7 @@ type LegalPageLayoutProps = {
 
 export default function LegalPageLayout({
   title,
-  subtitle = "Let's B2B — Global Tourism & Hospitality B2B Network",
+  subtitle = "LetsB2B — Global Tourism & Hospitality B2B Network",
   lastUpdated,
   badge = 'Legal',
   children,

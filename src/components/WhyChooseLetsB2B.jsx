@@ -29,7 +29,7 @@ const cards = [
   },
   {
     title: "Built on Trust & Ethics",
-    body: "Let'sB2B operates on a strict code of conduct that promotes ethical business practices, professional behavior, and meaningful industry collaboration. Spam, misuse, and unsolicited promotions are not allowed.",
+    body: "LetsB2B operates on a strict code of conduct that promotes ethical business practices, professional behavior, and meaningful industry collaboration. Spam, misuse, and unsolicited promotions are not allowed.",
     iconSrc: "/trust-etics.svg",
     colSpan: 1,
   },

@@ -1,6 +1,6 @@
 # Authentication Integration
 
-This document describes the authentication setup for the Let's B2B application.
+This document describes the authentication setup for the LetsB2B application.
 
 ## Environment Variables
 

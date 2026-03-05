@@ -156,7 +156,7 @@ const Footer = () => {
         {/* ── Bottom Bar ── */}
         <div className="pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-slate-500 text-xs font-medium">
-            © {currentYear} Let's B2B — Global Tourism &; Hospitality B2B Network. All rights reserved.
+            © {currentYear} LetsB2B — Global Tourism &; Hospitality B2B Network. All rights reserved.
           </p>
           <div className="flex items-center gap-6">
             <Link href="/privacy" className="text-slate-500 hover:text-slate-300 text-[10px] font-bold uppercase tracking-widest transition-colors">

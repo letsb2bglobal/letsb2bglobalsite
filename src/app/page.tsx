@@ -885,7 +885,7 @@ useEffect(() => {
                     {(activeWorkspace?.data.company_name || profile?.company_name || user?.username || "User").toUpperCase()}
                   </h4>
                   <p className="text-gray-500 text-xs mt-0.5 font-medium">
-                     {activeWorkspace?.data.category_items?.[0]?.category || profile?.category_items?.[0]?.category || "Professional at Let's B2B"}
+                     {activeWorkspace?.data.category_items?.[0]?.category || profile?.category_items?.[0]?.category || "Professional at LetsB2B"}
                   </p>
                 </div>
 

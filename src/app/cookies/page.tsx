@@ -13,8 +13,8 @@ const cookieTypes = [
 ];
 
 const sections = [
-  { id: 1, icon: Cookie, title: "What Are Cookies?", content: `Cookies are small text files that are placed on your device when you visit the Let's B2B platform. They help the platform remember your preferences and actions over a period of time so you don't have to re-enter them whenever you return. Cookies can also be used to measure how you use the platform and to improve your experience.` },
-  { id: 2, icon: ShieldCheck, title: "How We Use Cookies", content: `Let's B2B uses cookies for the following purposes:`, bullets: ["To keep you logged in securely during your session", "To remember your workspace and account preferences", "To understand how members use the platform and improve functionality", "To monitor platform performance and stability", "To ensure platform security and prevent unauthorized access"] },
+  { id: 1, icon: Cookie, title: "What Are Cookies?", content: `Cookies are small text files that are placed on your device when you visit the LetsB2B platform. They help the platform remember your preferences and actions over a period of time so you don't have to re-enter them whenever you return. Cookies can also be used to measure how you use the platform and to improve your experience.` },
+  { id: 2, icon: ShieldCheck, title: "How We Use Cookies", content: `LetsB2B uses cookies for the following purposes:`, bullets: ["To keep you logged in securely during your session", "To remember your workspace and account preferences", "To understand how members use the platform and improve functionality", "To monitor platform performance and stability", "To ensure platform security and prevent unauthorized access"] },
   { id: 4, icon: Settings, title: "Managing Your Cookies", content: `You can control and manage cookies in your browser settings. Most browsers allow you to:`, bullets: ["View cookies stored on your device", "Block or delete specific cookies", "Block all cookies from being set", "Allow only certain websites to set cookies", "Note: Blocking strictly necessary cookies may prevent you from logging in or using core platform features."] },
   { id: 5, icon: Eye, title: "Third-Party Cookies", content: `In limited cases, trusted third-party services we use (such as payment processors and analytics tools) may set their own cookies. These are subject to the respective third-party's privacy and cookie policies. We do not control these cookies and they are used only as needed for platform operations.` },
   { id: 6, icon: AlertCircle, title: "Cookie Retention", bullets: ["Session cookies — deleted when you close your browser", "Persistent cookies — stored for up to 12 months depending on their purpose", "You can delete cookies at any time via your browser settings"] },
@@ -28,14 +28,14 @@ export default function CookiesPolicy() {
   return (
     <LegalPageLayout
       title="Cookie Policy"
-      subtitle="Let's B2B — Global Tourism & Hospitality B2B Network"
+      subtitle="LetsB2B — Global Tourism & Hospitality B2B Network"
       lastUpdated={lastUpdated}
       badge="Legal"
     >
       <div className="bg-[#6B3FA0]/10 border border-[#6B3FA0]/20 rounded-2xl p-5 flex items-start gap-4 mb-10">
         <Cookie className="w-5 h-5 text-[#6B3FA0] shrink-0 mt-0.5" />
         <p className="text-sm text-gray-700 leading-relaxed md:text-base">
-          Let's B2B uses cookies to ensure you get the best experience on our platform. By continuing to use Let's B2B, you agree to our use of cookies as described in this policy. You may manage cookie preferences in your browser settings.
+          LetsB2B uses cookies to ensure you get the best experience on our platform. By continuing to use LetsB2B, you agree to our use of cookies as described in this policy. You may manage cookie preferences in your browser settings.
         </p>
       </div>
 

@@ -18,13 +18,13 @@ const dataCollected = [
 ];
 
 const sections = [
-  { id: 1, icon: Eye, title: "Introduction", content: `Let's B2B respects your privacy and is committed to protecting your personal and business information. This Privacy Policy explains how we collect, use, store, and protect data when you use our platform — a global B2B networking and trading platform exclusively for the tourism and hospitality industry.` },
+  { id: 1, icon: Eye, title: "Introduction", content: `LetsB2B respects your privacy and is committed to protecting your personal and business information. This Privacy Policy explains how we collect, use, store, and protect data when you use our platform — a global B2B networking and trading platform exclusively for the tourism and hospitality industry.` },
   { id: 3, icon: Lock, title: "How We Use Your Information", bullets: ["Profile creation, verification, and approval", "Enabling secure B2B networking and messaging between verified members", "Processing membership subscriptions and payments", "Improving platform experience and personalising your feed", "Sending platform notifications, updates, and announcements", "Compliance, security monitoring, and fraud prevention"] },
-  { id: 4, icon: Server, title: "Data Protection & Security", bullets: ["Secure encrypted data storage at all times", "User data is never sold to third parties", "Access is limited to authorized Let's B2B personnel only", "We use industry-standard security protocols and access controls", "Regular security audits are conducted to protect your information"] },
+  { id: 4, icon: Server, title: "Data Protection & Security", bullets: ["Secure encrypted data storage at all times", "User data is never sold to third parties", "Access is limited to authorized LetsB2B personnel only", "We use industry-standard security protocols and access controls", "Regular security audits are conducted to protect your information"] },
   { id: 5, icon: Users, title: "Third-Party Sharing", content: "We do not sell or rent your personal data. Information may be shared only in the following circumstances:", bullets: ["When legally required (e.g. regulatory compliance, law enforcement requests)", "With verified service providers needed for platform operations (e.g. payment processors)", "During verification checks via authorized third-party verification services"] },
   { id: 6, icon: ShieldCheck, title: "Data Retention", content: `We retain your personal and business data for as long as your account is active or as required by law. If you request account deletion, your data will be removed within 30 days, except where retention is required for legal or regulatory purposes.` },
   { id: 7, icon: Scale, title: "Your Rights", bullets: ["Request access to the personal data we hold about you", "Request correction of inaccurate or incomplete information", "Request deletion of your account and associated data", "Withdraw consent for data processing (subject to legal obligations)", "Object to certain types of data processing", "To exercise your rights, contact us at support@letsb2b.com"] },
-  { id: 8, icon: AlertCircle, title: "Children's Privacy", content: `Let's B2B is a professional B2B platform intended for adults and businesses only. We do not knowingly collect data from individuals under the age of 18. If you believe a minor has registered, please contact us immediately.` },
+  { id: 8, icon: AlertCircle, title: "Children's Privacy", content: `LetsB2B is a professional B2B platform intended for adults and businesses only. We do not knowingly collect data from individuals under the age of 18. If you believe a minor has registered, please contact us immediately.` },
   { id: 9, icon: FileText, title: "Changes to This Policy", content: `We may update this Privacy Policy from time to time to reflect changes in our services or legal requirements. When we make significant changes, we will notify you via email or a prominent notice on the platform. Continued use of the platform after changes implies acceptance.` },
 ];
 
@@ -34,7 +34,7 @@ export default function PrivacyPolicy() {
   return (
     <LegalPageLayout
       title="Privacy Policy"
-      subtitle="Let's B2B — Global Tourism & Hospitality B2B Network"
+      subtitle="LetsB2B — Global Tourism & Hospitality B2B Network"
       lastUpdated={lastUpdated}
       badge="Legal"
     >

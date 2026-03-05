@@ -65,7 +65,7 @@ function JoinTeamContent() {
       </div>
       <h1 className="text-2xl font-black text-gray-900 mb-3 tracking-tight">You're Invited!</h1>
       <p className="text-gray-500 leading-relaxed mb-10 font-medium">
-        You've been invited to join a company team on Let's B2B. By accepting, you'll gain access to their dashboard and collaborative tools.
+        You've been invited to join a company team on LetsB2B. By accepting, you'll gain access to their dashboard and collaborative tools.
       </p>
 
       <button

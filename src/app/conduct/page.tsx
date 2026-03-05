@@ -10,7 +10,7 @@ const sections = [
     id: 1,
     icon: ShieldCheck,
     title: "Our Commitment",
-    content: `Let's B2B is a professional B2B platform built exclusively for the tourism and hospitality industry. We are committed to maintaining a trusted, ethical, and professional environment where members can network, collaborate, and grow their businesses. This Code of Conduct sets out the standards of behaviour we expect from all members and the consequences of failing to meet them.`,
+    content: `LetsB2B is a professional B2B platform built exclusively for the tourism and hospitality industry. We are committed to maintaining a trusted, ethical, and professional environment where members can network, collaborate, and grow their businesses. This Code of Conduct sets out the standards of behaviour we expect from all members and the consequences of failing to meet them.`,
   },
   {
     id: 2,
@@ -29,7 +29,7 @@ const sections = [
     id: 3,
     icon: AlertTriangle,
     title: "Prohibited Behaviour",
-    content: "The following are strictly prohibited on Let's B2B:",
+    content: "The following are strictly prohibited on LetsB2B:",
     bullets: [
       "Spam, unsolicited promotions, or repetitive non-relevant messaging",
       "Misuse of messaging or enquiry features for non-business purposes",
@@ -55,7 +55,7 @@ const sections = [
     id: 6,
     icon: FileText,
     title: "Enforcement",
-    content: "Let's B2B reserves the right to investigate any reported or suspected breach of this Code of Conduct. We may warn, suspend, or permanently terminate accounts and membership without prior notice where we determine that a breach has occurred. We also reserve the right to report serious misconduct to relevant authorities where appropriate.",
+    content: "LetsB2B reserves the right to investigate any reported or suspected breach of this Code of Conduct. We may warn, suspend, or permanently terminate accounts and membership without prior notice where we determine that a breach has occurred. We also reserve the right to report serious misconduct to relevant authorities where appropriate.",
   },
 ];
 
@@ -65,7 +65,7 @@ export default function CodeOfConductPage() {
   return (
     <LegalPageLayout
       title="Code of Conduct"
-      subtitle="Professional standards and expected behaviour on Let's B2B"
+      subtitle="Professional standards and expected behaviour on LetsB2B"
       lastUpdated={lastUpdated}
       badge="Legal"
     >

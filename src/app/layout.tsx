@@ -26,7 +26,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "LET'S B2B | Global Networking",
+  title: "LetsB2B | Global Networking",
   description: "Marketplace and Networking Platform for B2B Professionals",
 };
 
