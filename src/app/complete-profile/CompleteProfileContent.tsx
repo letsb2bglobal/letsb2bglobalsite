@@ -39,8 +39,8 @@ const STEP_LABELS = [
 
 const HOTEL_TYPE_OPTIONS = ["5 Star", "4 Star", "3 Star", "Resort", "Boutique", "Budget", "Other"];
 
-/* DMC, Travel Agents, Taxi, TT Travel service - same form (Establishment Name + Areas You Service) */
-const DMC_STYLE_TYPES = ["DMC", "Tour Guide", "Taxi Business", "TT Bus Services"];
+/* DMC, Travel Agents, Taxi, TT Travel, Adventure Activity - same form (Establishment Name + Areas You Service) */
+const DMC_STYLE_TYPES = ["DMC", "Tour Guide", "Taxi Business", "TT Bus Services", "Adventure Activity"];
 
 /* Restaurant & Ayurveda Centre - same form (Establishment Name + Location + Capacity) */
 const RESTAURANT_STYLE_TYPES = ["Restaurant", "Ayurveda Centre"];
