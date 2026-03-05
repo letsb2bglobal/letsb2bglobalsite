@@ -2,6 +2,8 @@
 
 import React, { useEffect, useRef } from "react";
 import Link from "next/link";
+import { useGeo } from "@/hooks/useGeo";
+import { formatPrice } from "@/lib/currency";
 
 const tiers = [
   {
@@ -95,6 +97,7 @@ function CheckIcon({ className }) {
 export default function MembershipTiersSection() {
   const sectionRef = useRef(null);
   const cleanupRef = useRef(null);
+  const { currency } = useGeo();
 
   useEffect(() => {
     if (typeof window === "undefined" || !sectionRef.current) return;
@@ -232,7 +235,7 @@ export default function MembershipTiersSection() {
                 )}
                 <h3 className="text-lg font-bold md:text-xl">{tier.name}</h3>
                 <p className="mt-2 text-2xl font-bold md:text-3xl">
-                  ₹ {tier.price}
+                  {formatPrice(Number(tier.price), currency)}
                 </p>
                 <p
                   className={`mt-3 text-sm leading-relaxed ${

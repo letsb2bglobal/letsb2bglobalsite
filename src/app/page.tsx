@@ -284,18 +284,19 @@ useEffect(() => {
           </div>
 
           {/* Hero content — same horizontal container as header, pt for clearance under sticky header */}
-          <div className="relative z-10 flex flex-1 min-h-0 flex-col justify-center w-full max-w-[1440px] mx-auto px-5 lg:px-10 pt-20">
-            <div className="py-6">
-            <h1 className="text-6xl font-black text-white tracking-tight leading-tight">
+          <div className="relative z-10 flex flex-1 min-h-0 flex-col justify-center w-full max-w-[1440px] mx-auto px-4 sm:px-5 lg:px-10 pt-20">
+            <div className="py-4 sm:py-6">
+            <h1 className="text-3xl font-black text-white tracking-tight leading-tight sm:text-4xl md:text-5xl lg:text-6xl">
               Global Tourism &amp; Hospitality
             </h1>
-            <h2 className="text-6xl font-black text-white tracking-tight leading-tight mt-1">
+            <h2 className="text-3xl font-black text-white tracking-tight leading-tight mt-0.5 sm:mt-1 sm:text-4xl md:text-5xl lg:text-6xl">
               B2B Trade Network
             </h2>
-            <p className="text-lg text-white/90 mt-4 max-w-xl">
+            <p className="text-base text-white/90 mt-3 max-w-xl sm:text-lg sm:mt-4">
               Finding reliable and trusted business partners for global growth and trading.
             </p>
-            <div className="flex flex-wrap gap-2 mt-4">
+            {/* Tags: hidden on mobile to reduce clutter */}
+            <div className="hidden sm:flex flex-wrap gap-2 mt-4">
               {partnerTypes.map((t) => (
                 <span
                   key={t}
@@ -305,36 +306,36 @@ useEffect(() => {
                 </span>
               ))}
             </div>
-            <p className="text-base text-white/80 mt-4 max-w-2xl">
+            <p className="hidden sm:block text-base text-white/80 mt-4 max-w-2xl">
               Join our growing community and experience our industry-leading B2B matchmaking for tourism and hospitality.
             </p>
-            <div className="flex flex-wrap gap-3 mt-6">
+            <div className="flex flex-col gap-2 mt-5 sm:flex-row sm:flex-wrap sm:gap-3 sm:mt-6">
               <Link
                 href="/signup"
-                className="inline-flex items-center justify-center px-6 py-3 bg-white text-[#1a1625] font-bold rounded-full hover:bg-white/95 transition-colors text-sm"
+                className="inline-flex items-center justify-center w-full sm:w-auto px-6 py-3.5 bg-white text-[#1a1625] font-bold rounded-full hover:bg-white/95 transition-colors text-sm"
               >
                 Join the Network
               </Link>
               <Link
                 href="/signin"
-                className="inline-flex items-center justify-center px-6 py-3 bg-[#f97316] text-white font-bold rounded-full hover:bg-[#ea580c] transition-colors text-sm"
+                className="inline-flex items-center justify-center w-full sm:w-auto px-6 py-3.5 bg-[#f97316] text-white font-bold rounded-full hover:bg-[#ea580c] transition-colors text-sm"
               >
                 Explore Platform
               </Link>
             </div>
-            <div className="flex flex-wrap gap-6 mt-6">
-              <div className="flex items-center gap-2 text-white/90 text-sm">
-                <svg className="w-5 h-5 text-blue-400 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+            <div className="flex flex-wrap gap-4 mt-4 sm:gap-6 sm:mt-6">
+              <div className="flex items-center gap-1.5 text-white/90 text-xs sm:text-sm sm:gap-2">
+                <svg className="w-4 h-4 sm:w-5 sm:h-5 text-blue-400 shrink-0" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                 </svg>
                 <span className="font-semibold">Verified Members</span>
               </div>
-              <div className="flex items-center gap-2 text-white/90 text-sm">
-                <span className="w-5 h-5 rounded-full bg-amber-400 text-[#1a1625] flex items-center justify-center text-[10px] font-black shrink-0">0</span>
+              <div className="flex items-center gap-1.5 text-white/90 text-xs sm:text-sm sm:gap-2">
+                <span className="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-amber-400 text-[#1a1625] flex items-center justify-center text-[10px] font-black shrink-0">0</span>
                 <span className="font-semibold">Less Noise</span>
               </div>
-              <div className="flex items-center gap-2 text-white/90 text-sm">
-                <Handshake className="w-5 h-5 text-emerald-400 shrink-0" strokeWidth={2} />
+              <div className="flex items-center gap-1.5 text-white/90 text-xs sm:text-sm sm:gap-2">
+                <Handshake className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-400 shrink-0" strokeWidth={2} />
                 <span className="font-semibold">Pure Business</span>
               </div>
             </div>

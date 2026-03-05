@@ -194,25 +194,24 @@ export default function FeaturesSection() {
       {/* Content */}
       <div className="relative z-10 flex h-full flex-col">
         {/* Title + subtitle */}
-        <div className={`shrink-0 px-5 pt-12 lg:px-10 lg:pt-16 text-center ${poppins.className}`}>
-          <div className="relative inline-block">
+        <div className={`shrink-0 w-full px-4 pt-8 sm:px-5 sm:pt-10 md:pt-12 lg:px-10 lg:pt-16 text-center ${poppins.className}`}>
+          <div className="relative w-full min-h-[72px] sm:min-h-[90px] md:min-h-[100px] flex items-center justify-center">
             <span
-              className="pointer-events-none select-none block font-bold text-white"
-              style={{ fontSize: "176px", lineHeight: "241px", opacity: 0.07 }}
+              className="pointer-events-none select-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 font-bold text-white whitespace-nowrap text-[100px] leading-[1.1] sm:text-[140px] md:text-[160px] lg:text-[200px] lg:leading-[1.2]"
+              style={{ opacity: 0.07 }}
               aria-hidden
             >
               Features
             </span>
             <h2
-              className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 whitespace-nowrap font-bold text-white"
-              style={{ fontSize: "60px", lineHeight: "83px" }}
+              className="relative left-0 right-0 font-bold text-white text-[40px] leading-tight sm:text-[50px] md:text-[58px] lg:text-[68px]"
             >
               Features
             </h2>
           </div>
           <p
-            className="mx-auto mt-4 max-w-2xl text-center font-normal text-white"
-            style={{ fontSize: "20px", lineHeight: "32px" }}
+            className="mx-auto mt-4 sm:mt-5 max-w-2xl text-center font-normal text-white text-lg leading-snug sm:text-xl lg:text-2xl"
+            style={{ lineHeight: "1.5" }}
           >
             Features that help tourism partners connect, collaborate, and trade
             with confidence. Built to support trusted partnerships and real business growth across
@@ -221,25 +220,25 @@ export default function FeaturesSection() {
         </div>
 
         {/* Horizontal scroll area: 9 features + 4 blank cards so last card scrolls off */}
-        <div className="flex-1 min-h-0 px-5 lg:px-10 flex items-center">
+        <div className="flex-1 min-h-0 px-4 sm:px-5 lg:px-10 flex items-center pb-8 sm:pb-10">
           <div ref={containerRef} className="w-full overflow-hidden">
             <div
               ref={stripRef}
-              className="flex gap-6 lg:gap-8 will-change-transform"
+              className="flex gap-4 sm:gap-5 lg:gap-8 will-change-transform"
               style={{ width: "max-content" }}
             >
               {FEATURES.map((f) => (
                 <div
                   key={f.title}
-                  className="flex w-[85vw] max-w-[380px] shrink-0 flex-col items-start rounded-2xl p-6 text-left lg:w-[calc(33.333vw-2rem)] lg:max-w-[360px]"
+                  className="flex w-[82vw] min-w-[280px] max-w-[400px] shrink-0 flex-col items-start rounded-xl sm:rounded-2xl p-5 sm:p-6 lg:p-6 text-left lg:w-[calc(33.333vw-2rem)] lg:min-w-0 lg:max-w-[360px]"
                 >
-                  <div className="flex h-11 w-11 items-center justify-start text-white lg:h-12 lg:w-12">
+                  <div className="flex h-10 w-10 sm:h-11 sm:w-11 lg:h-12 lg:w-12 items-center justify-start text-white">
                     <f.Icon />
                   </div>
-                  <h3 className="mt-4 text-[23px] font-bold leading-tight text-white lg:text-[26px]">
+                  <h3 className="mt-4 sm:mt-5 text-xl font-bold leading-tight text-white sm:text-2xl lg:text-[28px]">
                     {f.title}
                   </h3>
-                  <p className="mt-2 text-[18px] leading-relaxed text-white/75 lg:text-[21px]">
+                  <p className="mt-2 sm:mt-3 text-base leading-relaxed text-white/75 sm:text-lg lg:text-[22px]">
                     {f.description}
                   </p>
                 </div>
@@ -248,7 +247,7 @@ export default function FeaturesSection() {
               {[0, 1,2,3,4].map((i) => (
                 <div
                   key={`blank-${i}`}
-                  className="flex w-[85vw] max-w-[380px] shrink-0 lg:w-[calc(33.333vw-2rem)] lg:max-w-[360px]"
+                  className="flex w-[82vw] min-w-[280px] max-w-[400px] shrink-0 lg:w-[calc(33.333vw-2rem)] lg:min-w-0 lg:max-w-[360px]"
                   aria-hidden
                 />
               ))}

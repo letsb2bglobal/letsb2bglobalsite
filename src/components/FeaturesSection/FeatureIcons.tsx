@@ -9,7 +9,7 @@ import React from "react";
  * 2. Replace the <path d="..."> (and any <path> nodes) with the SVG content.
  * 3. Keep viewBox, fill="currentColor", and className so size/color still work.
  */
-const iconClass = "h-10 w-10 shrink-0 lg:h-11 lg:w-11 text-white";
+const iconClass = "h-10 w-10 shrink-0 sm:h-11 sm:w-11 lg:h-12 lg:w-12 text-white";
 
 export function IconGlobe(props: React.SVGProps<SVGSVGElement>) {
   return (

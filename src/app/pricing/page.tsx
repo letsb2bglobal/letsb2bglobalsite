@@ -7,6 +7,8 @@ import PaymentStatusModal from '@/components/PaymentStatusModal';
 import { getUser } from '@/lib/auth';
 import { getMyProfile } from '@/lib/profile';
 import { useRouter } from 'next/navigation';
+import { useGeo } from '@/hooks/useGeo';
+import { formatPrice } from '@/lib/currency';
 
 export default function PricingPage() {
   const { 
@@ -25,6 +27,7 @@ export default function PricingPage() {
   const [paymentError, setPaymentError] = useState("");
   const router = useRouter();
   const user = getUser();
+  const { currency: displayCurrency } = useGeo();
 
   // Initialize selected durations if plans are available
   useEffect(() => {
@@ -250,11 +253,11 @@ export default function PricingPage() {
                     <>
                       <div className="flex items-baseline gap-1">
                         <span className={`text-3xl font-extrabold ${isPremium ? 'text-white' : 'text-gray-900'}`}>
-                          ₹{activePlan.current_price}
+                          {formatPrice(activePlan.current_price, displayCurrency)}
                         </span>
                         {activePlan.market_price > activePlan.current_price && (
                           <span className={`text-sm line-through ${isPremium ? 'text-slate-500' : 'text-gray-500'}`}>
-                            ₹{activePlan.market_price}
+                            {formatPrice(activePlan.market_price, displayCurrency)}
                           </span>
                         )}
                       </div>
@@ -374,7 +377,7 @@ export default function PricingPage() {
                           </div>
                           
                           <div className="text-right shrink-0">
-                            <p className="text-lg font-black text-slate-900 tracking-tighter leading-none">₹{t.amount}</p>
+                            <p className="text-lg font-black text-slate-900 tracking-tighter leading-none">{formatPrice(t.amount, displayCurrency)}</p>
                             <span className={`mt-2 inline-flex text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-tighter border ${
                               t.status === 'captured' 
                                 ? 'bg-emerald-50 text-emerald-600 border-emerald-100' 

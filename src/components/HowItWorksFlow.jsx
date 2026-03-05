@@ -142,7 +142,6 @@ export default function HowItWorksFlow() {
   const cardsWrapperRef = useRef(null);
   const headingRef = useRef(null);
   const subtitleRef = useRef(null);
-  const triggeredRef = useRef(false);
   const scrollTriggerRef = useRef(null);
   const cleanupRef = useRef(null);
 
@@ -178,46 +177,46 @@ export default function HowItWorksFlow() {
           paths.forEach((path) => {
             if (!path) return;
             const len = path.getTotalLength();
-            path.style.strokeDashoffset = len;
+            path.style.strokeDashoffset = String(len);
           });
 
-          scrollTriggerRef.current = ScrollTrigger.create({
-          trigger: section,
-          start: "top 85%",
-          once: true,
-          onEnter: () => {
-            if (triggeredRef.current) return;
-            triggeredRef.current = true;
-            const tl = gsap.timeline({ defaults: { ease: "power2.out" } });
+          const tl = gsap.timeline({
+            defaults: { ease: "power2.out" },
+            scrollTrigger: {
+              trigger: section,
+              start: "top 85%",
+              end: "+=1000",
+              scrub: 1,
+              once: false,
+            },
+          });
 
-            if (headingRef.current)
-              tl.to(headingRef.current, { opacity: 1, y: 0, duration: 0.4 });
-            if (subtitleRef.current)
-              tl.to(subtitleRef.current, {
-                opacity: 1,
-                y: 0,
-                duration: 0.35,
-              }, "-=0.25");
+          const cardDur = 0.6;
+          const pathDur = 0.9;
 
-            const cardDur = 0.35;
-            const pathDur = 0.4;
-            const gap = 0.08;
-            if (cards[0])
-              tl.to(cards[0], { opacity: 1, y: 0, duration: cardDur }, "+=0.1");
-            if (pathA)
-              tl.to(pathA, { strokeDashoffset: 0, duration: pathDur }, `-=${cardDur - gap}`);
-            if (cards[1])
-              tl.to(cards[1], { opacity: 1, y: 0, duration: cardDur }, `-=${pathDur - gap}`);
-            if (pathB)
-              tl.to(pathB, { strokeDashoffset: 0, duration: pathDur }, `-=${cardDur - gap}`);
-            if (cards[2])
-              tl.to(cards[2], { opacity: 1, y: 0, duration: cardDur }, `-=${pathDur - gap}`);
-            if (pathC)
-              tl.to(pathC, { strokeDashoffset: 0, duration: pathDur }, `-=${cardDur - gap}`);
-            if (cards[3])
-              tl.to(cards[3], { opacity: 1, y: 0, duration: cardDur }, `-=${pathDur - gap}`);
-          },
-        });
+          if (headingRef.current)
+            tl.to(headingRef.current, { opacity: 1, y: 0, duration: 0.4 });
+          if (subtitleRef.current)
+            tl.to(subtitleRef.current, {
+              opacity: 1,
+              y: 0,
+              duration: 0.35,
+            }, "-=0.25");
+
+          if (cards[0])
+            tl.to(cards[0], { opacity: 1, y: 0, duration: cardDur }, "+=0.15");
+          if (pathA)
+            tl.to(pathA, { strokeDashoffset: 0, duration: pathDur }, "+=0.12");
+          if (cards[1])
+            tl.to(cards[1], { opacity: 1, y: 0, duration: cardDur }, "+=0.1");
+          if (pathB)
+            tl.to(pathB, { strokeDashoffset: 0, duration: pathDur }, "+=0.12");
+          if (cards[2])
+            tl.to(cards[2], { opacity: 1, y: 0, duration: cardDur }, "+=0.1");
+          if (pathC)
+            tl.to(pathC, { strokeDashoffset: 0, duration: pathDur }, "+=0.12");
+          if (cards[3])
+            tl.to(cards[3], { opacity: 1, y: 0, duration: cardDur }, "+=0.1");
         }, section);
 
         cleanupRef.current = () => {
@@ -268,8 +267,10 @@ export default function HowItWorksFlow() {
               d="M 580 120 L 660 120 L 660 320"
               stroke="#9CA3AF"
               strokeWidth="4"
-              strokeDasharray="10 12"
+              strokeDasharray="12 10"
               fill="none"
+              strokeLinecap="round"
+              strokeLinejoin="round"
             />
             {/* Path B: Card2 bottom-center → down → left across gap → down to Card3 left-center */}
             <path
@@ -277,8 +278,10 @@ export default function HowItWorksFlow() {
               d="M 920 400 L 920 450 L 60 450 L 60 580"
               stroke="#9CA3AF"
               strokeWidth="4"
-              strokeDasharray="10 12"
+              strokeDasharray="12 10"
               fill="none"
+              strokeLinecap="round"
+              strokeLinejoin="round"
             />
             {/* Path C: Card3 right-center → right → down to Card4 left-center */}
             <path
@@ -286,8 +289,10 @@ export default function HowItWorksFlow() {
               d="M 580 580 L 660 580 L 660 760"
               stroke="#9CA3AF"
               strokeWidth="4"
-              strokeDasharray="10 12"
+              strokeDasharray="12 10"
               fill="none"
+              strokeLinecap="round"
+              strokeLinejoin="round"
             />
           </svg>
 

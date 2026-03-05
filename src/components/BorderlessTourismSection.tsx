@@ -136,8 +136,8 @@ export default function BorderlessTourismSection() {
       >
       <div className="w-full max-w-[1440px] mx-auto px-5 lg:px-10">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-start">
-          {/* Left: Heading + Accordion */}
-          <div className={poppins.className}>
+          {/* Left on desktop: Heading + Accordion — on mobile show second (below images) */}
+          <div className={`${poppins.className} order-2 lg:order-none`}>
             <h2
               ref={headingRef}
               className="opacity-0 text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-[56px] font-black text-[#1a1625] leading-tight mb-10"
@@ -192,8 +192,8 @@ export default function BorderlessTourismSection() {
             </div>
           </div>
 
-          {/* Right: Side by side, staggered — left (handshake) lower, right (vacation) higher, same height */}
-          <div ref={imagesRef} className="opacity-0 relative flex flex-row gap-3 lg:gap-4 items-start justify-end self-end">
+          {/* Right on desktop: Images — hidden on mobile */}
+          <div ref={imagesRef} className="opacity-0 hidden lg:flex order-1 lg:order-none relative flex-row gap-3 lg:gap-4 items-start justify-end self-end">
             <div className="relative w-[200px] lg:w-[260px] aspect-[260/571] rounded-[20px] overflow-hidden border border-[#E3E3E3] bg-transparent mt-20 lg:mt-28">
               <Image
                 src={`${ASSETS}/business-deal-handshake.png`}
