@@ -1,44 +1,10 @@
 "use client";
 
 import React, { useEffect, useRef } from "react";
+import { howItWorksCards as steps } from "@/data/howItWorks";
 
 const VIEWBOX_WIDTH = 1240;
 const VIEWBOX_HEIGHT = 860;
-
-const steps = [
-  {
-    number: "01",
-    title: "Register",
-    description:
-      "Create your Let'sB2B account as a tourism professional or business entity.",
-    variant: "purple",
-    position: "tl",
-  },
-  {
-    number: "02",
-    title: "Get Verified",
-    description:
-      "Complete your profile and verification to access the trusted trade network.",
-    variant: "light",
-    position: "mr",
-  },
-  {
-    number: "03",
-    title: "Connect",
-    description:
-      "Discover and connect with verified tourism and hospitality partners.",
-    variant: "light",
-    position: "bl",
-  },
-  {
-    number: "04",
-    title: "Collaborate",
-    description:
-      "Exchange enquiries, build partnerships, and grow your business globally.",
-    variant: "purple",
-    position: "br",
-  },
-];
 
 const cardPositions = {
   tl: { left: 60, top: 40 },
@@ -234,6 +200,7 @@ export default function HowItWorksFlow() {
 
   return (
     <section
+      id="how-it-works"
       ref={sectionRef}
       className="relative w-full bg-white py-10 md:py-14 px-4 md:px-8 overflow-hidden"
     >

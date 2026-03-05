@@ -39,7 +39,7 @@ export default function ZeroSpamBannerSection() {
           }
         `,
       }} />
-      <section className="relative w-full overflow-hidden">
+      <section id="zero-spam" className="relative w-full overflow-hidden">
         {/* Top blush strip — 100px to align with diagonal bar overlap */}
         <div
           className="w-full shrink-0"

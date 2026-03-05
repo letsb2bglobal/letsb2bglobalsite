@@ -22,6 +22,20 @@ import { useTeam } from '@/context/TeamContext';
 import { fetchEnquiryThreads } from '@/lib/enquiry';
 import { fetchUserConversations } from '@/lib/messages';
 
+// Landing page menu: section anchors (scroll on /) or page links; primary = CTA button style
+const LANDING_MENU: { label: string; href?: string; id?: string; primary?: boolean }[] = [
+  { label: 'About Us', href: '/aboutus' },
+  { label: 'Features', id: 'features' },
+  { label: 'How It Works', id: 'how-it-works' },
+  { label: 'Why LetsB2B', id: 'why-choose-us' },
+  { label: 'Pricing', href: '/pricing' },
+  { label: 'Contact Us', href: '/contact' },
+  { label: 'Get Started', href: '/signup', primary: true },
+];
+
+// Pages that use the landing-style header (dark nav, pill menu)
+const LANDING_HEADER_PAGES = ['/', '/pricing', '/aboutus', '/contact', '/privacy', '/terms', '/cookies', '/conduct'];
+
 const Header = () => {
   const router = useRouter();
   const pathname = usePathname();
@@ -39,14 +53,38 @@ const Header = () => {
   const [locationText, setLocationText] = useState("");
   const [scrolledPastLanding, setScrolledPastLanding] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [activeSectionId, setActiveSectionId] = useState<string | null>(null);
 
-  // On landing page: switch header to dark once user scrolls past the hero
+  // On landing / pricing / aboutus / contact / policy pages: switch header to dark once user scrolls past the hero
   useEffect(() => {
-    if (pathname !== '/') return;
+    if (!LANDING_HEADER_PAGES.includes(pathname)) return;
     const check = () => setScrolledPastLanding(window.scrollY >= window.innerHeight);
     check();
     window.addEventListener('scroll', check, { passive: true });
     return () => window.removeEventListener('scroll', check);
+  }, [pathname]);
+
+  // On homepage: track which section is in view for nav highlight
+  const sectionIds = ['features', 'how-it-works', 'why-choose-us'];
+  useEffect(() => {
+    if (pathname !== '/') {
+      setActiveSectionId(null);
+      return;
+    }
+    const updateActive = () => {
+      const viewportTop = 120;
+      let active: string | null = null;
+      for (const id of sectionIds) {
+        const el = document.getElementById(id);
+        if (!el) continue;
+        const rect = el.getBoundingClientRect();
+        if (rect.top <= viewportTop && rect.bottom > 0) active = id;
+      }
+      setActiveSectionId(active);
+    };
+    updateActive();
+    window.addEventListener('scroll', updateActive, { passive: true });
+    return () => window.removeEventListener('scroll', updateActive);
   }, [pathname]);
 
   // Close mobile menu when navigating or when scrolling past hero on landing
@@ -54,7 +92,7 @@ const Header = () => {
     setMobileMenuOpen(false);
   }, [pathname]);
   useEffect(() => {
-    if (pathname === '/' && scrolledPastLanding) setMobileMenuOpen(false);
+    if (LANDING_HEADER_PAGES.includes(pathname) && scrolledPastLanding) setMobileMenuOpen(false);
   }, [pathname, scrolledPastLanding]);
 
   // Lock body scroll when full-page mobile menu is open
@@ -97,13 +135,20 @@ const Header = () => {
     router.push('/signin');
   };
 
+  const handleSectionClick = useCallback((id: string) => {
+    setMobileMenuOpen(false);
+    const el = document.getElementById(id);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, []);
+
   if (!isLoggedIn && pathname !== '/signin' && pathname !== '/signup') {
-    // Landing page: header with logo, tagline, and pill nav
-    if (pathname === '/') {
+    // Landing & pricing & policy pages: header with logo and pill nav
+    if (LANDING_HEADER_PAGES.includes(pathname)) {
+      const isPolicyPage = ['/privacy', '/terms', '/cookies', '/conduct'].includes(pathname);
       return (
         <header
           className={`sticky top-0 left-0 right-0 z-[100] transition-all duration-300 ${
-            scrolledPastLanding
+            scrolledPastLanding || pathname === '/pricing' || pathname === '/aboutus' || pathname === '/contact' || isPolicyPage
               ? 'bg-[#1a1625] border-b border-white/10'
               : 'border-transparent bg-transparent'
           }`}
@@ -120,20 +165,72 @@ const Header = () => {
               />
             </Link>
 
-            {/* Desktop nav: pill with links */}
+            {/* Desktop nav: pill with menu links */}
             <nav
-              className="hidden md:flex items-center gap-2 rounded-[27px] px-1 py-1.5 opacity-100"
+              className="hidden md:flex items-center gap-1 rounded-[27px] px-1 py-1.5"
               style={{ background: '#FFFFFF 0% 0% no-repeat padding-box' }}
             >
-              <Link href="/#features" className="px-5 py-2.5 text-sm font-bold text-gray-800 hover:text-[#6B3FA0] hover:bg-gray-100 rounded-[27px] transition-colors">
-                Features
-              </Link>
-              <Link href="/pricing" className="px-5 py-2.5 text-sm font-bold text-gray-800 hover:text-[#6B3FA0] hover:bg-gray-100 rounded-[27px] transition-colors">
-                Pricing
-              </Link>
-              <Link href="/signup" className="px-5 py-2.5 text-sm font-bold text-white bg-[#6B3FA0] hover:bg-[#5a3590] rounded-[27px] transition-colors">
-                Get in Touch
-              </Link>
+              {LANDING_MENU.map((item) => {
+                const isActive = item.id
+                  ? pathname === '/' && activeSectionId === item.id
+                  : item.href ? pathname === item.href : false;
+                if (item.id) {
+                  return pathname === '/' ? (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => handleSectionClick(item.id!)}
+                      className={`px-4 py-2.5 text-sm font-bold rounded-[27px] transition-colors whitespace-nowrap ${
+                        isActive
+                          ? 'text-[#6B3FA0] bg-[#6B3FA0]/15'
+                          : 'text-gray-800 hover:text-[#6B3FA0] hover:bg-gray-100'
+                      }`}
+                    >
+                      {item.label}
+                    </button>
+                  ) : (
+                    <Link
+                      key={item.id}
+                      href={`/#${item.id}`}
+                      className={`px-4 py-2.5 text-sm font-bold rounded-[27px] transition-colors whitespace-nowrap ${
+                        isActive
+                          ? 'text-[#6B3FA0] bg-[#6B3FA0]/15'
+                          : 'text-gray-800 hover:text-[#6B3FA0] hover:bg-gray-100'
+                      }`}
+                    >
+                      {item.label}
+                    </Link>
+                  );
+                }
+                if (item.primary) {
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href!}
+                      className={`px-5 py-2.5 text-sm font-bold rounded-[27px] transition-colors whitespace-nowrap shrink-0 ${
+                        isActive
+                          ? 'text-white bg-[#5a3590] ring-2 ring-[#6B3FA0] ring-offset-2'
+                          : 'text-white bg-[#6B3FA0] hover:bg-[#5a3590]'
+                      }`}
+                    >
+                      {item.label}
+                    </Link>
+                  );
+                }
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href!}
+                    className={`px-4 py-2.5 text-sm font-bold rounded-[27px] transition-colors whitespace-nowrap shrink-0 ${
+                      isActive
+                        ? 'text-[#6B3FA0] bg-[#6B3FA0]/15'
+                        : 'text-gray-800 hover:text-[#6B3FA0] hover:bg-gray-100'
+                    }`}
+                  >
+                    {item.label}
+                  </Link>
+                );
+              })}
             </nav>
 
           {/* Mobile: hamburger opens full-page pull menu */}
@@ -184,27 +281,62 @@ const Header = () => {
                 </button>
               </div>
               <nav className="flex flex-col flex-1 py-6 px-4 overflow-auto">
-                <Link
-                  href="/#features"
-                  className="px-4 py-3.5 text-base font-bold text-white hover:bg-white/10 rounded-xl transition-colors"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  Features
-                </Link>
-                <Link
-                  href="/pricing"
-                  className="px-4 py-3.5 text-base font-bold text-white hover:bg-white/10 rounded-xl transition-colors"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  Pricing
-                </Link>
-                <Link
-                  href="/signup"
-                  className="mt-4 mx-4 py-3.5 text-center text-base font-bold text-white bg-[#6B3FA0] hover:bg-[#5a3590] rounded-xl transition-colors"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  Get in Touch
-                </Link>
+                {LANDING_MENU.map((item) => {
+                  const isActive = item.id
+                    ? pathname === '/' && activeSectionId === item.id
+                    : item.href ? pathname === item.href : false;
+                  if (item.id) {
+                    return pathname === '/' ? (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() => handleSectionClick(item.id!)}
+                        className={`px-4 py-3.5 text-left text-base font-bold rounded-xl transition-colors ${
+                          isActive ? 'text-[#22c55e] bg-white/10' : 'text-white hover:bg-white/10'
+                        }`}
+                      >
+                        {item.label}
+                      </button>
+                    ) : (
+                      <Link
+                        key={item.id}
+                        href={`/#${item.id}`}
+                        className={`px-4 py-3.5 text-base font-bold rounded-xl transition-colors ${
+                          isActive ? 'text-[#22c55e] bg-white/10' : 'text-white hover:bg-white/10'
+                        }`}
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        {item.label}
+                      </Link>
+                    );
+                  }
+                  if (item.primary) {
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href!}
+                        className={`mt-4 mx-4 py-3.5 text-center text-base font-bold rounded-xl transition-colors ${
+                          isActive ? 'text-white bg-[#5a3590] ring-2 ring-[#22c55e]' : 'text-white bg-[#6B3FA0] hover:bg-[#5a3590]'
+                        }`}
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        {item.label}
+                      </Link>
+                    );
+                  }
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href!}
+                      className={`px-4 py-3.5 text-base font-bold rounded-xl transition-colors ${
+                        isActive ? 'text-[#22c55e] bg-white/10' : 'text-white hover:bg-white/10'
+                      }`}
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      {item.label}
+                    </Link>
+                  );
+                })}
               </nav>
             </div>
           </div>

@@ -1,39 +1,13 @@
 "use client";
 
 import React, { useState } from "react";
+import { faqs as faqsData } from "@/data/faqs";
 
-const faqs = [
-  {
-    id: "faq-1",
-    question: "Is Let'sB2B only for tourism and hospitality?",
-    answer:
-      "Yes. Let'sB2B is exclusively built for tourism and hospitality trade partners, ensuring every connection, enquiry, and collaboration is relevant and professional.",
-  },
-  {
-    id: "faq-2",
-    question: "Is verification mandatory?",
-    answer:
-      "Verification is strongly recommended to access the trusted trade network. Verified members receive higher visibility and can engage in direct business enquiries with greater credibility.",
-  },
-  {
-    id: "faq-3",
-    question: "Can members message each other directly?",
-    answer:
-      "Yes. Members can use secure one-to-one messaging to communicate professionally, share requirements, and build partnerships without spam.",
-  },
-  {
-    id: "faq-4",
-    question: "Does Let'sB2B sell leads?",
-    answer:
-      "No. Let'sB2B does not sell leads. We enable direct B2B enquiries and genuine trade collaboration—no lead reselling, no irrelevant promotions.",
-  },
-  {
-    id: "faq-5",
-    question: "Is the platform global?",
-    answer:
-      "Yes. Let'sB2B supports pan-India presence with international reach, helping tourism businesses connect across regions and global markets.",
-  },
-];
+const faqs = faqsData.map((faq, i) => ({
+  id: `faq-${i + 1}`,
+  question: faq.q,
+  answer: faq.a,
+}));
 
 export default function FaqSection() {
   const [openId, setOpenId] = useState(faqs[0].id);

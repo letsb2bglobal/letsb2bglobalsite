@@ -266,7 +266,7 @@ export default function MembershipTiersSection() {
                   ))}
                 </ul>
                 <Link
-                  href="/pricing"
+                  href="/signup"
                   className={`mt-8 block w-full py-3 text-center text-sm transition-colors ${tier.buttonClass}`}
                 >
                   Get Started

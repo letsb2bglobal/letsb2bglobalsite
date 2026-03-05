@@ -12,7 +12,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const isSignupPage = pathname?.startsWith('/signup');
 
   return (
-    <div className={`flex flex-col min-h-screen ${isSignupPage ? "h-screen overflow-hidden" : ""}`}>
+    <div className={`flex flex-col min-h-screen ${isSignupPage ? "h-screen overflow-hidden" : ""}`} suppressHydrationWarning>
       {!isAuthPage && <Header />}
       <main className={`relative z-0 flex-grow ${isSignupPage ? "min-h-0 overflow-hidden" : ""}`}>{children}</main>
       {!isAuthPage && <Footer />}

@@ -203,6 +203,7 @@ export default function WhyChooseLetsB2B() {
 
   return (
     <section
+      id="why-choose-us"
       ref={sectionRef}
       className="relative w-full overflow-hidden bg-white py-20 md:py-24 bg-cover bg-center bg-no-repeat"
       style={{

@@ -22,13 +22,13 @@ const Footer = () => {
       { name: 'Features', href: '/aboutus#features' },
       { name: 'Membership Plans', href: '/pricing' },
       { name: 'Verification Policy', href: '/aboutus#verification' },
-      { name: 'FAQ', href: '/aboutus#faq' },
+      { name: 'FAQ', href: '/#faqs' },
     ],
     legal: [
       { name: 'Privacy Policy', href: '/privacy' },
       { name: 'Terms & Conditions', href: '/terms' },
       { name: 'Cookie Policy', href: '/cookies' },
-      { name: 'Code of Conduct', href: '/aboutus#conduct' },
+      { name: 'Code of Conduct', href: '/conduct' },
     ],
     support: [
       { name: 'Feedback & Support', href: 'mailto:support@letsb2b.com' },
@@ -168,7 +168,10 @@ const Footer = () => {
             <Link href="/cookies" className="text-slate-500 hover:text-slate-300 text-[10px] font-bold uppercase tracking-widest transition-colors">
               Cookies
             </Link>
-            <Link href="/aboutus#faq" className="text-slate-500 hover:text-slate-300 text-[10px] font-bold uppercase tracking-widest transition-colors">
+            <Link href="/conduct" className="text-slate-500 hover:text-slate-300 text-[10px] font-bold uppercase tracking-widest transition-colors">
+              Code of Conduct
+            </Link>
+            <Link href="/#faqs" className="text-slate-500 hover:text-slate-300 text-[10px] font-bold uppercase tracking-widest transition-colors">
               FAQ
             </Link>
           </div>

@@ -268,6 +268,7 @@ useEffect(() => {
         <LandingScrollTriggerRefresh />
         {/* Section 1: Landing — full viewport with video behind sticky header. */}
         <section
+          id="landing"
           data-section="landing"
           className="relative -mt-20 h-screen flex flex-col bg-[#1a1625] overflow-hidden"
         >
@@ -282,10 +283,24 @@ useEffect(() => {
               src="/our-features-section/landing.mp4"
             />
           </div>
-
+          {/* Gradient overlay: dark left/bottom, warm orange glow top-right */}
+          <div
+            className="absolute inset-0 z-[1] pointer-events-none"
+            style={{
+              background: `
+                linear-gradient(90deg, rgba(26,22,37,0.82) 0%, transparent 45%),
+                linear-gradient(0deg, rgba(26,22,37,0.88) 0%, transparent 55%),
+                radial-gradient(ellipse 85% 75% at 100% 0%, rgba(251,146,60,0.35) 0%, rgba(251,146,60,0.08) 45%, transparent 65%)
+              `,
+            }}
+            aria-hidden
+          />
           {/* Hero content — same horizontal container as header, pt for clearance under sticky header */}
           <div className="relative z-10 flex flex-1 min-h-0 flex-col justify-center w-full max-w-[1440px] mx-auto px-4 sm:px-5 lg:px-10 pt-20">
             <div className="py-4 sm:py-6">
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 text-white font-semibold border border-white/20 rounded-full text-xs uppercase tracking-widest mb-6 shadow-lg shadow-black/10">
+              Less Noise, Pure Business B2B
+            </div>
             <h1 className="text-3xl font-black text-white tracking-tight leading-tight sm:text-4xl md:text-5xl lg:text-6xl">
               Global Tourism &amp; Hospitality
             </h1>
@@ -344,6 +359,7 @@ useEffect(() => {
 
           {/* Green bar — part of Section 1, on top of video */}
           <div className="relative z-10 shrink-0">
+            <div className="h-1 w-full bg-gradient-to-r from-transparent via-amber-500/60 to-amber-400/50" aria-hidden />
             <GreenBarMarquee />
           </div>
         </section>
