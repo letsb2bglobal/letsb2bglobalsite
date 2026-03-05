@@ -39,6 +39,13 @@ const TOTAL_CHARS = WORDS.reduce((n, { word }) => n + word.length, 0);
 const TYPING_DURATION = 6;
 const CHAR_RATE = TYPING_DURATION / TOTAL_CHARS;
 
+function clearWordStyles(container: HTMLParagraphElement | null) {
+  if (!container) return;
+  container.querySelectorAll<HTMLSpanElement>(".word-reveal").forEach((el) => {
+    gsap.set(el, { clearProps: "width,overflow,display,verticalAlign" });
+  });
+}
+
 export default function Section2Intro() {
   const containerRef = useRef<HTMLParagraphElement>(null);
 
@@ -47,6 +54,7 @@ export default function Section2Intro() {
     if (!container) return;
 
     let tl: gsap.core.Timeline | null = null;
+    let fallbackTimer: ReturnType<typeof setTimeout> | null = null;
 
     const run = () => {
       const spans = container.querySelectorAll<HTMLSpanElement>(".word-reveal");
@@ -62,14 +70,16 @@ export default function Section2Intro() {
         time += duration;
       });
 
+      // If layout/fonts aren't ready, scrollWidth can be 0 and text would stay hidden. Skip animation.
+      if (!tweens.some((t) => t.fullWidth > 0)) return;
+
       tweens.forEach(({ el }) => {
         gsap.set(el, { width: 0, overflow: "hidden", display: "inline-block", verticalAlign: "bottom" });
       });
 
       tl = gsap.timeline({ delay: 0.3 });
-      const timeline = tl;
       tweens.forEach(({ el, start, duration, chars, fullWidth }) => {
-        timeline.to(
+        tl!.to(
           el,
           {
             width: fullWidth,
@@ -80,19 +90,25 @@ export default function Section2Intro() {
           start
         );
       });
+
+      fallbackTimer = setTimeout(() => clearWordStyles(container), 8000);
     };
 
-    if (document.fonts?.ready) {
-      document.fonts.ready.then(run);
-    } else {
-      run();
-    }
+    const start = () => {
+      if (document.fonts?.ready) {
+        document.fonts.ready.then(() => requestAnimationFrame(() => requestAnimationFrame(run))).catch(() => run());
+      } else {
+        requestAnimationFrame(() => requestAnimationFrame(run));
+      }
+    };
+    const t = setTimeout(start, 50);
 
     return () => {
+      clearTimeout(t);
+      if (fallbackTimer) clearTimeout(fallbackTimer);
       tl?.kill();
-      container.querySelectorAll<HTMLSpanElement>(".word-reveal").forEach((el) => {
-        gsap.set(el, { clearProps: "width,overflow,display,verticalAlign" });
-      });
+      tl = null;
+      clearWordStyles(container);
     };
   }, []);
 
