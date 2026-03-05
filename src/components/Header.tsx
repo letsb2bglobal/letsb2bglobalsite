@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { 
   Search, 
   Bell, 
@@ -34,6 +35,16 @@ const Header = () => {
   const [hasNewNotifications, setHasNewNotifications] = useState(false);
   const [searchText, setSearchText] = useState("");
   const [locationText, setLocationText] = useState("");
+  const [scrolledPastLanding, setScrolledPastLanding] = useState(false);
+
+  // On landing page: switch header to dark once user scrolls past the hero
+  useEffect(() => {
+    if (pathname !== '/') return;
+    const check = () => setScrolledPastLanding(window.scrollY >= window.innerHeight);
+    check();
+    window.addEventListener('scroll', check, { passive: true });
+    return () => window.removeEventListener('scroll', check);
+  }, [pathname]);
 
   const checkNotifications = useCallback(async () => {
     try {
@@ -68,6 +79,45 @@ const Header = () => {
   };
 
   if (!isLoggedIn && pathname !== '/signin' && pathname !== '/signup') {
+    // Landing page: header with logo, tagline, and pill nav
+    if (pathname === '/') {
+      return (
+        <header
+          className={`sticky top-0 left-0 right-0 z-[100] transition-all duration-300 ${
+            scrolledPastLanding
+              ? 'bg-[#1a1625] border-b border-white/10'
+              : 'border-transparent bg-transparent'
+          }`}
+        >
+          <div className="max-w-[1440px] mx-auto flex items-center justify-between h-20 px-5 lg:px-10">
+            <Link href="/" className="flex items-center gap-3">
+              <Image
+                src="/letsb2b_logo_white.png"
+                alt="LetsB2B - Less Noise, Pure Business"
+                width={180}
+                height={48}
+                className="h-12 w-auto object-contain"
+                priority
+              />
+            </Link>
+            <nav
+              className="flex items-center gap-2 rounded-[27px] px-1 py-1.5 opacity-100"
+              style={{ background: '#FFFFFF 0% 0% no-repeat padding-box' }}
+            >
+              <Link href="/#features" className="px-5 py-2.5 text-sm font-bold text-gray-800 hover:text-[#6B3FA0] hover:bg-gray-100 rounded-[27px] transition-colors">
+                Features
+              </Link>
+              <Link href="/pricing" className="px-5 py-2.5 text-sm font-bold text-gray-800 hover:text-[#6B3FA0] hover:bg-gray-100 rounded-[27px] transition-colors">
+                Pricing
+              </Link>
+              <Link href="/signup" className="px-5 py-2.5 text-sm font-bold text-white bg-[#6B3FA0] hover:bg-[#5a3590] rounded-[27px] transition-colors">
+                Get in Touch
+              </Link>
+            </nav>
+          </div>
+        </header>
+      );
+    }
     return null;
   }
 
@@ -75,7 +125,7 @@ const Header = () => {
   if (noHeaderPages.includes(pathname)) return null;
 
   return (
-    <header className="sticky top-0 z-50 bg-white border-b border-gray-100 shadow-md">
+    <header className="sticky top-0 z-[100] border-b border-gray-200/80 bg-white/75 backdrop-blur-xl shadow-lg shadow-black/5">
       <div className="max-w-[1440px] mx-auto flex items-center justify-between h-16 px-5 gap-4">
         {/* Left Section: Logo + Quick Actions */}
         <div className="flex items-center gap-6 shrink-0">

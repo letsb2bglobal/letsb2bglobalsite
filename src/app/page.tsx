@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useAuth } from "@/components/ProtectedRoute"; // Using the hook
 import {
   getAllUserProfiles,
@@ -17,7 +18,18 @@ import { getOrCreateConversation } from "@/lib/messages";
 import { getTradeWallFeed, searchTradeWall, deletePost, type Post } from "@/lib/posts";
 import WorkspaceSwitcher from "@/components/WorkspaceSwitcher";
 import { useTeam } from "@/context/TeamContext";
-import { Search, MapPin } from "lucide-react";
+import { Search, MapPin, Handshake } from "lucide-react";
+import GreenBarMarquee from "@/components/GreenBarMarquee";
+import Section2Intro from "@/components/Section2Intro";
+import BorderlessTourismSection from "@/components/BorderlessTourismSection";
+import GlobalTourismTradeNetworkSection from "@/components/GlobalTourismTradeNetworkSection";
+import FeaturesSection from "@/components/FeaturesSection";
+import HowItWorksFlow from "@/components/HowItWorksFlow";
+import WhyChooseLetsB2B from "@/components/WhyChooseLetsB2B";
+import MembershipTiersSection from "@/components/MembershipTiersSection";
+import FaqSection from "@/components/FaqSection";
+import ZeroSpamBannerSection from "@/components/ZeroSpamBannerSection";
+import LandingScrollTriggerRefresh from "@/components/LandingScrollTriggerRefresh";
 
 export default function Home() {
   const router = useRouter();
@@ -67,11 +79,8 @@ export default function Home() {
 useEffect(() => {
   if (!mounted) return;
 
-  // Auth check (client-only, safe)
-  if (!isAuthenticated()) {
-    router.push("/signin");
-    return;
-  }
+  // If not authenticated, we show the landing page (no redirect)
+  if (!isAuthenticated()) return;
 
   const fetchData = async () => {
     if (!user?.id) return;
@@ -243,7 +252,124 @@ useEffect(() => {
   // Block rendering until hydration completes
   if (!mounted) return null;
 
-  // Loading state (NO auth checks here)
+  // Public home: GRB-inspired landing (grb.uk.com)
+  if (!isAuthenticated()) {
+    const partnerTypes = [
+      "DMC",
+      "Hotels",
+      "Tour Operators",
+      "Travel Agents",
+      "MICE",
+      "Inbound",
+      "Outbound",
+    ];
+    return (
+      <div className="min-h-screen bg-[#1a1625] flex flex-col">
+        <LandingScrollTriggerRefresh />
+        {/* Section 1: Landing — full viewport with video behind sticky header. */}
+        <section
+          data-section="landing"
+          className="relative -mt-20 h-screen flex flex-col bg-[#1a1625] overflow-hidden"
+        >
+          {/* Background video — behind hero and green bar */}
+          <div className="absolute inset-0 z-0">
+            <video
+              autoPlay
+              muted
+              loop
+              playsInline
+              className="h-full w-full object-cover scale-x-[-1]"
+              src="/our-features-section/landing_1.mp4"
+            />
+          </div>
+
+          {/* Hero content — same horizontal container as header, pt for clearance under sticky header */}
+          <div className="relative z-10 flex flex-1 min-h-0 flex-col justify-center w-full max-w-[1440px] mx-auto px-5 lg:px-10 pt-20">
+            <div className="py-6">
+            <h1 className="text-6xl font-black text-white tracking-tight leading-tight">
+              Global Tourism &amp; Hospitality
+            </h1>
+            <h2 className="text-6xl font-black text-white tracking-tight leading-tight mt-1">
+              B2B Trade Network
+            </h2>
+            <p className="text-lg text-white/90 mt-4 max-w-xl">
+              Finding reliable and trusted business partners for global growth and trading.
+            </p>
+            <div className="flex flex-wrap gap-2 mt-4">
+              {partnerTypes.map((t) => (
+                <span
+                  key={t}
+                  className="px-3 py-1.5 rounded-full bg-white/10 text-white/90 text-xs font-semibold border border-white/20"
+                >
+                  {t}
+                </span>
+              ))}
+            </div>
+            <p className="text-base text-white/80 mt-4 max-w-2xl">
+              Join our growing community and experience our industry-leading B2B matchmaking for tourism and hospitality.
+            </p>
+            <div className="flex flex-wrap gap-3 mt-6">
+              <Link
+                href="/signup"
+                className="inline-flex items-center justify-center px-6 py-3 bg-white text-[#1a1625] font-bold rounded-full hover:bg-white/95 transition-colors text-sm"
+              >
+                Join the Network
+              </Link>
+              <Link
+                href="/signin"
+                className="inline-flex items-center justify-center px-6 py-3 bg-[#f97316] text-white font-bold rounded-full hover:bg-[#ea580c] transition-colors text-sm"
+              >
+                Explore Platform
+              </Link>
+            </div>
+            <div className="flex flex-wrap gap-6 mt-6">
+              <div className="flex items-center gap-2 text-white/90 text-sm">
+                <svg className="w-5 h-5 text-blue-400 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                </svg>
+                <span className="font-semibold">Verified Members</span>
+              </div>
+              <div className="flex items-center gap-2 text-white/90 text-sm">
+                <span className="w-5 h-5 rounded-full bg-amber-400 text-[#1a1625] flex items-center justify-center text-[10px] font-black shrink-0">0</span>
+                <span className="font-semibold">Less Noise</span>
+              </div>
+              <div className="flex items-center gap-2 text-white/90 text-sm">
+                <Handshake className="w-5 h-5 text-emerald-400 shrink-0" strokeWidth={2} />
+                <span className="font-semibold">Pure Business</span>
+              </div>
+            </div>
+            </div>
+          </div>
+
+          {/* Green bar — part of Section 1, on top of video */}
+          <div className="relative z-10 shrink-0">
+            <GreenBarMarquee />
+          </div>
+        </section>
+
+        <Section2Intro />
+
+        <BorderlessTourismSection />
+
+        <GlobalTourismTradeNetworkSection />
+
+        <FeaturesSection />
+
+        <HowItWorksFlow />
+
+        <WhyChooseLetsB2B />
+
+        <MembershipTiersSection />
+
+        <FaqSection />
+
+        <ZeroSpamBannerSection />
+
+      </div>
+    );
+  }
+
+  // Loading state (authenticated, fetching profile)
   if (loading && !profile) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#f3f2ef]">
@@ -252,9 +378,7 @@ useEffect(() => {
     );
   }
 
-  // If not authenticated, we'll just return null as the useEffect handles redirect
-  // if (!isAuthenticated()) return null;
-
+  // If not authenticated, we'll show landing above; otherwise render feed below
   return (
     <div className="min-h-screen bg-[#f3f2ef]">
       <div className="max-w-6xl mx-auto mt-6 px-4 grid grid-cols-1 md:grid-cols-4 gap-6 pb-10">

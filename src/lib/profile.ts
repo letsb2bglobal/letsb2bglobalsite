@@ -491,7 +491,7 @@ export const getAllUserProfiles = async (): Promise<ProfileResponse> => {
   const token = getToken();
 
   if (!token) {
-    throw new Error("No authentication token found");
+    return { data: [] };
   }
 
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://api.letsb2b.com";
