@@ -14,7 +14,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className={`flex flex-col min-h-screen ${isSignupPage ? "h-screen overflow-hidden" : ""}`}>
       {!isAuthPage && <Header />}
-      <main className={`flex-grow ${isSignupPage ? "min-h-0 overflow-hidden" : ""}`}>{children}</main>
+      <main className={`relative z-0 flex-grow ${isSignupPage ? "min-h-0 overflow-hidden" : ""}`}>{children}</main>
       {!isAuthPage && <Footer />}
     </div>
   );

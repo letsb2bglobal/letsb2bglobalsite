@@ -44,6 +44,7 @@ export default function RootLayout({
     <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${outfit.variable} ${inter.variable} antialiased font-inter`}
+        suppressHydrationWarning
       >
         <ToastProvider>
           <TeamProvider>
