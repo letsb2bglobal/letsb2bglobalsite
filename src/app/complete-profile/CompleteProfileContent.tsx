@@ -39,6 +39,13 @@ const STEP_LABELS = [
 
 const HOTEL_TYPE_OPTIONS = ["5 Star", "4 Star", "3 Star", "Resort", "Boutique", "Budget", "Other"];
 
+/* DMC, Travel Agents, Taxi, TT Travel service - same form (Establishment Name + Areas You Service) */
+const DMC_STYLE_TYPES = ["DMC", "Tour Guide", "Taxi Business", "TT Bus Services"];
+
+/* Restaurant & Ayurveda Centre - same form (Establishment Name + Location + Capacity) */
+const RESTAURANT_STYLE_TYPES = ["Restaurant", "Ayurveda Centre"];
+const LOCATION_OPTIONS = ["Kochi", "Mumbai", "Delhi", "Bangalore", "Dubai", "Kuwait", "Singapore", "Other"];
+
 const PURPLE = "#612178";
 const PURPLE_LIGHT = "#E0CCF0";   // light purple circle for inactive steps
 const PURPLE_DARK = "#8C4D9F";    // dark purple for inactive number & text
@@ -59,6 +66,7 @@ export default function CompleteProfileContent() {
   const [showBusinessAddedModal, setShowBusinessAddedModal] = useState(false);
   const [showPreferenceAfterAdd, setShowPreferenceAfterAdd] = useState(false);
   const [addBusinessForm, setAddBusinessForm] = useState({ businessName: "", description: "" });
+  const [areaInputValue, setAreaInputValue] = useState("");
 
   // Form State
   const [formData, setFormData] = useState({
@@ -197,9 +205,9 @@ export default function CompleteProfileContent() {
       const bts = formData.business_type;
       const details = formData.business_details;
 
-      if (bts.includes("DMC")) {
+      if (DMC_STYLE_TYPES.some((t) => bts.includes(t))) {
         if (!details.areas_serviced || (details.areas_serviced as string[]).length === 0) {
-          newErrors.areas_serviced = "Areas serviced is required for DMC";
+          newErrors.areas_serviced = "Please add at least one area you service";
         }
       }
       if (bts.includes("Restaurant") || bts.includes("Ayurveda Centre")) {
@@ -264,6 +272,10 @@ export default function CompleteProfileContent() {
     const hasHotel = bts.includes("Hotel");
     const requiresDefaultLocation = !hasDMC && !hasRestaurantOrCentre && !hasHotel;
     const hotelOnly = hasHotel && !hasDMC && !hasRestaurantOrCentre;
+    const dmcStyleOnly = DMC_STYLE_TYPES.some((t) => bts.includes(t)) && !hasHotel && !hasRestaurantOrCentre;
+    const selectedDmcStyleType = bts.find((t) => DMC_STYLE_TYPES.includes(t)) || "DMC";
+    const restaurantStyleOnly = RESTAURANT_STYLE_TYPES.some((t) => bts.includes(t)) && !hasHotel && !hasDMC;
+    const selectedRestaurantStyleType = bts.find((t) => RESTAURANT_STYLE_TYPES.includes(t)) || "Restaurant";
 
     /* Hotel form per Figma - when Hotel is selected */
     if (hotelOnly) {
@@ -311,6 +323,140 @@ export default function CompleteProfileContent() {
                 className={`w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-800 placeholder-gray-400 bg-white focus:outline-none focus:border-[#612178] transition-colors ${errors.number_of_rooms ? "border-red-500" : ""}`}
               />
               {errors.number_of_rooms && <p className="text-red-500 text-xs font-bold mt-1">{errors.number_of_rooms}</p>}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    /* DMC, Taxi, TT Bus, Tour Guide form per Figma */
+    if (dmcStyleOnly) {
+      const areas = (details.areas_serviced as string[]) || [];
+      const addArea = (val: string) => {
+        const trimmed = val.trim();
+        if (trimmed && !areas.includes(trimmed)) {
+          updateDetails("areas_serviced", [...areas, trimmed]);
+          setAreaInputValue("");
+        }
+      };
+      const removeArea = (idx: number) => {
+        updateDetails("areas_serviced", areas.filter((_, i) => i !== idx));
+      };
+      return (
+        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+          <div>
+            <h3 className="text-xl sm:text-2xl font-bold text-gray-900">
+              Lets learn more about your{" "}
+              <span style={{ color: PURPLE }}>{selectedDmcStyleType} business</span>
+            </h3>
+            <p className="text-sm text-gray-600 mt-1">Enter Your Business Detail Below</p>
+          </div>
+          <div className="space-y-4">
+            <div>
+              <input
+                type="text"
+                name="company_name"
+                value={formData.company_name}
+                onChange={handleInputChange}
+                placeholder="Establishment Name"
+                className={`w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-800 placeholder-gray-400 bg-white focus:outline-none focus:border-[#612178] transition-colors ${errors.company_name ? "border-red-500" : ""}`}
+              />
+              {errors.company_name && <p className="text-red-500 text-xs font-bold mt-1">{errors.company_name}</p>}
+            </div>
+            <div>
+              <div className={`min-h-[44px] px-4 py-2 border border-gray-300 rounded-lg bg-white focus-within:border-[#612178] transition-colors ${errors.areas_serviced ? "border-red-500" : ""}`}>
+                <input
+                  type="text"
+                  value={areaInputValue}
+                  onChange={(e) => setAreaInputValue(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === ",") {
+                      e.preventDefault();
+                      addArea(areaInputValue || (e.target as HTMLInputElement).value);
+                    }
+                  }}
+                  onBlur={() => areaInputValue.trim() && addArea(areaInputValue)}
+                  placeholder="Areas You Service"
+                  className="w-full min-w-[120px] py-2 border-0 outline-none focus:ring-0 text-gray-800 placeholder-gray-400"
+                />
+                {areas.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {areas.map((area, idx) => (
+                      <span
+                        key={idx}
+                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-sm font-medium"
+                        style={{ backgroundColor: PURPLE_LIGHT, color: PURPLE }}
+                      >
+                        #{area}
+                        <button
+                          type="button"
+                          onClick={() => removeArea(idx)}
+                          className="ml-0.5 hover:opacity-70 text-current"
+                          aria-label={`Remove ${area}`}
+                        >
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+              {errors.areas_serviced && <p className="text-red-500 text-xs font-bold mt-1">{errors.areas_serviced}</p>}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    /* Restaurant & Ayurveda Centre form per Figma */
+    if (restaurantStyleOnly) {
+      const capacityPlaceholder = selectedRestaurantStyleType === "Restaurant" ? "Restaurant Capacity" : "Ayurveda Centre Capacity";
+      return (
+        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+          <div>
+            <h3 className="text-xl sm:text-2xl font-bold text-gray-900">
+              Lets learn more about your{" "}
+              <span style={{ color: PURPLE }}>{selectedRestaurantStyleType}</span>
+            </h3>
+            <p className="text-sm text-gray-600 mt-1">Enter Your Business Detail Below</p>
+          </div>
+          <div className="space-y-4">
+            <div>
+              <input
+                type="text"
+                name="company_name"
+                value={formData.company_name}
+                onChange={handleInputChange}
+                placeholder="Establishment Name"
+                className={`w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-800 placeholder-gray-400 bg-white focus:outline-none focus:border-[#612178] transition-colors ${errors.company_name ? "border-red-500" : ""}`}
+              />
+              {errors.company_name && <p className="text-red-500 text-xs font-bold mt-1">{errors.company_name}</p>}
+            </div>
+            <div>
+              <select
+                value={(details.location as string) || ""}
+                onChange={(e) => updateDetails("location", e.target.value)}
+                className={`w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-800 bg-white focus:outline-none focus:border-[#612178] transition-colors ${errors.location ? "border-red-500" : ""}`}
+              >
+                <option value="">Location</option>
+                {LOCATION_OPTIONS.map((opt) => (
+                  <option key={opt} value={opt}>{opt}</option>
+                ))}
+              </select>
+              {errors.location && <p className="text-red-500 text-xs font-bold mt-1">{errors.location}</p>}
+            </div>
+            <div>
+              <input
+                type="text"
+                inputMode="numeric"
+                value={(details.capacity as string) || ""}
+                onChange={(e) => updateDetails("capacity", e.target.value)}
+                placeholder={capacityPlaceholder}
+                className={`w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-800 placeholder-gray-400 bg-white focus:outline-none focus:border-[#612178] transition-colors ${errors.capacity ? "border-red-500" : ""}`}
+              />
+              {errors.capacity && <p className="text-red-500 text-xs font-bold mt-1">{errors.capacity}</p>}
             </div>
           </div>
         </div>
