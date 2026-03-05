@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useRef, useEffect } from "react";
-import { gsap } from "gsap";
+import React from "react";
+import Typewriter from "typewriter-effect";
 
 const SEGMENTS: { text: string; gray: boolean }[] = [
   { text: "We are a global ", gray: true },
@@ -17,101 +17,18 @@ const SEGMENTS: { text: string; gray: boolean }[] = [
   { text: " across markets.", gray: true },
 ];
 
-// Split into words, preserving leading and trailing spaces so spacing is correct
-function getWords() {
-  return SEGMENTS.flatMap((s) => {
-    if (s.text.length <= 3) return [{ word: s.text, gray: s.gray }];
-    const parts = s.text.split(/\s+/).filter(Boolean);
-    if (parts.length === 0) return s.text ? [{ word: s.text, gray: s.gray }] : [];
-    const result: string[] = [];
-    for (let i = 0; i < parts.length; i++) {
-      const prefix = i === 0 && s.text.startsWith(" ") ? " " : "";
-      const suffix = i === parts.length - 1 && s.text.endsWith(" ") ? " " : i < parts.length - 1 ? " " : "";
-      result.push(prefix + parts[i] + suffix);
-    }
-    return result.map((word) => ({ word, gray: s.gray }));
-  });
-}
-
-const WORDS = getWords();
-
-const TOTAL_CHARS = WORDS.reduce((n, { word }) => n + word.length, 0);
-const TYPING_DURATION = 6;
-const CHAR_RATE = TYPING_DURATION / TOTAL_CHARS;
-
-function clearWordStyles(container: HTMLParagraphElement | null) {
-  if (!container) return;
-  container.querySelectorAll<HTMLSpanElement>(".word-reveal").forEach((el) => {
-    gsap.set(el, { clearProps: "width,overflow,display,verticalAlign" });
-  });
+function segmentToHtml(segment: { text: string; gray: boolean }): string {
+  const style = segment.gray
+    ? "color:#969696"
+    : "font-weight:700;color:black";
+  const escaped = segment.text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+  return `<span style="${style};margin-right:10px">${escaped}</span>`;
 }
 
 export default function Section2Intro() {
-  const containerRef = useRef<HTMLParagraphElement>(null);
-
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
-
-    let tl: gsap.core.Timeline | null = null;
-    let fallbackTimer: ReturnType<typeof setTimeout> | null = null;
-
-    const run = () => {
-      const spans = container.querySelectorAll<HTMLSpanElement>(".word-reveal");
-      if (!spans.length) return;
-
-      let time = 0;
-      const tweens: { el: HTMLSpanElement; start: number; duration: number; chars: number; fullWidth: number }[] = [];
-      spans.forEach((el) => {
-        const chars = el.textContent?.length ?? 1;
-        const fullWidth = el.scrollWidth;
-        const duration = chars * CHAR_RATE;
-        tweens.push({ el, start: time, duration, chars, fullWidth });
-        time += duration;
-      });
-
-      // If layout/fonts aren't ready, scrollWidth can be 0 and text would stay hidden. Skip animation.
-      if (!tweens.some((t) => t.fullWidth > 0)) return;
-
-      tweens.forEach(({ el }) => {
-        gsap.set(el, { width: 0, overflow: "hidden", display: "inline-block", verticalAlign: "bottom" });
-      });
-
-      tl = gsap.timeline({ delay: 0.3 });
-      tweens.forEach(({ el, start, duration, chars, fullWidth }) => {
-        tl!.to(
-          el,
-          {
-            width: fullWidth,
-            duration,
-            ease: `steps(${chars})`,
-            overflow: "hidden",
-          },
-          start
-        );
-      });
-
-      fallbackTimer = setTimeout(() => clearWordStyles(container), 8000);
-    };
-
-    const start = () => {
-      if (document.fonts?.ready) {
-        document.fonts.ready.then(() => requestAnimationFrame(() => requestAnimationFrame(run))).catch(() => run());
-      } else {
-        requestAnimationFrame(() => requestAnimationFrame(run));
-      }
-    };
-    const t = setTimeout(start, 50);
-
-    return () => {
-      clearTimeout(t);
-      if (fallbackTimer) clearTimeout(fallbackTimer);
-      tl?.kill();
-      tl = null;
-      clearWordStyles(container);
-    };
-  }, []);
-
   return (
     <section
       id="intro"
@@ -121,21 +38,26 @@ export default function Section2Intro() {
       <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-[#e91e8c]" aria-hidden="true" />
       <div className="w-full max-w-[1440px] mx-auto px-5 lg:px-10">
         <div className="pl-6 lg:pl-8 min-h-[12rem] sm:min-h-[14rem] md:min-h-[16rem] lg:min-h-[18rem] xl:min-h-[20rem]">
-          <p ref={containerRef} className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl leading-snug">
-            {WORDS.map(({ word, gray }, i) => (
-              <span
-                key={i}
-                className="word-reveal"
-                style={
-                  gray
-                    ? { color: "#969696", marginRight: "10px" }
-                    : { fontWeight: 700, color: "black", marginRight: "10px" }
-                }
-              >
-                {word}
-              </span>
-            ))}
-          </p>
+          <div
+            className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl leading-snug"
+            aria-live="polite"
+          >
+            <Typewriter
+              options={{
+                cursor: "",
+                delay: 50,
+                skipAddStyles: true,
+                wrapperClassName: "Typewriter__wrapper inline",
+                cursorClassName: "hidden",
+              }}
+              onInit={(tw) => {
+                SEGMENTS.forEach((seg) => {
+                  tw.typeString(segmentToHtml(seg));
+                });
+                tw.start();
+              }}
+            />
+          </div>
         </div>
       </div>
     </section>
