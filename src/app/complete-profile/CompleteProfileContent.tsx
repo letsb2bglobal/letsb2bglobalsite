@@ -6,6 +6,7 @@ import { useAuth } from "@/components/ProtectedRoute";
 import { 
   completeOnboardingStep,
   getMyProfile,
+  type OnboardingStepPayload,
 } from "@/lib/profile";
 import Image from "next/image";
 import AuthLayout from "@/components/AuthLayout";
@@ -58,6 +59,8 @@ export default function CompleteProfileContent() {
   const [submitError, setSubmitError] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isInitializing, setIsInitializing] = useState(true);
+  const [showAddBusinessModal, setShowAddBusinessModal] = useState(false);
+  const [addBusinessForm, setAddBusinessForm] = useState({ businessName: "", description: "" });
 
   // Form State
   const [formData, setFormData] = useState({
@@ -231,30 +234,44 @@ export default function CompleteProfileContent() {
   };
 
   const submitStep = async (stepToSubmit?: number) => {
-    const step = stepToSubmit || currentStep;
+    const step = stepToSubmit ?? currentStep;
     if (!validateStep()) return;
 
     setIsLoading(true);
     setSubmitError("");
 
     try {
-      const payloadData: Record<string, unknown> = { step };
+      let payload: OnboardingStepPayload;
 
       if (step === 1) {
-        payloadData.business_type = formData.business_type;
+        payload = {
+          step: 1,
+          business_type: formData.business_type,
+        };
       } else if (step === 2) {
-        payloadData.company_name = formData.company_name;
-        payloadData.business_details = formData.business_details;
+        payload = {
+          step: 2,
+          company_name: formData.company_name,
+          business_details: formData.business_details,
+        };
       } else if (step === 3) {
-        payloadData.preferred_collaborations = formData.preferred_collaborations;
-      } else if (step === 4) {
-        // Nothing extra for 4, it just confirms completion
+        payload = {
+          step: 3,
+          preferred_collaborations: formData.preferred_collaborations,
+        };
+      } else {
+        payload = { step: 4 };
       }
 
-      await completeOnboardingStep(payloadData);
+      console.log("Submitting onboarding payload:", payload);
+
+      const result = await completeOnboardingStep(payload);
+
+      // Use onboarding_step from backend for resume behavior; fallback to step + 1
+      const nextStep = result.onboarding_step ?? result.nextStep ?? (step < 4 ? step + 1 : 4);
 
       if (step < 4) {
-        setCurrentStep(step + 1);
+        setCurrentStep(Math.min(nextStep, 4));
       } else {
         await refreshWorkspaces();
         showToast("Profile set up successfully", "success");
@@ -406,8 +423,9 @@ export default function CompleteProfileContent() {
       <div className="flex flex-wrap items-center justify-between w-full gap-2 sm:gap-1">
         {STEP_LABELS.map((label, idx) => {
           const stepNum = idx + 1;
-          const isActive = currentStep === stepNum;
-          const isCompleted = currentStep > stepNum;
+          const effectiveStep = showAddBusinessModal ? 2 : currentStep;
+          const isActive = effectiveStep === stepNum;
+          const isCompleted = effectiveStep > stepNum;
           return (
             <React.Fragment key={stepNum}>
               {idx > 0 && (
@@ -424,7 +442,7 @@ export default function CompleteProfileContent() {
                         : { backgroundColor: PURPLE_LIGHT, color: PURPLE_DARK }
                   }
                 >
-                  {isCompleted ? "✓" : stepNum}
+                  {stepNum}
                 </span>
                 <span
                   className="text-sm font-medium"
@@ -445,17 +463,92 @@ export default function CompleteProfileContent() {
       </div>
     );
 
+  const handleAddBusiness = () => {
+    if (addBusinessForm.businessName.trim()) {
+      setFormData(prev => ({
+        ...prev,
+        company_name: addBusinessForm.businessName,
+        business_details: { ...prev.business_details, description: addBusinessForm.description },
+      }));
+      setAddBusinessForm({ businessName: "", description: "" });
+      setShowAddBusinessModal(false);
+      setCurrentStep(2);
+    }
+  };
+
   return (
-    <AuthLayout variant="signup" header={stepper}>
+    <AuthLayout variant="signup" header={stepper} hideCardStyle={false}>
       {isInitializing ? (
         <div className="flex flex-col items-center justify-center py-20 space-y-4">
           <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
           <p className="text-gray-500 text-sm font-medium animate-pulse">Loading onboarding data...</p>
         </div>
       ) : (
-        <div className="pt-2">
+        <div className="pt-2 overflow-hidden">
             {currentStep === 1 && (
-              <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+              showAddBusinessModal ? (
+              /* Add Your Unique Business - uses same AuthLayout card as Who Are You (no extra wrapper) */
+              <div key="add-business" className="animate-in fade-in slide-in-from-bottom-2 duration-300 space-y-5">
+                    <div>
+                      <h3 className="text-xl sm:text-2xl font-bold text-gray-900">Add Your Unique Business</h3>
+                      <p className="text-sm text-gray-600 mt-1">Enter Your Business Detail Below</p>
+                    </div>
+
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">Business Name</label>
+                        <input
+                          type="text"
+                          value={addBusinessForm.businessName}
+                          onChange={(e) => setAddBusinessForm(prev => ({ ...prev, businessName: e.target.value }))}
+                          placeholder="Business Name"
+                          className="w-full px-3 py-2.5 sm:py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#612178] focus:border-transparent text-sm text-gray-800 placeholder-gray-400 bg-white"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">Add Description</label>
+                        <textarea
+                          value={addBusinessForm.description}
+                          onChange={(e) => setAddBusinessForm(prev => ({ ...prev, description: e.target.value }))}
+                          placeholder="Add Description"
+                          rows={4}
+                          className="w-full px-3 py-2.5 sm:py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#612178] focus:border-transparent text-sm text-gray-800 placeholder-gray-400 bg-white resize-none"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
+                      <div className="w-full sm:w-48 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                        <div
+                          className="h-full rounded-full transition-all"
+                          style={{ width: "25%", backgroundColor: PURPLE }}
+                        />
+                      </div>
+                      <div className="flex gap-3 w-full sm:w-auto">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setAddBusinessForm({ businessName: "", description: "" });
+                            setShowAddBusinessModal(false);
+                          }}
+                          className="flex-1 sm:flex-none px-5 py-2.5 rounded-xl font-semibold text-sm text-gray-700 bg-gray-100 hover:bg-gray-200 transition-colors"
+                        >
+                          Back
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleAddBusiness}
+                          className="flex-1 sm:flex-none px-5 py-2.5 rounded-xl font-semibold text-sm text-white transition-colors"
+                          style={{ backgroundColor: PURPLE, boxShadow: "0px 4px 10px -2px rgba(0,0,0,0.25)" }}
+                        >
+                          Add
+                        </button>
+                      </div>
+                    </div>
+              </div>
+              ) : (
+              /* Who Are You - Select Your Business (Figma alignment) */
+              <div key="who-are-you" className="animate-in fade-in slide-in-from-bottom-2 duration-300">
                 <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
                   <div>
                     <h3 className="text-2xl md:text-3xl font-bold text-gray-900">Who Are You ?</h3>
@@ -463,61 +556,56 @@ export default function CompleteProfileContent() {
                   </div>
                   <button
                     type="button"
-                    className="flex items-center justify-center gap-2 text-white font-semibold text-sm whitespace-nowrap"
+                    className="flex items-center justify-center gap-2 text-white font-semibold text-sm whitespace-nowrap shrink-0"
                     style={{ width: 220.75, height: 50, borderRadius: 16, backgroundColor: PURPLE }}
-                    onClick={() => {}}
+                    onClick={() => setShowAddBusinessModal(true)}
                   >
                     <span className="text-lg">+</span> Add Your Business
                   </button>
                 </div>
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 w-full max-w-full min-w-0 overflow-x-hidden">
+                <div className="grid grid-cols-2 lg:grid-cols-[repeat(4,120px)] gap-4 lg:justify-between w-full">
                   {BUSINESS_TYPES.map(type => {
                     const isSelected = formData.business_type.includes(type);
                     return (
                       <div 
                         key={type}
                         onClick={() => toggleBusinessType(type)}
-                        className={`rounded-[16px] border-2 transition-all cursor-pointer flex flex-col overflow-hidden shrink-0 ${
-                          isSelected ? "shadow-md" : "bg-white hover:shadow-sm"
-                        }`}
+                        className="w-[120px] h-[120px] rounded-[16px] border-2 transition-all cursor-pointer flex flex-col overflow-hidden shrink-0"
                         style={
                           isSelected
                             ? {
-                                width: 172.31,
-                                height: 174.97,
                                 borderColor: PURPLE,
                                 background: "linear-gradient(114.72deg, #612178 16.64%, #801E7C 50.66%, #801E7C 94.01%)",
+                                boxShadow: "2px 5px 13px 0px #E1C0EC",
                               }
                             : {
-                                width: 172.31,
-                                height: 174.97,
-                                borderColor: PURPLE_LIGHT,
+                                borderColor: "#E8D5F0",
                                 backgroundColor: "#FFFFFF",
+                                boxShadow: "2px 5px 13px 0px #E1C0EC",
                               }
                         }
                       >
                         {BUSINESS_TYPE_IMAGES[type] && (
-                          <div
-                            className="relative overflow-hidden shrink-0 rounded-t-[16px]"
-                            style={{ width: 172.31, height: 139.68 }}
-                          >
+                          <div className="relative w-full flex-1 min-h-0 rounded-t-[14px] overflow-hidden">
                             <Image
                               src={BUSINESS_TYPE_IMAGES[type]!}
                               alt={type}
                               fill
                               className="object-cover object-center"
+                              sizes="120px"
                             />
                           </div>
                         )}
-                        <div className="flex-1 flex items-center justify-center min-h-[35px] px-2 py-1">
-                          <h4 className={`font-bold text-sm text-center leading-tight ${isSelected ? "text-white" : "text-gray-900"}`}>{type}</h4>
+                        <div className="flex-shrink-0 flex items-center justify-center h-8 px-1.5 py-0.5">
+                          <h4 className={`font-bold text-[11px] text-center leading-tight truncate max-w-full ${isSelected ? "text-white" : "text-gray-900"}`}>{type}</h4>
                         </div>
                       </div>
                     )
                   })}
                 </div>
-                {errors.business_type && <p className="text-red-500 text-sm font-bold mt-4 text-center">{errors.business_type}</p>}
+                {errors.business_type && <p className="text-red-500 text-sm font-bold mt-4 text-left">{errors.business_type}</p>}
               </div>
+              )
             )}
 
             {currentStep === 2 && renderStep2Fields()}
@@ -525,23 +613,23 @@ export default function CompleteProfileContent() {
             {currentStep === 3 && (
               <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
                 <h3 className="text-xl font-bold text-gray-900 mb-4 text-center">Business You Are Looking For. Select business you want to collaborate with</h3>
-                <div className="grid grid-cols-2 gap-3 mt-6">
+                <div className="grid grid-cols-2 gap-2 mt-6">
                   {BUSINESS_TYPES.map(type => {
                     const isSelected = formData.preferred_collaborations.includes(type);
                     return (
                       <div 
                         key={type}
                         onClick={() => togglePreference(type)}
-                        className={`p-4 rounded-xl border-2 transition-all cursor-pointer flex items-center justify-between ${
+                        className={`h-10 px-3 rounded-lg border-2 transition-all cursor-pointer flex items-center justify-between text-xs font-semibold ${
                           isSelected
                             ? ""
                             : "border-gray-100 bg-white hover:border-purple-200"
                         }`}
                         style={isSelected ? { borderColor: PURPLE, backgroundColor: `${PURPLE}15` } : {}}
                       >
-                        <span className={`text-sm font-semibold ${isSelected ? 'text-gray-900' : 'text-gray-700'}`}>{type}</span>
+                        <span className={`text-xs font-semibold ${isSelected ? 'text-gray-900' : 'text-gray-700'}`}>{type}</span>
                         {isSelected && (
-                          <svg className="w-5 h-5" style={{ color: PURPLE }} fill="currentColor" viewBox="0 0 20 20">
+                          <svg className="w-4 h-4 shrink-0" style={{ color: PURPLE }} fill="currentColor" viewBox="0 0 20 20">
                             <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                           </svg>
                         )}
@@ -624,18 +712,17 @@ export default function CompleteProfileContent() {
               </div>
             )}
 
-            {/* Progress bar */}
-            <div className="mt-6 mb-4">
-              <div className="h-1.5 w-full bg-gray-200 rounded-full overflow-hidden">
+            {/* Progress bar left, buttons right - same layout as Add Your Unique Business */}
+            {!showAddBusinessModal && (
+            <>
+            <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="w-full sm:w-48 h-1.5 bg-gray-200 rounded-full overflow-hidden shrink-0">
                 <div
                   className="h-full rounded-full transition-all duration-500"
                   style={{ width: String(calculateCompletionPercentage()) + "%", backgroundColor: PURPLE }}
                 />
               </div>
-            </div>
-
-            <div className="pt-4 flex flex-col md:flex-row gap-4 md:justify-between md:items-center">
-              <div>
+              <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto justify-end items-stretch sm:items-center">
                 {currentStep > 1 && (
                   <button
                     onClick={() => setCurrentStep(currentStep - 1)}
@@ -645,9 +732,8 @@ export default function CompleteProfileContent() {
                     GO BACK
                   </button>
                 )}
-              </div>
-              {currentStep < 4 ? (
-                <div className="flex gap-3 w-full md:w-auto justify-end">
+                {currentStep < 4 ? (
+                <div className="flex gap-4 w-full sm:w-auto justify-end">
                   <button
                     onClick={() => {
                       if(currentStep === 1 && formData.business_type.length === 0) {
@@ -670,8 +756,8 @@ export default function CompleteProfileContent() {
                     {isLoading ? "PROCESSING..." : "Next"}
                   </button>
                 </div>
-              ) : (
-                <div className="flex flex-col md:flex-row gap-3 w-full md:justify-end">
+                ) : (
+                <div className="flex flex-col sm:flex-row gap-3 w-full sm:justify-end">
                   <button
                     onClick={() => setCurrentStep(2)}
                     disabled={isLoading}
@@ -689,8 +775,11 @@ export default function CompleteProfileContent() {
                     {isLoading ? "PROCESSING..." : "Lets Find Other Business"}
                   </button>
                 </div>
-              )}
+                )}
+              </div>
             </div>
+            </>
+            )}
         </div>
       )}
     </AuthLayout>

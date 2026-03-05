@@ -249,6 +249,12 @@ export const checkUserProfile = async (
     const data = result.data || result;
     return data;
   } catch (error) {
+    // Network errors (e.g. "Failed to fetch", CORS, API unreachable) - return null instead of throwing
+    const isNetworkError = error instanceof TypeError && String((error as Error).message || "").includes("fetch");
+    if (isNetworkError) {
+      console.warn("Profile API unreachable, check NEXT_PUBLIC_API_URL and network:", error);
+      return null;
+    }
     console.error("Error checking user profile:", error);
     throw error;
   }
@@ -295,7 +301,13 @@ export const getMyContexts = async (): Promise<{
 
     return result;
   } catch (error) {
-    console.error("Error fetching user contexts:", error);
+    // Network errors (e.g. "Failed to fetch") - return safe fallback
+    const isNetworkError = error instanceof TypeError && String((error as Error).message || "").includes("fetch");
+    if (isNetworkError) {
+      console.warn("User contexts API unreachable:", error);
+    } else {
+      console.error("Error fetching user contexts:", error);
+    }
     return { exists: false, ownProfile: null, memberships: [] };
   }
 };
@@ -330,7 +342,13 @@ export const getMyProfile = async (
     const profile = result.data || result;
     return { exists: !!profile, profile };
   } catch (error) {
-    console.error("Error fetching my profile:", error);
+    // Network errors (e.g. "Failed to fetch") - return safe fallback
+    const isNetworkError = error instanceof TypeError && String((error as Error).message || "").includes("fetch");
+    if (isNetworkError) {
+      console.warn("Profile API unreachable:", error);
+    } else {
+      console.error("Error fetching my profile:", error);
+    }
     return { exists: false };
   }
 };
@@ -858,33 +876,71 @@ export const completeProfileStep = async (
 };
 
 /**
- * Complete a profile onboarding step using the new 4-part flow API
+ * Onboarding step payload - matches POST /api/user-profiles/onboarding-step contract.
+ * Each step sends only the relevant fields; backend persists and returns onboarding_step for resume.
+ */
+export interface OnboardingStepPayload {
+  step: number;
+  business_type?: string[];
+  company_name?: string;
+  business_details?: Record<string, unknown>;
+  preferred_collaborations?: string[];
+}
+
+export interface OnboardingStepResponse {
+  success: boolean;
+  data?: Record<string, unknown>;
+  onboarding_step?: number;
+  nextStep?: number;
+  userType?: string;
+}
+
+/**
+ * Complete a profile onboarding step using the new 4-part flow API.
+ * Body format: { data: payload }
  */
 export const completeOnboardingStep = async (
-  data: any
-): Promise<{ success: boolean; data: any; nextStep?: number; userType?: string }> => {
+  payload: OnboardingStepPayload
+): Promise<OnboardingStepResponse> => {
   const token = getToken();
   if (!token) throw new Error("No authentication token found");
 
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://api.letsb2b.com";
 
   try {
-    const response = await fetch(`${apiUrl}/api/user-profiles/onboarding-step`, {
+    const url = `${apiUrl}/api/user-profiles/onboarding-step`;
+    const body = JSON.stringify({ data: payload });
+    console.log("[completeOnboardingStep] POST", url, "payload:", payload);
+
+    const response = await fetch(url, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ data }),
+      body,
     });
 
+    const text = await response.text();
+
     if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData?.error?.message || `Failed to complete onboarding step`);
+      let message = `Failed to complete onboarding step (${response.status})`;
+      try {
+        const errorData = JSON.parse(text);
+        message = errorData?.error?.message || message;
+      } catch {
+        if (text) message = text;
+      }
+      throw new Error(message);
     }
 
-    const result = await response.json();
-    return result;
+    if (!text) return { success: true };
+
+    try {
+      return JSON.parse(text) as OnboardingStepResponse;
+    } catch {
+      throw new Error("Invalid JSON response from server");
+    }
   } catch (error) {
     console.error(`Error completing onboarding step:`, error);
     throw error;

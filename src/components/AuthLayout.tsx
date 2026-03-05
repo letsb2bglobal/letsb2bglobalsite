@@ -1,9 +1,15 @@
 import Image from "next/image";
 import Link from "next/link";
 
-type AuthLayoutProps = { children: React.ReactNode; variant?: "signin" | "signup"; header?: React.ReactNode };
+type AuthLayoutProps = {
+  children: React.ReactNode;
+  variant?: "signin" | "signup";
+  header?: React.ReactNode;
+  /** When true, hides the form card border/shadow so only the inner content box is visible */
+  hideCardStyle?: boolean;
+};
 
-export default function AuthLayout({ children, variant = "signin", header }: AuthLayoutProps) {
+export default function AuthLayout({ children, variant = "signin", header, hideCardStyle }: AuthLayoutProps) {
   const hideLeftPanel = variant === "signup";
 
   return (
@@ -118,15 +124,19 @@ export default function AuthLayout({ children, variant = "signin", header }: Aut
               </div>
             )}
             <div
-              className={`w-full py-5 px-4 sm:py-8 sm:px-6 md:px-8 ${
-                hideLeftPanel
-                  ? "max-w-full sm:max-w-[540px] md:max-w-[680px] lg:max-w-[872px] min-h-0 sm:min-h-[663px] rounded-2xl sm:rounded-[24px] bg-[#FFFFFF]"
-                  : "max-w-[460px] rounded-xl sm:rounded-[20px] overflow-y-auto"
+              className={`w-full py-4 px-4 sm:py-6 sm:px-6 md:px-8 ${
+                hideCardStyle
+                  ? "w-full max-w-full sm:w-[872px] sm:max-w-[872px] min-h-0 overflow-y-auto"
+                  : hideLeftPanel
+                    ? "w-full max-w-full sm:w-[872px] sm:max-w-[872px] sm:min-h-[393px] min-h-[280px] rounded-2xl sm:rounded-[24px] bg-[#FFFFFF] overflow-y-auto"
+                    : "max-w-[460px] rounded-xl sm:rounded-[20px] overflow-y-auto"
               }`}
               style={
-                hideLeftPanel
-                  ? { boxShadow: "2px 5px 13px 0px #E1C0EC" }
-                  : { background: "#FFFFFF", boxShadow: "0px 4px 24px 0px rgba(180,100,200,0.13)" }
+                hideCardStyle
+                  ? { background: "transparent", boxShadow: "none" }
+                  : hideLeftPanel
+                    ? { boxShadow: "2px 5px 13px 0px #E1C0EC" }
+                    : { background: "#FFFFFF", boxShadow: "0px 4px 24px 0px rgba(180,100,200,0.13)" }
               }
             >
               {children}
