@@ -121,7 +121,7 @@ export default function AboutUs() {
               Less Noise, Pure Business B2B
             </div>
             <h1 className="text-3xl font-black text-white tracking-tight leading-tight sm:text-4xl md:text-5xl lg:text-6xl">
-              Global Tourism &amp; Hospitality<br />
+              Global Tourism &; Hospitality<br />
               <span className="text-[#22c55e]">B2B Network</span>
             </h1>
             <p className="text-base text-white/80 mt-3 max-w-xl sm:text-lg sm:mt-4">
@@ -150,7 +150,7 @@ export default function AboutUs() {
                 About Let&apos;s B2B
               </div>
               <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black text-gray-900 mb-6 leading-tight tracking-tight">
-                Built for the Tourism &amp; Hospitality Trade
+                Built for the Tourism &; Hospitality Trade
               </h2>
               <p className="text-base text-gray-600 leading-relaxed mb-8 md:text-lg">
                 Let&apos;s B2B is a global B2B networking and trading platform <strong>exclusively for the tourism and hospitality industry</strong>. We help members find reliable, verified partners and connect digitally across India and international markets — with a focus on trust, verification, and long-term partnerships.
@@ -222,7 +222,7 @@ export default function AboutUs() {
             <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-[#6B3FA0]/10 text-[#6B3FA0] rounded-full text-xs font-bold uppercase tracking-widest mb-4">
               Industry Coverage
             </div>
-            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black text-gray-900 mb-4 tracking-tight">Tourism &amp; Hospitality Verticals</h2>
+            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black text-gray-900 mb-4 tracking-tight">Tourism &; Hospitality Verticals</h2>
             <p className="text-base text-gray-500 max-w-2xl mx-auto md:text-lg">Let&apos;s B2B covers the full spectrum of the tourism and hospitality trade ecosystem.</p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -307,7 +307,7 @@ export default function AboutUs() {
       <SectionDark id="verification">
         <div className="max-w-3xl mx-auto text-center">
           <ShieldCheck className="w-14 h-14 text-[#22c55e] mx-auto mb-6" />
-          <h2 className="text-2xl sm:text-3xl md:text-4xl font-black mb-4 tracking-tight">Verification &amp; Trust Policy</h2>
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-black mb-4 tracking-tight">Verification &; Trust Policy</h2>
           <p className="text-base text-white/80 leading-relaxed mb-10 md:text-lg">
             All members undergo a structured verification process. This may include business or professional credentials, contact and identity checks, and platform approval.
           </p>
@@ -374,7 +374,7 @@ export default function AboutUs() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="bg-[#1a1625] rounded-2xl p-8 lg:p-10 text-white">
               <Mail className="w-10 h-10 text-[#22c55e] mb-6" />
-              <h3 className="text-xl md:text-2xl font-black mb-3 tracking-tight">Feedback &amp; Support</h3>
+              <h3 className="text-xl md:text-2xl font-black mb-3 tracking-tight">Feedback &; Support</h3>
               <p className="text-white/80 text-base leading-relaxed mb-6 md:text-lg">
                 Share suggestions, report misuse, or request features. We use your feedback to improve the platform.
               </p>

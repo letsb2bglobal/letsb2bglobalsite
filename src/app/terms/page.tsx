@@ -37,7 +37,7 @@ export default function TermsOfService() {
       <div className="bg-[#6B3FA0]/10 border border-[#6B3FA0]/20 rounded-2xl p-5 flex items-start gap-4 mb-10">
         <AlertCircle className="w-5 h-5 text-[#6B3FA0] shrink-0 mt-0.5" />
         <p className="text-sm text-gray-700 leading-relaxed md:text-base">
-          By accessing or using the Let's B2B platform, you agree to be bound by these Terms &amp; Conditions. If you do not agree, you must not access or use the platform. This platform is intended for <strong>tourism and hospitality B2B use only</strong>.
+          By accessing or using the Let's B2B platform, you agree to be bound by these Terms &; Conditions. If you do not agree, you must not access or use the platform. This platform is intended for <strong>tourism and hospitality B2B use only</strong>.
         </p>
       </div>
 

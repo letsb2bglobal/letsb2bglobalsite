@@ -76,7 +76,7 @@ export default function AuthLayout({ children, variant = "signin" }: AuthLayoutP
                   marginTop: "6px",
                 }}
               >
-                Where tourism &amp; hospitality professionals connect the right way.
+                Where tourism &; hospitality professionals connect the right way.
               </p>
 
               {/* 3. List Your Business — Regular, Body Large, #000000 */}

@@ -22,7 +22,7 @@ function segmentToHtml(segment: { text: string; gray: boolean }): string {
     ? "color:#969696"
     : "font-weight:700;color:black";
   // Only escape < and > so they aren't parsed as HTML. Do not escape & or
-  // the typewriter will show "&amp;" literally when it types character-by-character.
+  // the typewriter will show "&;" literally when it types character-by-character.
   const escaped = segment.text
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;");
