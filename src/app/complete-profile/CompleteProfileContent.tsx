@@ -65,6 +65,7 @@ export default function CompleteProfileContent() {
   const [showAddBusinessModal, setShowAddBusinessModal] = useState(false);
   const [showBusinessAddedModal, setShowBusinessAddedModal] = useState(false);
   const [showPreferenceAfterAdd, setShowPreferenceAfterAdd] = useState(false);
+  const [cameFromAddFlow, setCameFromAddFlow] = useState(false);
   const [addBusinessForm, setAddBusinessForm] = useState({ businessName: "", description: "" });
   const [areaInputValue, setAreaInputValue] = useState("");
 
@@ -171,15 +172,9 @@ export default function CompleteProfileContent() {
     setFormData((prev) => {
       const isSelected = prev.preferred_collaborations.includes(type);
       if (isSelected) {
-        return {
-          ...prev,
-          preferred_collaborations: prev.preferred_collaborations.filter(t => t !== type)
-        };
+        return { ...prev, preferred_collaborations: [] };
       } else {
-        return {
-          ...prev,
-          preferred_collaborations: [...prev.preferred_collaborations, type]
-        };
+        return { ...prev, preferred_collaborations: [type] };
       }
     });
     if (errors.preferred_collaborations) {
@@ -222,8 +217,9 @@ export default function CompleteProfileContent() {
       const requiresLocationAndCapacity = bts.includes("Restaurant") || bts.includes("Ayurveda Centre");
       const requiresHotelDetails = bts.includes("Hotel");
       const requiresDMC = bts.includes("DMC");
+      const requiresDmcStyle = DMC_STYLE_TYPES.some((t) => bts.includes(t));
 
-      if (!requiresLocationAndCapacity && !requiresHotelDetails && !requiresDMC) {
+      if (!requiresLocationAndCapacity && !requiresHotelDetails && !requiresDMC && !requiresDmcStyle) {
          if (!details.location) newErrors.location = "Location is required";
       }
 
@@ -246,7 +242,12 @@ export default function CompleteProfileContent() {
 
     try {
       // API disabled for now - advance steps locally
-      const nextStep = step < 4 ? step + 1 : 4;
+      // Add flow: Step 2 -> Step 4 (skip 3); Who Are You flow: Step 2 -> Step 3
+      let nextStep = step < 4 ? step + 1 : 4;
+      if (step === 2 && cameFromAddFlow) {
+        nextStep = 4;
+        setCameFromAddFlow(false);
+      }
 
       if (step < 4) {
         setCurrentStep(Math.min(nextStep, 4));
@@ -657,6 +658,7 @@ export default function CompleteProfileContent() {
     }
     setErrors({});
     setShowPreferenceAfterAdd(false);
+    setCameFromAddFlow(true);
     setCurrentStep(2);
   };
 
@@ -666,6 +668,7 @@ export default function CompleteProfileContent() {
     }
     setErrors({});
     setShowPreferenceAfterAdd(false);
+    setCameFromAddFlow(true);
     setCurrentStep(2);
   };
 
@@ -853,33 +856,53 @@ export default function CompleteProfileContent() {
             {currentStep === 2 && renderStep2Fields()}
 
             {currentStep === 3 && (
+              /* Step 3 Preference - same design as Who Are You (image cards), no Add button */
               <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
-                <h3 className="text-xl font-bold text-gray-900 mb-4 text-center">Business You Are Looking For. Select business you want to collaborate with</h3>
-                <div className="grid grid-cols-2 gap-2 mt-6">
+                <div className="mb-6">
+                  <h3 className="text-2xl md:text-3xl font-bold text-gray-900">Business You Are Looking For</h3>
+                  <p className="text-gray-600 text-sm mt-1">Select Business you want to collaborate with</p>
+                </div>
+                <div className="grid grid-cols-2 lg:grid-cols-[repeat(4,120px)] gap-4 lg:justify-between w-full">
                   {BUSINESS_TYPES.map(type => {
                     const isSelected = formData.preferred_collaborations.includes(type);
                     return (
-                      <div 
+                      <div
                         key={type}
                         onClick={() => togglePreference(type)}
-                        className={`h-10 px-3 rounded-lg border-2 transition-all cursor-pointer flex items-center justify-between text-xs font-semibold ${
+                        className="w-[120px] h-[120px] rounded-[16px] border-2 transition-all cursor-pointer flex flex-col overflow-hidden shrink-0"
+                        style={
                           isSelected
-                            ? ""
-                            : "border-gray-100 bg-white hover:border-purple-200"
-                        }`}
-                        style={isSelected ? { borderColor: PURPLE, backgroundColor: `${PURPLE}15` } : {}}
+                            ? {
+                                borderColor: PURPLE,
+                                background: "linear-gradient(114.72deg, #612178 16.64%, #801E7C 50.66%, #801E7C 94.01%)",
+                                boxShadow: "2px 5px 13px 0px #E1C0EC",
+                              }
+                            : {
+                                borderColor: "#E8D5F0",
+                                backgroundColor: "#FFFFFF",
+                                boxShadow: "2px 5px 13px 0px #E1C0EC",
+                              }
+                        }
                       >
-                        <span className={`text-xs font-semibold ${isSelected ? 'text-gray-900' : 'text-gray-700'}`}>{type}</span>
-                        {isSelected && (
-                          <svg className="w-4 h-4 shrink-0" style={{ color: PURPLE }} fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                          </svg>
+                        {BUSINESS_TYPE_IMAGES[type] && (
+                          <div className="relative w-full flex-1 min-h-0 rounded-t-[14px] overflow-hidden">
+                            <Image
+                              src={BUSINESS_TYPE_IMAGES[type]!}
+                              alt={type}
+                              fill
+                              className="object-cover object-center"
+                              sizes="120px"
+                            />
+                          </div>
                         )}
+                        <div className="flex-shrink-0 flex items-center justify-center h-8 px-1.5 py-0.5">
+                          <h4 className={`font-bold text-[11px] text-center leading-tight truncate max-w-full ${isSelected ? "text-white" : "text-gray-900"}`}>{type}</h4>
+                        </div>
                       </div>
                     );
                   })}
                 </div>
-                {errors.preferred_collaborations && <p className="text-red-500 text-sm font-bold mt-4 text-center">{errors.preferred_collaborations}</p>}
+                {errors.preferred_collaborations && <p className="text-red-500 text-sm font-bold mt-4 text-left">{errors.preferred_collaborations}</p>}
               </div>
             )}
 
@@ -904,9 +927,11 @@ export default function CompleteProfileContent() {
                     <div className="space-y-1 col-span-1 md:col-span-2">
                       <p className="text-xs font-bold text-blue-400 uppercase tracking-wide">Category</p>
                       <div className="flex flex-wrap gap-2 mt-1">
-                        {formData.business_type.map(type => (
-                           <span key={type} className="text-sm font-semibold text-gray-800 bg-white px-2 py-1 rounded border border-blue-100">{type}</span>
-                        ))}
+                        {formData.business_type.length > 0
+                          ? formData.business_type.map(type => (
+                              <span key={type} className="text-sm font-semibold text-gray-800 bg-white px-2 py-1 rounded border border-blue-100">{type}</span>
+                            ))
+                          : <span className="text-sm font-semibold text-gray-800 bg-white px-2 py-1 rounded border border-blue-100">Custom Business</span>}
                       </div>
                     </div>
                     
@@ -916,7 +941,7 @@ export default function CompleteProfileContent() {
                          <p className="text-sm font-semibold text-gray-800">{formData.business_details?.hotel_type as string || '-'}, {formData.business_details?.number_of_rooms as string || '-'} Rooms</p>
                        </div>
                     )}
-                    {formData.business_type.includes('DMC') && (
+                    {DMC_STYLE_TYPES.some((t) => formData.business_type.includes(t)) && (
                        <div className="space-y-1">
                          <p className="text-xs font-bold text-blue-400 uppercase tracking-wide">Areas Serviced</p>
                          <p className="text-sm font-semibold text-gray-800">{(formData.business_details?.areas_serviced as string[] || []).join(', ') || '-'}</p>
