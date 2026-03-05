@@ -30,7 +30,9 @@ export default function GreenBarMarquee() {
       ease: "none",
     });
 
-    return () => tween.kill();
+    return () => {
+      tween.kill();
+    };
   }, []);
 
   return (

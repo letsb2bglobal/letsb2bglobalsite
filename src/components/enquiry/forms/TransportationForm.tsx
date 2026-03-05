@@ -3,6 +3,8 @@
 import React from "react";
 import { useFormContext } from "react-hook-form";
 
+type DetailsErrors = { serviceType?: { message?: string }; vehicleType?: { message?: string }; dateTime?: { message?: string } };
+
 const SPECIAL_INSTRUCTIONS = [
   "Language Driver",
   "Seat Belt",
@@ -38,7 +40,7 @@ const TransportationForm = () => {
           <option value="full_day">Full Day Usage</option>
           <option value="disposal">Disposal</option>
         </select>
-        {errors.details?.serviceType && (
+        {errors.details && (errors.details as DetailsErrors).serviceType && (
           <p className="text-red-500 text-[10px] mt-1 font-bold italic">
             Service type is required
           </p>
@@ -60,7 +62,7 @@ const TransportationForm = () => {
           <option value="minibus">Minibus / Tempo</option>
           <option value="bus">Coach / Bus</option>
         </select>
-        {errors.details?.vehicleType && (
+        {errors.details && (errors.details as DetailsErrors).vehicleType && (
           <p className="text-red-500 text-[10px] mt-1 font-bold italic">
             Vehicle type is required
           </p>
@@ -101,7 +103,7 @@ const TransportationForm = () => {
           {...register("details.dateTime")}
           className="w-full h-11 px-4 bg-[#F7F7FB] border border-gray-100 rounded-xl focus:ring-2 focus:ring-[#6B3FA0]/20 outline-none font-bold text-[13px] tracking-tighter"
         />
-        {errors.details?.dateTime && (
+        {errors.details && (errors.details as DetailsErrors).dateTime && (
           <p className="text-red-500 text-[10px] mt-1 font-bold italic">
             Date & Time is required
           </p>

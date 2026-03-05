@@ -3,6 +3,8 @@
 import React from "react";
 import { useFormContext } from "react-hook-form";
 
+type DetailsErrors = { eventType?: { message?: string }; venueLocation?: { message?: string } };
+
 const VENUE_REQUIREMENTS = [
   "Main Hall",
   "Breakout Rooms",
@@ -49,7 +51,7 @@ const MICEForm = () => {
           <option value="exhibition">Exhibition</option>
           <option value="wedding">Destination Wedding</option>
         </select>
-        {errors.details?.eventType && (
+        {errors.details && (errors.details as DetailsErrors).eventType && (
           <p className="text-red-500 text-[10px] mt-1 font-bold italic">
             Event type is required
           </p>
@@ -65,7 +67,7 @@ const MICEForm = () => {
           placeholder="e.g. Dubai, UAE"
           className="w-full h-11 px-4 bg-[#F7F7FB] border border-gray-100 rounded-xl focus:ring-2 focus:ring-[#6B3FA0]/20 outline-none font-bold text-[13px]"
         />
-        {errors.details?.venueLocation && (
+        {errors.details && (errors.details as DetailsErrors).venueLocation && (
           <p className="text-red-500 text-[10px] mt-1 font-bold italic">
             Venue location is required
           </p>

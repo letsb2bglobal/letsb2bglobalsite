@@ -3,6 +3,8 @@
 import React from "react";
 import { useFormContext } from "react-hook-form";
 
+type DetailsErrors = { serviceType?: { message?: string }; treatmentCategory?: { message?: string } };
+
 const ADDITIONAL_SERVICES = [
   "Airport Transfers",
   "Interpreter",
@@ -39,7 +41,7 @@ const MedicalTourismForm = () => {
           <option value="wellness">Wellness / Rejuvenation</option>
           <option value="consultation">Medical Consultation</option>
         </select>
-        {errors.details?.serviceType && (
+        {errors.details && (errors.details as DetailsErrors).serviceType && (
           <p className="text-red-500 text-[10px] mt-1 font-bold italic">
             Service type is required
           </p>
@@ -55,7 +57,7 @@ const MedicalTourismForm = () => {
           placeholder="e.g. Cardiology, Orthopedics"
           className="w-full h-11 px-4 bg-[#F7F7FB] border border-gray-100 rounded-xl focus:ring-2 focus:ring-[#6B3FA0]/20 outline-none font-bold text-[13px]"
         />
-        {errors.details?.treatmentCategory && (
+        {errors.details && (errors.details as DetailsErrors).treatmentCategory && (
           <p className="text-red-500 text-[10px] mt-1 font-bold italic">
             Treatment category is required
           </p>
