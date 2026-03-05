@@ -6,13 +6,13 @@ import Typewriter from "typewriter-effect";
 const SEGMENTS: { text: string; gray: boolean }[] = [
   { text: "We are a global ", gray: true },
   { text: "B2B networking", gray: false },
-  { text: " and ", gray: true },
+  { text: "and", gray: true },
   { text: "trading platform", gray: false },
   { text: " built exclusively for tourism ", gray: true },
-  { text: "& hospitality.", gray: false },
+  { text: "and hospitality.", gray: false },
   { text: " Connect with ", gray: true },
   { text: "verified professionals", gray: false },
-  { text: " and ", gray: true },
+  { text: "and", gray: true },
   { text: "businesses", gray: false },
   { text: " across markets.", gray: true },
 ];
