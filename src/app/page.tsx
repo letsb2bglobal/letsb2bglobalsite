@@ -279,7 +279,7 @@ useEffect(() => {
               loop
               playsInline
               className="h-full w-full object-cover scale-x-[-1]"
-              src="/our-features-section/landing_1.mp4"
+              src="/our-features-section/landing.mp4"
             />
           </div>
 

@@ -40,6 +40,3 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# Large media (host elsewhere or use Git LFS; exceed GitHub 100MB limit)
-/public/our-features-section/landing_1.mp4
-/public/our-features-section/*.mp4
