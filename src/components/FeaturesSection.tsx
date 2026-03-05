@@ -79,13 +79,15 @@ const FEATURES = [
 export default function FeaturesSection() {
   const sectionRef = useRef<HTMLElement>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const stripRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const section = sectionRef.current;
     const wrap = wrapRef.current;
+    const container = containerRef.current;
     const strip = stripRef.current;
-    if (!section || !wrap || !strip) return;
+    if (!section || !wrap || !container || !strip) return;
 
     let mounted = true;
     const cleanupRef: { current: (() => void) | null } = { current: null };
@@ -101,54 +103,59 @@ export default function FeaturesSection() {
       ScrollTrigger.defaults({ anticipatePin: 1 });
 
       const ctx = gsap.context(() => {
-        const getX = () => {
+        let tl: ReturnType<typeof gsap.timeline> | null = null;
+
+        function build() {
+          if (!container || !strip) return;
+          if (tl) {
+            tl.scrollTrigger?.kill();
+            tl.kill();
+            tl = null;
+          }
+
+          const containerWidth = container.clientWidth;
           const stripWidth = strip.scrollWidth;
-          const viewportWidth = section.offsetWidth;
-          const maxScroll = Math.max(0, stripWidth - viewportWidth);
-          return -maxScroll;
-        };
+          const maxX = Math.max(stripWidth - containerWidth, 0);
 
-        gsap.set(strip, { x: 0 });
-        gsap.set(section, { opacity: 1, y: 0 });
-        const tl = gsap.timeline({
-          scrollTrigger: {
-            trigger: wrap,
-            start: "top top",
-            end: "bottom top",
-            scrub: 1,
-            invalidateOnRefresh: true,
-          },
-        });
-        tl.to(strip, {
-          x: getX,
-          ease: "none",
-        });
-        tl.to(
-          section,
-          {
-            opacity: 0,
-            y: 80,
-            ease: "power2.in",
-            duration: 0.18,
-          },
-          0.82
-        );
+          gsap.set(strip, { x: 0 });
+          gsap.set(section, { opacity: 1, y: 0 });
 
-        const onRefresh = () => ScrollTrigger.refresh();
-        window.addEventListener("resize", onRefresh);
-
-        if (document.fonts?.ready) {
-          document.fonts.ready.then(() => {
-            if (mounted) ScrollTrigger.refresh();
+          tl = gsap.timeline({
+            scrollTrigger: {
+              trigger: wrap,
+              start: "top top",
+              end: "bottom top",
+              scrub: true,
+              pin: true,
+              anticipatePin: 1,
+              invalidateOnRefresh: true,
+            },
           });
+          tl.to(strip, {
+            x: -maxX,
+            ease: "none",
+          });
+          tl.to(
+            section,
+            {
+              opacity: 0,
+              y: 80,
+              ease: "power2.in",
+              duration: 0.18,
+            },
+            0.82
+          );
         }
-        const refreshTimeout = window.setTimeout(() => {
-          if (mounted) ScrollTrigger.refresh();
-        }, 800);
+
+        build();
+        ScrollTrigger.addEventListener("refreshInit", build);
 
         cleanupRef.current = () => {
-          window.removeEventListener("resize", onRefresh);
-          window.clearTimeout(refreshTimeout);
+          ScrollTrigger.removeEventListener("refreshInit", build);
+          if (tl) {
+            tl.scrollTrigger?.kill();
+            tl.kill();
+          }
           ctx.revert();
         };
       }, wrap);
@@ -215,7 +222,7 @@ export default function FeaturesSection() {
 
         {/* Horizontal scroll area: 9 features + 4 blank cards so last card scrolls off */}
         <div className="flex-1 min-h-0 px-5 lg:px-10 flex items-center">
-          <div className="w-full overflow-hidden">
+          <div ref={containerRef} className="w-full overflow-hidden">
             <div
               ref={stripRef}
               className="flex gap-6 lg:gap-8 will-change-transform"

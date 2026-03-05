@@ -112,6 +112,7 @@ export default function GlobalTourismTradeNetworkSection() {
   const tickerRef = useRef<((time: number) => void) | null>(null);
   const scrollTriggerRef = useRef<{ kill: () => void } | null>(null);
   const resizeRef = useRef<(() => void) | null>(null);
+  const contextRef = useRef<{ revert: () => void } | null>(null);
   const triggeredRef = useRef(false);
 
   const resizeCanvas = useCallback(() => {
@@ -162,8 +163,9 @@ export default function GlobalTourismTradeNetworkSection() {
       window.addEventListener("resize", handleResize);
       resizeRef.current = handleResize;
 
-      const ctx = canvas.getContext("2d");
-      if (!ctx) return;
+      const ctx = gsap.context(() => {
+      const ctx2 = canvas.getContext("2d");
+      if (!ctx2) return;
 
       const dpr = window.devicePixelRatio || 1;
 
@@ -172,19 +174,19 @@ export default function GlobalTourismTradeNetworkSection() {
         const w = rect.width;
         const h = rect.height;
 
-        ctx.save();
-        ctx.setTransform(1, 0, 0, 1, 0, 0);
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.scale(dpr, dpr);
+        ctx2.save();
+        ctx2.setTransform(1, 0, 0, 1, 0, 0);
+        ctx2.clearRect(0, 0, canvas.width, canvas.height);
+        ctx2.scale(dpr, dpr);
 
         particlesRef.current.forEach((p) => {
-          ctx.beginPath();
-          ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-          ctx.fillStyle = `rgba(230, 220, 255, ${p.alpha})`;
-          ctx.fill();
+          ctx2.beginPath();
+          ctx2.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+          ctx2.fillStyle = `rgba(230, 220, 255, ${p.alpha})`;
+          ctx2.fill();
         });
 
-        ctx.restore();
+        ctx2.restore();
       };
 
       const update = () => {
@@ -271,6 +273,8 @@ export default function GlobalTourismTradeNetworkSection() {
       if (heading) gsap.set(heading, { opacity: 0, x: -32 });
       gsap.set(lines, { opacity: 0, y: 12 });
       gsap.set(cards, { opacity: 0, y: 24 });
+      }, section);
+      contextRef.current = ctx;
     });
 
     return () => {
@@ -289,6 +293,8 @@ export default function GlobalTourismTradeNetworkSection() {
       if (tickerCallback) {
         void import("gsap").then((m) => m.default.ticker.remove(tickerCallback));
       }
+      contextRef.current?.revert();
+      contextRef.current = null;
     };
   }, [resizeCanvas]);
 

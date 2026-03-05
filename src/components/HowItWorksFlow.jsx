@@ -3,7 +3,7 @@
 import React, { useEffect, useRef } from "react";
 
 const VIEWBOX_WIDTH = 1240;
-const VIEWBOX_HEIGHT = 720;
+const VIEWBOX_HEIGHT = 860;
 
 const steps = [
   {
@@ -43,8 +43,8 @@ const steps = [
 const cardPositions = {
   tl: { left: 60, top: 40 },
   mr: { right: 60, left: "auto", top: 240 },
-  bl: { left: 60, top: 430 },
-  br: { right: 60, left: "auto", top: 610 },
+  bl: { left: 60, top: 500 },
+  br: { right: 60, left: "auto", top: 680 },
 };
 
 const CARD_W = 520;
@@ -144,6 +144,7 @@ export default function HowItWorksFlow() {
   const subtitleRef = useRef(null);
   const triggeredRef = useRef(false);
   const scrollTriggerRef = useRef(null);
+  const cleanupRef = useRef(null);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -163,23 +164,24 @@ export default function HowItWorksFlow() {
         const cardsWrapper = cardsWrapperRef.current;
         if (!section || !cardsWrapper) return;
 
-        const cards = Array.from(
-          cardsWrapper.querySelectorAll("[data-how-card]")
-        );
-        const paths = [pathA, pathB, pathC].filter(Boolean);
+        const ctx = gsap.context(() => {
+          const cards = Array.from(
+            cardsWrapper.querySelectorAll("[data-how-card]")
+          );
+          const paths = [pathA, pathB, pathC].filter(Boolean);
 
-        if (headingRef.current)
-          gsap.set(headingRef.current, { opacity: 0, y: 16 });
-        if (subtitleRef.current)
-          gsap.set(subtitleRef.current, { opacity: 0, y: 12 });
-        cards.forEach((card) => gsap.set(card, { opacity: 0, y: 24 }));
-        paths.forEach((path) => {
-          if (!path) return;
-          const len = path.getTotalLength();
-          path.style.strokeDashoffset = len;
-        });
+          if (headingRef.current)
+            gsap.set(headingRef.current, { opacity: 0, y: 16 });
+          if (subtitleRef.current)
+            gsap.set(subtitleRef.current, { opacity: 0, y: 12 });
+          cards.forEach((card) => gsap.set(card, { opacity: 0, y: 24 }));
+          paths.forEach((path) => {
+            if (!path) return;
+            const len = path.getTotalLength();
+            path.style.strokeDashoffset = len;
+          });
 
-        scrollTriggerRef.current = ScrollTrigger.create({
+          scrollTriggerRef.current = ScrollTrigger.create({
           trigger: section,
           start: "top 85%",
           once: true,
@@ -216,15 +218,18 @@ export default function HowItWorksFlow() {
               tl.to(cards[3], { opacity: 1, y: 0, duration: cardDur }, `-=${pathDur - gap}`);
           },
         });
+        }, section);
+
+        cleanupRef.current = () => {
+          ctx.revert();
+          scrollTriggerRef.current = null;
+        };
       }
     );
 
     return () => {
       mounted = false;
-      if (scrollTriggerRef.current) {
-        scrollTriggerRef.current.kill();
-        scrollTriggerRef.current = null;
-      }
+      cleanupRef.current?.();
     };
   }, []);
 
@@ -236,13 +241,13 @@ export default function HowItWorksFlow() {
       <div className="max-w-[1240px] mx-auto">
         <h2
           ref={headingRef}
-          className="opacity-0 text-3xl md:text-4xl font-bold text-gray-900 text-center mb-4"
+          className="opacity-0 text-4xl md:text-5xl font-bold text-gray-900 text-center mb-4"
         >
           How It Works
         </h2>
         <p
           ref={subtitleRef}
-          className="opacity-0 text-gray-600 text-center text-sm md:text-base max-w-xl mx-auto mb-12 md:mb-0"
+          className="opacity-0 text-gray-600 text-center text-base md:text-lg max-w-xl mx-auto mb-12 md:mb-0"
         >
           Four simple steps to join and grow on the network.
         </p>
@@ -257,31 +262,31 @@ export default function HowItWorksFlow() {
             viewBox={`0 0 ${VIEWBOX_WIDTH} ${VIEWBOX_HEIGHT}`}
             preserveAspectRatio="xMidYMid meet"
           >
-            {/* Path A: Card1 right-center → right → down → stop before Card2 */}
+            {/* Path A: Card1 right-center → right → down to Card2 left-center */}
             <path
               ref={pathARef}
-              d="M 580 120 L 660 120 L 660 232"
+              d="M 580 120 L 660 120 L 660 320"
               stroke="#9CA3AF"
-              strokeWidth="2"
-              strokeDasharray="6 8"
+              strokeWidth="4"
+              strokeDasharray="10 12"
               fill="none"
             />
-            {/* Path B: Card2 left-bottom → left → down → stop before Card3 */}
+            {/* Path B: Card2 bottom-center → down → left across gap → down to Card3 left-center */}
             <path
               ref={pathBRef}
-              d="M 660 400 L 60 400 L 60 422"
+              d="M 920 400 L 920 450 L 60 450 L 60 580"
               stroke="#9CA3AF"
-              strokeWidth="2"
-              strokeDasharray="6 8"
+              strokeWidth="4"
+              strokeDasharray="10 12"
               fill="none"
             />
-            {/* Path C: Card3 right-center → right → down → stop before Card4 */}
+            {/* Path C: Card3 right-center → right → down to Card4 left-center */}
             <path
               ref={pathCRef}
-              d="M 580 510 L 660 510 L 660 602"
+              d="M 580 580 L 660 580 L 660 760"
               stroke="#9CA3AF"
-              strokeWidth="2"
-              strokeDasharray="6 8"
+              strokeWidth="4"
+              strokeDasharray="10 12"
               fill="none"
             />
           </svg>
@@ -295,7 +300,7 @@ export default function HowItWorksFlow() {
               <div
                 key={step.number}
                 data-how-card
-                className="absolute w-[520px] h-[160px] rounded-3xl shadow-sm flex items-center gap-6 px-8 py-6 opacity-0"
+                className="absolute w-[520px] h-[180px] rounded-3xl shadow-sm flex items-center gap-6 px-8 py-6 opacity-0"
                 style={{
                   left: pos.left,
                   right: pos.right,
@@ -312,13 +317,13 @@ export default function HowItWorksFlow() {
                         : "bg-gray-800 text-white"
                     }`}
                   >
-                    <span className="flex items-center justify-center w-6 h-6 rounded-full bg-white/30 text-xs font-bold">
+                    <span className="flex items-center justify-center w-7 h-7 rounded-full bg-white/30 text-sm font-bold">
                       {step.number}
                     </span>
-                    <span className="text-sm font-semibold">{step.title}</span>
+                    <span className="text-lg font-semibold">{step.title}</span>
                   </div>
                   <p
-                    className={`text-sm leading-relaxed ${
+                    className={`text-lg leading-relaxed ${
                       isPurple ? "text-white/90" : "text-gray-600"
                     }`}
                   >
@@ -347,12 +352,12 @@ export default function HowItWorksFlow() {
               <div key={step.number} className="relative flex">
                 {i < steps.length - 1 && (
                   <div
-                    className="absolute left-6 top-[72px] bottom-0 w-0 border-l-2 border-dashed border-gray-300 -mb-6"
+                    className="absolute left-6 top-[72px] bottom-0 w-0 border-l-4 border-dashed border-gray-300 -mb-6"
                     style={{ height: "calc(100% + 24px)" }}
                   />
                 )}
                 <div
-                  className="relative w-full rounded-3xl shadow-sm flex items-center gap-4 px-6 py-5 min-h-[140px]"
+                  className="relative w-full rounded-3xl shadow-sm flex items-center gap-4 px-6 py-6 min-h-[160px]"
                   style={{
                     backgroundColor: isPurple ? "#6B2A7A" : "#F5F6F8",
                     color: isPurple ? "white" : "#111827",
@@ -373,13 +378,13 @@ export default function HowItWorksFlow() {
                           : "bg-gray-800 text-white"
                       }`}
                     >
-                      <span className="flex items-center justify-center w-6 h-6 rounded-full bg-white/30 text-xs font-bold">
+                      <span className="flex items-center justify-center w-7 h-7 rounded-full bg-white/30 text-sm font-bold">
                         {step.number}
                       </span>
-                      <span className="text-sm font-semibold">{step.title}</span>
+                      <span className="text-lg font-semibold">{step.title}</span>
                     </div>
                     <p
-                      className={`text-sm leading-relaxed ${
+                      className={`text-lg leading-relaxed ${
                         isPurple ? "text-white/90" : "text-gray-600"
                       }`}
                     >

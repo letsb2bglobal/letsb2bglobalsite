@@ -37,7 +37,7 @@ export default function GreenBarMarquee() {
     <div className="overflow-hidden bg-[#22c55e] py-[0.96rem]">
       <div
         ref={trackRef}
-        className="flex gap-8 sm:gap-12 text-white font-semibold text-base whitespace-nowrap"
+        className="flex gap-8 sm:gap-12 text-white font-semibold text-lg sm:text-xl whitespace-nowrap"
         style={{ width: "max-content" }}
       >
         {[...STATS, ...STATS].map((text, i) => (

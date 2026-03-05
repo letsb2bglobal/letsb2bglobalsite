@@ -42,12 +42,14 @@ export default function WhyChooseLetsB2B() {
   useEffect(() => {
     if (typeof window === "undefined" || !sectionRef.current) return;
 
+    let mounted = true;
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
     Promise.all([
       import("gsap"),
       import("gsap/ScrollTrigger"),
     ]).then(([gsapModule, stModule]) => {
+      if (!mounted) return;
       const gsap = gsapModule.default;
       const ScrollTrigger = stModule.default;
       gsap.registerPlugin(ScrollTrigger);
@@ -193,7 +195,10 @@ export default function WhyChooseLetsB2B() {
       };
     });
 
-    return () => cleanupRef.current?.();
+    return () => {
+      mounted = false;
+      cleanupRef.current?.();
+    };
   }, []);
 
   return (
