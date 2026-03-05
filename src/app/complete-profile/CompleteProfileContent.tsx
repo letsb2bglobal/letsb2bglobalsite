@@ -3,15 +3,10 @@
 import React, { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/components/ProtectedRoute";
-import { 
-  completeOnboardingStep,
-  getMyProfile,
-  type OnboardingStepPayload,
-} from "@/lib/profile";
+import { getMyProfile } from "@/lib/profile";
 import Image from "next/image";
 import AuthLayout from "@/components/AuthLayout";
 import { useToast } from "@/components/Toast";
-import { useTeam } from "@/context/TeamContext";
 
 const BUSINESS_TYPES = [
   "Restaurant",
@@ -42,6 +37,8 @@ const STEP_LABELS = [
   "Preview"
 ];
 
+const HOTEL_TYPE_OPTIONS = ["5 Star", "4 Star", "3 Star", "Resort", "Boutique", "Budget", "Other"];
+
 const PURPLE = "#612178";
 const PURPLE_LIGHT = "#E0CCF0";   // light purple circle for inactive steps
 const PURPLE_DARK = "#8C4D9F";    // dark purple for inactive number & text
@@ -51,7 +48,6 @@ export default function CompleteProfileContent() {
   const searchParams = useSearchParams();
   const user = useAuth();
   const { showToast } = useToast();
-  const { refreshWorkspaces } = useTeam();
   
   // State for flow control
   const [currentStep, setCurrentStep] = useState(1);
@@ -60,6 +56,8 @@ export default function CompleteProfileContent() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isInitializing, setIsInitializing] = useState(true);
   const [showAddBusinessModal, setShowAddBusinessModal] = useState(false);
+  const [showBusinessAddedModal, setShowBusinessAddedModal] = useState(false);
+  const [showPreferenceAfterAdd, setShowPreferenceAfterAdd] = useState(false);
   const [addBusinessForm, setAddBusinessForm] = useState({ businessName: "", description: "" });
 
   // Form State
@@ -151,15 +149,9 @@ export default function CompleteProfileContent() {
     setFormData((prev) => {
       const isSelected = prev.business_type.includes(type);
       if (isSelected) {
-        return {
-          ...prev,
-          business_type: prev.business_type.filter(t => t !== type)
-        };
+        return { ...prev, business_type: [] };
       } else {
-        return {
-          ...prev,
-          business_type: [...prev.business_type, type]
-        };
+        return { ...prev, business_type: [type] };
       }
     });
     if (errors.business_type) {
@@ -191,7 +183,11 @@ export default function CompleteProfileContent() {
     const newErrors: Record<string, string> = {};
     
     if (currentStep === 1) {
-      if (formData.business_type.length === 0) {
+      if (showPreferenceAfterAdd) {
+        if (formData.preferred_collaborations.length === 0) {
+          newErrors.preferred_collaborations = "Please select at least one preferred collaboration";
+        }
+      } else if (formData.business_type.length === 0) {
         newErrors.business_type = "Please select at least one business type";
       }
     } else if (currentStep === 2) {
@@ -241,39 +237,12 @@ export default function CompleteProfileContent() {
     setSubmitError("");
 
     try {
-      let payload: OnboardingStepPayload;
-
-      if (step === 1) {
-        payload = {
-          step: 1,
-          business_type: formData.business_type,
-        };
-      } else if (step === 2) {
-        payload = {
-          step: 2,
-          company_name: formData.company_name,
-          business_details: formData.business_details,
-        };
-      } else if (step === 3) {
-        payload = {
-          step: 3,
-          preferred_collaborations: formData.preferred_collaborations,
-        };
-      } else {
-        payload = { step: 4 };
-      }
-
-      console.log("Submitting onboarding payload:", payload);
-
-      const result = await completeOnboardingStep(payload);
-
-      // Use onboarding_step from backend for resume behavior; fallback to step + 1
-      const nextStep = result.onboarding_step ?? result.nextStep ?? (step < 4 ? step + 1 : 4);
+      // API disabled for now - advance steps locally
+      const nextStep = step < 4 ? step + 1 : 4;
 
       if (step < 4) {
         setCurrentStep(Math.min(nextStep, 4));
       } else {
-        await refreshWorkspaces();
         showToast("Profile set up successfully", "success");
         const redirectTo = searchParams.get("redirect") || "/";
         router.push(redirectTo);
@@ -294,6 +263,59 @@ export default function CompleteProfileContent() {
     const hasRestaurantOrCentre = bts.includes("Restaurant") || bts.includes("Ayurveda Centre");
     const hasHotel = bts.includes("Hotel");
     const requiresDefaultLocation = !hasDMC && !hasRestaurantOrCentre && !hasHotel;
+    const hotelOnly = hasHotel && !hasDMC && !hasRestaurantOrCentre;
+
+    /* Hotel form per Figma - when Hotel is selected */
+    if (hotelOnly) {
+      return (
+        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+          <div>
+            <h3 className="text-xl sm:text-2xl font-bold text-gray-900">
+              Lets learn more about your{" "}
+              <span style={{ color: PURPLE }}>Hotel</span>
+            </h3>
+            <p className="text-sm text-gray-600 mt-1">Enter Your Business Detail Below</p>
+          </div>
+          <div className="space-y-4">
+            <div>
+              <input
+                type="text"
+                name="company_name"
+                value={formData.company_name}
+                onChange={handleInputChange}
+                placeholder="Hotel Name"
+                className={`w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-800 placeholder-gray-400 bg-white focus:outline-none focus:border-[#612178] transition-colors ${errors.company_name ? "border-red-500" : ""}`}
+              />
+              {errors.company_name && <p className="text-red-500 text-xs font-bold mt-1">{errors.company_name}</p>}
+            </div>
+            <div>
+              <select
+                value={(details.hotel_type as string) || ""}
+                onChange={(e) => updateDetails("hotel_type", e.target.value)}
+                className={`w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-800 bg-white focus:outline-none focus:border-[#612178] transition-colors ${errors.hotel_type ? "border-red-500" : ""}`}
+              >
+                <option value="">Hotel Type</option>
+                {HOTEL_TYPE_OPTIONS.map((opt) => (
+                  <option key={opt} value={opt}>{opt}</option>
+                ))}
+              </select>
+              {errors.hotel_type && <p className="text-red-500 text-xs font-bold mt-1">{errors.hotel_type}</p>}
+            </div>
+            <div>
+              <input
+                type="text"
+                inputMode="numeric"
+                value={(details.number_of_rooms as string) || ""}
+                onChange={(e) => updateDetails("number_of_rooms", e.target.value)}
+                placeholder="No. Of Rooms You Have"
+                className={`w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-800 placeholder-gray-400 bg-white focus:outline-none focus:border-[#612178] transition-colors ${errors.number_of_rooms ? "border-red-500" : ""}`}
+              />
+              {errors.number_of_rooms && <p className="text-red-500 text-xs font-bold mt-1">{errors.number_of_rooms}</p>}
+            </div>
+          </div>
+        </div>
+      );
+    }
 
     return (
       <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
@@ -413,6 +435,7 @@ export default function CompleteProfileContent() {
   };
 
   const calculateCompletionPercentage = () => {
+    if (showPreferenceAfterAdd) return 75;
     if (currentStep === 1) return 25;
     if (currentStep === 2) return 50;
     if (currentStep === 3) return 75;
@@ -423,7 +446,7 @@ export default function CompleteProfileContent() {
       <div className="flex flex-wrap items-center justify-between w-full gap-2 sm:gap-1">
         {STEP_LABELS.map((label, idx) => {
           const stepNum = idx + 1;
-          const effectiveStep = showAddBusinessModal ? 2 : currentStep;
+          const effectiveStep = showAddBusinessModal ? 2 : showPreferenceAfterAdd ? 3 : currentStep;
           const isActive = effectiveStep === stepNum;
           const isCompleted = effectiveStep > stepNum;
           return (
@@ -470,10 +493,34 @@ export default function CompleteProfileContent() {
         company_name: addBusinessForm.businessName,
         business_details: { ...prev.business_details, description: addBusinessForm.description },
       }));
-      setAddBusinessForm({ businessName: "", description: "" });
-      setShowAddBusinessModal(false);
-      setCurrentStep(2);
+      setShowBusinessAddedModal(true);
     }
+  };
+
+  const handleBusinessAddedContinue = () => {
+    setAddBusinessForm({ businessName: "", description: "" });
+    setShowBusinessAddedModal(false);
+    setShowAddBusinessModal(false);
+    setShowPreferenceAfterAdd(true);
+  };
+
+  const handlePreferenceAfterAddNext = () => {
+    if (formData.preferred_collaborations.length === 0) {
+      setErrors({ preferred_collaborations: "Please select at least one preferred collaboration" });
+      return;
+    }
+    setErrors({});
+    setShowPreferenceAfterAdd(false);
+    setCurrentStep(2);
+  };
+
+  const handlePreferenceAfterAddSkip = () => {
+    if (formData.preferred_collaborations.length === 0) {
+      setFormData(prev => ({ ...prev, preferred_collaborations: [BUSINESS_TYPES[0]] }));
+    }
+    setErrors({});
+    setShowPreferenceAfterAdd(false);
+    setCurrentStep(2);
   };
 
   return (
@@ -484,7 +531,7 @@ export default function CompleteProfileContent() {
           <p className="text-gray-500 text-sm font-medium animate-pulse">Loading onboarding data...</p>
         </div>
       ) : (
-        <div className="pt-2 overflow-hidden">
+        <div className="pt-2 overflow-x-hidden">
             {currentStep === 1 && (
               showAddBusinessModal ? (
               /* Add Your Unique Business - uses same AuthLayout card as Who Are You (no extra wrapper) */
@@ -502,7 +549,7 @@ export default function CompleteProfileContent() {
                           value={addBusinessForm.businessName}
                           onChange={(e) => setAddBusinessForm(prev => ({ ...prev, businessName: e.target.value }))}
                           placeholder="Business Name"
-                          className="w-full px-3 py-2.5 sm:py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#612178] focus:border-transparent text-sm text-gray-800 placeholder-gray-400 bg-white"
+                          className="w-full px-4 py-2.5 sm:py-3 border border-gray-300 rounded-lg text-sm text-gray-800 placeholder-gray-400 bg-white focus:outline-none focus:border-[#612178] transition-colors"
                         />
                       </div>
                       <div>
@@ -512,7 +559,7 @@ export default function CompleteProfileContent() {
                           onChange={(e) => setAddBusinessForm(prev => ({ ...prev, description: e.target.value }))}
                           placeholder="Add Description"
                           rows={4}
-                          className="w-full px-3 py-2.5 sm:py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#612178] focus:border-transparent text-sm text-gray-800 placeholder-gray-400 bg-white resize-none"
+                          className="w-full px-4 py-2.5 sm:py-3 border border-gray-300 rounded-lg text-sm text-gray-800 placeholder-gray-400 bg-white resize-none focus:outline-none focus:border-[#612178] transition-colors"
                         />
                       </div>
                     </div>
@@ -545,6 +592,55 @@ export default function CompleteProfileContent() {
                         </button>
                       </div>
                     </div>
+              </div>
+              ) : showPreferenceAfterAdd ? (
+              /* Business You Are Looking For - same design as Who Are You (image cards), no Add button */
+              <div key="preference-after-add" className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+                <div className="mb-6">
+                  <h3 className="text-2xl md:text-3xl font-bold text-gray-900">Business You Are Looking For</h3>
+                  <p className="text-gray-600 text-sm mt-1">Select Business you want to collaborate with</p>
+                </div>
+                <div className="grid grid-cols-2 lg:grid-cols-[repeat(4,120px)] gap-4 lg:justify-between w-full">
+                  {BUSINESS_TYPES.map(type => {
+                    const isSelected = formData.preferred_collaborations.includes(type);
+                    return (
+                      <div
+                        key={type}
+                        onClick={() => togglePreference(type)}
+                        className="w-[120px] h-[120px] rounded-[16px] border-2 transition-all cursor-pointer flex flex-col overflow-hidden shrink-0"
+                        style={
+                          isSelected
+                            ? {
+                                borderColor: PURPLE,
+                                background: "linear-gradient(114.72deg, #612178 16.64%, #801E7C 50.66%, #801E7C 94.01%)",
+                                boxShadow: "2px 5px 13px 0px #E1C0EC",
+                              }
+                            : {
+                                borderColor: "#E8D5F0",
+                                backgroundColor: "#FFFFFF",
+                                boxShadow: "2px 5px 13px 0px #E1C0EC",
+                              }
+                        }
+                      >
+                        {BUSINESS_TYPE_IMAGES[type] && (
+                          <div className="relative w-full flex-1 min-h-0 rounded-t-[14px] overflow-hidden">
+                            <Image
+                              src={BUSINESS_TYPE_IMAGES[type]!}
+                              alt={type}
+                              fill
+                              className="object-cover object-center"
+                              sizes="120px"
+                            />
+                          </div>
+                        )}
+                        <div className="flex-shrink-0 flex items-center justify-center h-8 px-1.5 py-0.5">
+                          <h4 className={`font-bold text-[11px] text-center leading-tight truncate max-w-full ${isSelected ? "text-white" : "text-gray-900"}`}>{type}</h4>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                {errors.preferred_collaborations && <p className="text-red-500 text-sm font-bold mt-4 text-left">{errors.preferred_collaborations}</p>}
               </div>
               ) : (
               /* Who Are You - Select Your Business (Figma alignment) */
@@ -712,7 +808,7 @@ export default function CompleteProfileContent() {
               </div>
             )}
 
-            {/* Progress bar left, buttons right - same layout as Add Your Unique Business */}
+            {/* Progress bar left, buttons right - shown for Who Are You and preference-after-add */}
             {!showAddBusinessModal && (
             <>
             <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
@@ -736,10 +832,14 @@ export default function CompleteProfileContent() {
                 <div className="flex gap-4 w-full sm:w-auto justify-end">
                   <button
                     onClick={() => {
-                      if(currentStep === 1 && formData.business_type.length === 0) {
-                         setFormData({...formData, business_type: [BUSINESS_TYPES[0]]}); 
+                      if (showPreferenceAfterAdd) {
+                        handlePreferenceAfterAddSkip();
+                      } else {
+                        if (currentStep === 1 && formData.business_type.length === 0) {
+                          setFormData(prev => ({ ...prev, business_type: [BUSINESS_TYPES[0]] }));
+                        }
+                        submitStep();
                       }
-                      submitStep();
                     }}
                     disabled={isLoading}
                     className="flex items-center justify-center text-gray-700 font-semibold text-sm hover:opacity-90 transition-all disabled:opacity-50"
@@ -748,7 +848,7 @@ export default function CompleteProfileContent() {
                     Skip
                   </button>
                   <button
-                    onClick={() => submitStep()}
+                    onClick={() => (showPreferenceAfterAdd ? handlePreferenceAfterAddNext() : submitStep())}
                     disabled={isLoading}
                     className="flex items-center justify-center text-white font-semibold text-sm transition-all disabled:opacity-50"
                     style={{ width: 144.51, height: 50, borderRadius: 16, backgroundColor: PURPLE, boxShadow: "0px 4px 10px -2px #00000040" }}
@@ -779,6 +879,44 @@ export default function CompleteProfileContent() {
               </div>
             </div>
             </>
+            )}
+
+            {/* Business Added success modal */}
+            {showBusinessAddedModal && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" onClick={() => setShowBusinessAddedModal(false)}>
+                <div
+                  className="relative w-full max-w-md rounded-2xl bg-white p-6 sm:p-8 shadow-lg animate-in fade-in zoom-in-95 duration-200"
+                  style={{ boxShadow: "2px 5px 13px 0px #E1C0EC" }}
+                  onClick={e => e.stopPropagation()}
+                >
+                  <button
+                    type="button"
+                    onClick={handleBusinessAddedContinue}
+                    className="absolute top-4 right-4 p-1 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors"
+                    aria-label="Close"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                  <h3 className="text-xl sm:text-2xl font-bold text-gray-900 pr-8">Business Added</h3>
+                  <p className="mt-4 text-gray-700 text-sm sm:text-base leading-relaxed">
+                    Your business has been added!{" "}
+                    <span className="font-semibold" style={{ color: PURPLE }}>
+                      Our team will reach out to you soon.
+                    </span>{" "}
+                    In the meantime, feel free to continue with your onboarding.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={handleBusinessAddedContinue}
+                    className="mt-6 w-full py-3 rounded-xl font-semibold text-white transition-colors hover:opacity-90"
+                    style={{ backgroundColor: PURPLE, boxShadow: "0px 4px 10px -2px rgba(0,0,0,0.25)" }}
+                  >
+                    Continue
+                  </button>
+                </div>
+              </div>
             )}
         </div>
       )}
