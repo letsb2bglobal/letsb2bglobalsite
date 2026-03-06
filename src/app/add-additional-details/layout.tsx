@@ -6,11 +6,11 @@ export default function AddAdditionalDetailsLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen min-h-dvh flex flex-col bg-gray-100" style={{ overflowX: 'clip' }}>
+    <div className="min-h-screen min-h-dvh flex flex-col bg-gray-100 overflow-x-hidden">
       <header className="flex-shrink-0">
         <SignupHeader sticky />
       </header>
-      <div className="flex-1 pt-16">{children}</div>
+      <div className="flex-1 pt-16 min-w-0 overflow-x-hidden">{children}</div>
     </div>
   );
 }

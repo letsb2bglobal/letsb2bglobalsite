@@ -122,7 +122,7 @@ export default function AuthLayout({ children, variant = "signin", header, hideC
           )}
 
           {/* ── Right Panel (Form Card) ────────────────────────────────── */}
-          <div className={`relative z-10 flex flex-col items-center px-4 sm:px-6 lg:px-8 py-4 sm:py-6 min-w-0 w-full ${noInnerScroll && hideLeftPanel ? "overflow-visible" : "overflow-x-hidden"} ${hideLeftPanel ? "w-full" : ""}`}>
+          <div className={`relative z-10 flex flex-col items-center px-4 sm:px-6 lg:px-8 py-4 sm:py-6 min-w-0 w-full overflow-x-hidden ${hideLeftPanel ? "w-full" : ""}`}>
             {hideLeftPanel && header && (
               <div className="w-full max-w-full sm:max-w-[540px] md:max-w-[680px] lg:max-w-[872px] mb-6 sm:mb-8">
                 {header}
@@ -131,9 +131,9 @@ export default function AuthLayout({ children, variant = "signin", header, hideC
             <div
               className={`w-full py-4 sm:py-6 px-4 sm:px-6 ${
                 hideCardStyle
-                  ? `w-full max-w-full sm:w-[872px] sm:max-w-[872px] min-h-0 ${noInnerScroll ? "overflow-visible" : "overflow-y-auto"}`
+                  ? `w-full max-w-full sm:w-[872px] sm:max-w-[872px] min-h-0 overflow-x-hidden ${noInnerScroll ? "overflow-y-visible" : "overflow-y-auto"}`
                   : hideLeftPanel
-                    ? `w-full max-w-full sm:w-[872px] sm:max-w-[872px] rounded-2xl sm:rounded-[24px] bg-white shadow-lg ${noInnerScroll ? "overflow-visible overflow-y-visible" : "overflow-y-auto"}`
+                    ? `w-full max-w-full sm:w-[872px] sm:max-w-[872px] rounded-2xl sm:rounded-[24px] bg-white shadow-lg overflow-x-hidden ${noInnerScroll ? "overflow-y-visible" : "overflow-y-auto"}`
                     : "max-w-[460px] rounded-xl sm:rounded-[20px] overflow-y-auto"
               }`}
               style={

@@ -703,7 +703,7 @@ export default function CompleteProfileContent() {
           <p className="text-gray-500 text-sm font-medium animate-pulse">Loading onboarding data...</p>
         </div>
       ) : (
-        <div className="pt-2 pb-8 overflow-x-hidden min-w-0">
+        <div className="pt-2 pb-8 overflow-x-hidden min-w-0 w-full">
             {currentStep === 1 && (
               showAddBusinessModal ? (
               /* Add Your Unique Business - uses same AuthLayout card as Who Are You (no extra wrapper) */
@@ -931,7 +931,7 @@ export default function CompleteProfileContent() {
                       <Image src="/cover_cameralogo.png" alt="" width={20} height={20} className="object-contain" />
                     </button>
                   </div>
-                  <div className="flex justify-start relative -mt-12 pl-6">
+                  <div className="flex justify-start relative -mt-12 pl-4 sm:pl-6">
                     <div className="w-24 h-24 rounded-full bg-white border-4 border-white shadow-lg flex items-center justify-center overflow-hidden z-10">
                       <Image src="/profilecamera.png" alt="" width={24} height={24} className="object-contain" />
                     </div>
@@ -939,16 +939,14 @@ export default function CompleteProfileContent() {
                 </div>
 
                 {/* Business info - company name with Edit */}
-                <div className="pt-14 sm:pt-12 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 mb-4">
+                <div className="pt-14 sm:pt-12 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-2 mb-4">
                   <div className="min-w-0 flex-1">
                     <h4
-                      className="break-words"
+                      className="break-words text-2xl sm:text-[32px] leading-tight sm:leading-[40px]"
                       style={{
                         fontFamily: '"Inter", "Inter Display", sans-serif',
                         fontWeight: 600,
                         fontStyle: 'normal',
-                        fontSize: 32,
-                        lineHeight: '40px',
                         letterSpacing: 0,
                         color: '#1F1E25',
                       }}
@@ -973,10 +971,8 @@ export default function CompleteProfileContent() {
                   <button
                     type="button"
                     onClick={() => setCurrentStep(2)}
-                    className="inline-flex items-center justify-center gap-1.5 font-semibold text-sm shrink-0 rounded-[16px]"
+                    className="inline-flex items-center justify-center gap-1.5 font-semibold text-sm shrink-0 rounded-[16px] w-full sm:w-[87.45px] h-[45px] sm:h-[44.77px]"
                     style={{
-                      width: 87.45,
-                      height: 44.77,
                       backgroundColor: '#F7E0FF',
                       color: PURPLE,
                     }}
@@ -1080,7 +1076,7 @@ export default function CompleteProfileContent() {
 
                 {/* Profile completion + buttons in one row */}
                 <div
-                  className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 py-6 mt-6 rounded-[24px] px-4 sm:px-6"
+                  className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 py-6 mt-6 rounded-[24px] px-4 sm:px-6 min-w-0"
                   style={{ backgroundColor: "#FCF5FF", minHeight: "91px" }}
                 >
                   <div className="flex items-center gap-3">
@@ -1098,7 +1094,7 @@ export default function CompleteProfileContent() {
                       <p className="text-sm text-gray-600">Complete profile now to get verified, or start finding businesses.</p>
                     </div>
                   </div>
-                  <div className="flex flex-col sm:flex-row gap-3 shrink-0">
+                  <div className="flex flex-col sm:flex-row gap-3 shrink-0 w-full sm:w-auto">
                     <button
                       type="button"
                       onClick={() => {
@@ -1108,10 +1104,8 @@ export default function CompleteProfileContent() {
                       router.push('/add-additional-details');
                     }}
                       disabled={isLoading}
-                      className="inline-flex items-center justify-center gap-2 font-semibold text-sm rounded-[16px] hover:bg-gray-50 transition-all disabled:opacity-50 shrink-0"
+                      className="inline-flex items-center justify-center gap-2 font-semibold text-sm rounded-[16px] hover:bg-gray-50 transition-all disabled:opacity-50 shrink-0 w-full sm:w-[218.6px] h-[50px]"
                       style={{
-                        width: 218.6,
-                        height: 50,
                         backgroundColor: '#FFFFFF',
                         border: '1px solid #612178',
                         color: PURPLE,
@@ -1125,10 +1119,8 @@ export default function CompleteProfileContent() {
                     <button
                       onClick={() => submitStep()}
                       disabled={isLoading}
-                      className="text-white font-semibold text-sm rounded-[16px] transition-all disabled:opacity-50 shrink-0"
+                      className="text-white font-semibold text-sm rounded-[16px] transition-all disabled:opacity-50 shrink-0 w-full sm:w-[218.6px] h-[50px]"
                       style={{
-                        width: 218.6,
-                        height: 50,
                         backgroundColor: PURPLE,
                         boxShadow: '0px 4px 10px -2px #00000040',
                       }}

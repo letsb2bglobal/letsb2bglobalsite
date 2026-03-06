@@ -116,7 +116,7 @@ function AddAdditionalDetailsContent() {
   };
 
   return (
-    <div className="flex flex-col min-h-0 flex-1">
+    <div className="flex flex-col min-h-0 flex-1 min-w-0 overflow-x-hidden">
       {/* Title bar - above Profile Completed per Figma */}
       <div className="px-4 sm:px-6 lg:px-8 pt-4 pb-6 max-w-7xl mx-auto w-full">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -145,16 +145,14 @@ function AddAdditionalDetailsContent() {
         </div>
       </div>
 
-      <div className="flex flex-1 flex-col lg:flex-row min-h-0">
-        <div className="flex flex-1 gap-0 lg:gap-8 p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full overflow-auto">
+      <div className="flex flex-1 flex-col lg:flex-row min-h-0 min-w-0 overflow-hidden">
+        <div className="flex flex-1 flex-col lg:flex-row gap-0 lg:gap-8 p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full min-w-0 overflow-y-auto overflow-x-hidden">
           {/* Left sidebar */}
-        <aside className="w-full lg:w-[309px] shrink-0 mb-6 lg:mb-0">
+        <aside className="w-full lg:w-[309px] shrink-0 mb-6 lg:mb-0 min-w-0 max-w-full">
           <div
-            className="rounded-[16px] p-5"
+            className="rounded-[16px] p-5 w-full max-w-full lg:max-w-[308.59px]"
             style={{
-              width: '100%',
               minHeight: 242.14,
-              maxWidth: 308.59,
               backgroundColor: '#FFFFFF',
               border: '1px solid #D9D9D9',
               boxShadow: '0px 4px 4px 0px #00000040',
@@ -195,9 +193,9 @@ function AddAdditionalDetailsContent() {
         </aside>
 
         {/* Main content */}
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-0 w-full overflow-hidden">
           <div
-            className={`rounded-2xl p-6 sm:p-8 space-y-6 ${
+            className={`rounded-2xl p-4 sm:p-6 lg:p-8 space-y-4 sm:space-y-6 overflow-x-hidden ${
               activeTab === 'company' || activeTab === 'business' || activeTab === 'kyc'
                 ? ''
                 : 'bg-white border border-gray-200'
@@ -221,12 +219,12 @@ function AddAdditionalDetailsContent() {
                       <Image src="/cover_cameralogo.png" alt="" width={20} height={20} className="object-contain" />
                     </button>
                   </div>
-                  <div className="flex justify-start relative -mt-12 pl-6">
+                  <div className="flex justify-start relative -mt-12 pl-4 sm:pl-6">
                     <div className="w-24 h-24 rounded-full bg-white border-4 border-white shadow-lg flex items-center justify-center overflow-hidden z-10 cursor-pointer">
                       <Image src="/profilecamera.png" alt="" width={24} height={24} className="object-contain" />
                     </div>
                   </div>
-                  <div className="px-6 sm:px-8 pt-4 pb-6 sm:pb-8 space-y-4">
+                  <div className="px-4 sm:px-6 lg:px-8 pt-4 pb-6 sm:pb-8 space-y-4">
                   <input
                     type="text"
                     value={formData.companyName}
@@ -316,7 +314,7 @@ function AddAdditionalDetailsContent() {
                 </div>
 
                 {/* Card 2: Location */}
-                <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 sm:p-8">
+                <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 sm:p-6 lg:p-8">
                   <h2 className="text-base font-bold text-gray-900 mb-4">Location</h2>
                   <div className="space-y-4">
                     <div>
@@ -370,7 +368,7 @@ function AddAdditionalDetailsContent() {
                 </div>
 
                 {/* Card 3: Contact Information */}
-                <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 sm:p-8">
+                <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 sm:p-6 lg:p-8">
                   <h2 className="text-base font-bold text-gray-900 mb-4">Contact Information</h2>
                   <div className="space-y-4">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -401,11 +399,11 @@ function AddAdditionalDetailsContent() {
                         className="w-full px-4 py-3 border border-gray-300 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:border-[#612178]"
                       />
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 flex-wrap sm:flex-nowrap">
                       <select
                         value={formData.countryCode}
                         onChange={(e) => setFormData((p) => ({ ...p, countryCode: e.target.value }))}
-                        className="w-20 px-3 py-3 border border-gray-300 rounded-xl text-gray-800 bg-white focus:outline-none focus:border-[#612178]"
+                        className="min-w-[70px] sm:w-20 px-3 py-3 border border-gray-300 rounded-xl text-gray-800 bg-white focus:outline-none focus:border-[#612178] shrink-0"
                         aria-label="Country code"
                       >
                         <option value="+91">+91</option>
@@ -442,7 +440,7 @@ function AddAdditionalDetailsContent() {
             {activeTab === 'business' && (
               <div className="space-y-6">
                 {/* Card 1: Upload Business Card + fields */}
-                <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 sm:p-8">
+                <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 sm:p-6 lg:p-8">
                   {/* Upload business card */}
                   <div className="border border-dashed border-gray-300 rounded-2xl px-6 py-10 flex flex-col items-center justify-center text-center">
                     <p className="text-sm font-medium text-gray-600 mb-3">Upload Business Card</p>
@@ -506,7 +504,7 @@ function AddAdditionalDetailsContent() {
                 </div>
 
                 {/* Card 2: Business you are finding for */}
-                <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 sm:p-8">
+                <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 sm:p-6 lg:p-8">
                   <p className="text-sm font-bold text-gray-900 mb-4">Business You Are Finding For</p>
 
                   <div className="mb-4">
@@ -551,7 +549,7 @@ function AddAdditionalDetailsContent() {
             {activeTab === 'kyc' && (
               <div className="space-y-6">
                 {/* Card 1: Business Verification */}
-                <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 sm:p-8 space-y-4">
+                <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 sm:p-6 lg:p-8 space-y-4">
                   <p className="text-base font-bold text-gray-900">Business Verification</p>
                   <div className="border border-dashed border-gray-300 rounded-2xl px-6 py-10 flex flex-col items-center justify-center text-center">
                     <p className="text-sm font-medium text-gray-600 mb-3">Upload Business Registration Certificate</p>
@@ -573,7 +571,7 @@ function AddAdditionalDetailsContent() {
                 </div>
 
                 {/* Card 2: GST Information */}
-                <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 sm:p-8 space-y-4">
+                <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 sm:p-6 lg:p-8 space-y-4">
                   <p className="text-base font-bold text-gray-900">GST Information</p>
                   <div className="border border-dashed border-gray-300 rounded-2xl px-6 py-10 flex flex-col items-center justify-center text-center">
                     <p className="text-sm font-medium text-gray-600 mb-3">Upload Business Registration Certificate</p>
@@ -595,7 +593,7 @@ function AddAdditionalDetailsContent() {
                 </div>
 
                 {/* Card 3: PAN Information */}
-                <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 sm:p-8 space-y-4">
+                <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 sm:p-6 lg:p-8 space-y-4">
                   <p className="text-base font-bold text-gray-900">PAN Information</p>
                   <div className="border border-dashed border-gray-300 rounded-2xl px-6 py-10 flex flex-col items-center justify-center text-center">
                     <p className="text-sm font-medium text-gray-600 mb-3">Upload PAN Copy</p>
