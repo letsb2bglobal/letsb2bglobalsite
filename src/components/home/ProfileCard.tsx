@@ -1,9 +1,10 @@
 "use client";
 
-import React from 'react';
-import { BadgeCheck, Hotel } from 'lucide-react';
-import { UserProfile } from '@/lib/profile';
-
+import React from "react";
+import { BadgeCheck, Hotel } from "lucide-react";
+import { UserProfile } from "@/lib/profile";
+import Image from "next/image";
+import ProgressCard from "./ProgressCard";
 interface ProfileCardProps {
   profile?: UserProfile | null;
 }
@@ -12,39 +13,51 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ profile }) => {
   return (
     <div className="bg-white rounded-[12px] shadow-sm overflow-hidden border border-gray-100 mb-4">
       {/* Banner */}
-      <div className="h-16 w-full bg-gradient-to-r from-[#6B3FA0] to-[#9d66e7]"></div>
-      
+      {/* <div className="h-16 w-full bg-gradient-to-r from-[#6B3FA0] to-[#9d66e7]"></div> */}
+
       {/* Profile Info */}
       <div className="px-5 pb-5">
-        <div className="relative -mt-8 mb-3">
-          <div className="w-16 h-16 rounded-[20px] bg-white border-2 border-white shadow-md flex items-center justify-center text-[#6B3FA0] font-bold text-2xl overflow-hidden ring-1 ring-gray-100">
-             {profile?.company_name?.[0]?.toUpperCase() || 'L'}
+        <div className="relative mt-5 mb-3">
+          <div className="w-22 h-22 rounded-full bg-white border-2 border-white shadow-md flex items-center justify-center text-[#6B3FA0] font-bold text-2xl overflow-hidden ring-1 ring-gray-100">
+            {profile?.company_name?.[0]?.toUpperCase() || "L"}
           </div>
-        </div>
-        
-        <div className="flex flex-col gap-1">
-          <div className="flex items-center gap-1.5">
-            <h2 className="text-base font-bold text-gray-900 leading-tight">
-               {profile?.company_name || 'Le Tourister'}
-            </h2>
-            <BadgeCheck size={16} className="text-[#6B3FA0] fill-[#6B3FA0]/10" />
-          </div>
-          <span className="text-[10px] font-medium text-gray-400">
-            {profile?.email || 'contact@letourister.com'}
-          </span>
         </div>
 
-        <div className="mt-4 pt-4 border-t border-gray-50 flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-[#f6f2f8] flex items-center justify-center text-[#6B3FA0]">
-             <Hotel size={16} />
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center gap-1 ">
+            <h2 className="text-[18px] font-bold text-gray-900 leading-tight">
+              {profile?.company_name || "Le Tourister"}
+            </h2>
+
+            <Image
+              src="/assets/icons/verify.png"
+              width={21}
+              height={21}
+              alt="verify"
+            />
           </div>
-          <div className="flex flex-col">
-            <span className="text-[11px] font-bold text-gray-800">
-               {profile?.business_type?.[0] || '5 Star Hotel'}
-            </span>
-            <span className="text-[9px] font-medium text-gray-400">
-               {profile?.city || 'Kochi'}, {profile?.country || 'India'}
-            </span>
+          <span className="flex items-center gap-1 text-[12px] font-medium text-gray-400 mt-1">
+            <Image
+              src="/assets/icons/location.png"
+              alt="Location"
+              width={15}
+              height={16}
+              className="mr-1.5"
+            />
+            {profile?.city || profile?.state
+              ? [profile?.city, profile?.state].filter(Boolean).join(" - ")
+              : "Location"}
+          </span>
+          <span className="text-[12px] font-medium text-[#000000] mt-1">
+            {typeof profile?.about === "string" && profile.about
+              ? profile.about
+              : "About the Company"}
+          </span>
+
+          <div className="border-t border-gray-200 mt-5"></div>
+
+          <div className="mt-4">
+            <ProgressCard profile={profile} />
           </div>
         </div>
       </div>

@@ -408,7 +408,7 @@ const Header = () => {
   if (noHeaderPages.includes(pathname)) return null;
 
   return (
-    <header className="sticky top-0 z-[100] border-b border-gray-200/80 bg-white/75 backdrop-blur-xl shadow-lg shadow-black/5">
+    <header className="sticky top-0 z-[100] border-b border-gray-200/80 bg-[#FFFFFF] backdrop-blur-xl shadow-lg shadow-black/5">
       <div className="max-w-[1440px] mx-auto flex items-center justify-between h-18 px-5">
         {/* Left Section: Logo + Quick Actions */}
         <div className="flex items-center gap-6 shrink-0">

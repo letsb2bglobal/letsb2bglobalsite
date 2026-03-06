@@ -73,7 +73,7 @@ export default function HomeRoute() {
   return (
     <div className="min-h-screen bg-[#f6f2f8]">
       
-      <main className="max-w-[1280px] mx-auto px-5 py-6">
+      <main className="max-w-[1350px] mx-auto px-4 py-6">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Left Sidebar - 25% (lg:col-span-3) */}
           <div className="hidden lg:block lg:col-span-3 sticky top-[80px] self-start max-h-[calc(100vh-100px)] overflow-y-auto no-scrollbar">
