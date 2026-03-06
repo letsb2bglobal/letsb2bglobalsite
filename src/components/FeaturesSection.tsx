@@ -23,7 +23,7 @@ const FEATURES = [
   {
     title: "Global B2B Networking",
     description:
-      "Connect with verified travel & tourism businesses across India and International markets.",
+      "Connect with verified travel & tourism businesses across India and International markets",
     Icon: IconGlobe,
   },
   {
@@ -119,34 +119,30 @@ export default function FeaturesSection() {
 
           gsap.set(strip, { x: 0 });
           gsap.set(section, { opacity: 1, y: 0 });
-          
           const featureCards = strip.querySelectorAll(".feature-card");
-          gsap.set(featureCards, { opacity: 0.2, scale: 0.9 });
+          gsap.set(featureCards, { opacity: 1, scale: 1 });
 
           tl = gsap.timeline({
             scrollTrigger: {
               trigger: wrap,
               start: "top top",
               end: "bottom top",
-              scrub: 1,
+              scrub: true,
               pin: true,
               anticipatePin: 1,
               invalidateOnRefresh: true,
             },
           });
-          
           tl.to(strip, {
             x: -maxX,
             ease: "none",
           });
-
-          // Stagger animation for cards as they scroll through
+          
+          // Ensure cards stay fully visible throughout
           tl.to(featureCards, {
             opacity: 1,
             scale: 1,
-            stagger: 0.1,
-            duration: 0.5,
-            ease: "power2.out"
+            duration: 0.1
           }, 0);
 
           tl.to(
@@ -157,7 +153,7 @@ export default function FeaturesSection() {
               ease: "power2.in",
               duration: 0.18,
             },
-            0.9
+            0.82
           );
         }
 
@@ -185,7 +181,7 @@ export default function FeaturesSection() {
     <div
       ref={wrapRef}
       className="relative"
-      style={{ height: "350vh" }}
+      style={{ height: "200vh" }}
     >
       <section
         ref={sectionRef}
@@ -193,16 +189,17 @@ export default function FeaturesSection() {
         data-section="features"
         className="sticky top-0 left-0 right-0 z-0 h-screen w-full overflow-hidden"
       >
-        {/* Video background - no overlay */}
-        <div className="absolute inset-0 z-0">
+        {/* Video background with strong dark overlay for maximum contrast */}
+        <div className="absolute inset-0 z-0 bg-neutral-950">
           <video
             autoPlay
             muted
             loop
             playsInline
-            className="h-full w-full object-cover"
+            className="h-full w-full object-cover opacity-40"
             src="/our-features-section/our-featuers-v2.mp4"
           />
+          <div className="absolute inset-0 bg-gradient-to-t from-neutral-950 via-transparent to-neutral-950/80" />
         </div>
 
         {/* Content */}
@@ -220,40 +217,52 @@ export default function FeaturesSection() {
               <h2
                 className="relative left-0 right-0 font-bold text-white text-[40px] leading-tight sm:text-[50px] md:text-[58px] lg:text-[68px]"
               >
-                Platform Features
+                Features
               </h2>
             </div>
+            <p
+              className="mx-auto mt-4 sm:mt-5 max-w-2xl text-center font-normal text-white text-lg leading-snug sm:text-xl lg:text-2xl"
+              style={{ lineHeight: "1.5" }}
+            >
+              Features that help tourism partners connect, collaborate, and trade
+              with confidence. Built to support trusted partnerships and real business growth across
+              global markets.
+            </p>
           </div>
 
-          {/* Horizontal scroll area */}
+          {/* Horizontal scroll area: 9 features + 4 blank cards so last card scrolls off */}
           <div className="flex-1 min-h-0 px-4 sm:px-5 lg:px-10 flex items-center pb-8 sm:pb-10">
             <div ref={containerRef} className="w-full overflow-hidden">
               <div
                 ref={stripRef}
-                className="flex gap-4 sm:gap-6 lg:gap-10 will-change-transform"
+                className="flex gap-4 sm:gap-5 lg:gap-8 will-change-transform"
                 style={{ width: "max-content" }}
               >
                 {FEATURES.map((f) => (
                   <div
                     key={f.title}
-                    className="feature-card flex w-[85vw] min-w-[300px] max-w-[420px] shrink-0 flex-col items-start rounded-3xl bg-white/10 backdrop-blur-md border border-white/20 p-6 sm:p-8 lg:p-10 text-left lg:w-[30vw] lg:min-w-0"
+                    className="feature-card flex w-[85vw] min-w-[280px] shrink-0 flex-col items-start p-2 text-left lg:w-[25vw] lg:min-w-0"
+                    style={{ opacity: 1 }}
                   >
-                    <div className="flex h-12 w-12 items-center justify-start text-emerald-400">
+                    <div className="flex h-12 w-12 items-center justify-start text-white mb-6">
                       <f.Icon />
                     </div>
-                    <h3 className="mt-6 text-2xl font-black leading-tight text-white sm:text-3xl">
+                    <h3 className="text-xl font-bold leading-tight text-white sm:text-2xl tracking-tight">
                       {f.title}
                     </h3>
-                    <p className="mt-4 text-base leading-relaxed text-white/80 sm:text-lg lg:text-xl">
+                    <p className="mt-4 text-base leading-relaxed text-white/80 sm:text-lg font-normal">
                       {f.description}
                     </p>
                   </div>
                 ))}
-                {/* Single blank card for smooth exit */}
-                <div
-                  className="flex w-[50vw] shrink-0"
-                  aria-hidden
-                />
+                {/* Blank cards so Industry Collaboration can scroll off before next section */}
+                {[0, 1, 2, 3, 4].map((i) => (
+                  <div
+                    key={`blank-${i}`}
+                    className="flex w-[82vw] min-w-[280px] max-w-[400px] shrink-0 lg:w-[calc(33.333vw-2rem)] lg:min-w-0 lg:max-w-[360px]"
+                    aria-hidden
+                  />
+                ))}
               </div>
             </div>
           </div>

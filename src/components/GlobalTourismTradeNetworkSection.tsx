@@ -166,115 +166,115 @@ export default function GlobalTourismTradeNetworkSection() {
       resizeRef.current = handleResize;
 
       const ctx = gsap.context(() => {
-      const ctx2 = canvas.getContext("2d");
-      if (!ctx2) return;
+        const ctx2 = canvas.getContext("2d");
+        if (!ctx2) return;
 
-      const dpr = window.devicePixelRatio || 1;
+        const dpr = window.devicePixelRatio || 1;
 
-      const draw = () => {
-        const rect = section.getBoundingClientRect();
-        const w = rect.width;
-        const h = rect.height;
+        const draw = () => {
+          const rect = section.getBoundingClientRect();
+          const w = rect.width;
+          const h = rect.height;
 
-        ctx2.save();
-        ctx2.setTransform(1, 0, 0, 1, 0, 0);
-        ctx2.clearRect(0, 0, canvas.width, canvas.height);
-        ctx2.scale(dpr, dpr);
+          ctx2.save();
+          ctx2.setTransform(1, 0, 0, 1, 0, 0);
+          ctx2.clearRect(0, 0, canvas.width, canvas.height);
+          ctx2.scale(dpr, dpr);
 
-        particlesRef.current.forEach((p) => {
-          ctx2.beginPath();
-          ctx2.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-          ctx2.fillStyle = `rgba(230, 220, 255, ${p.alpha})`;
-          ctx2.fill();
-        });
-
-        ctx2.restore();
-      };
-
-      const update = () => {
-        const rect = section.getBoundingClientRect();
-        const w = rect.width;
-        const h = rect.height;
-        particlesRef.current.forEach((p) => {
-          p.x += p.vx;
-          p.y += p.vy;
-        });
-        draw();
-      };
-
-      scrollTriggerRef.current = ScrollTrigger.create({
-        trigger: section,
-        start: "top 85%",
-        once: true,
-        onEnter: () => {
-          if (triggeredRef.current) return;
-          triggeredRef.current = true;
-
-          const label = section.querySelector<HTMLElement>("[data-gt-label]");
-          const heading = section.querySelector<HTMLElement>("[data-gt-heading]");
-          const lines = section.querySelectorAll<HTMLElement>("[data-gt-line]");
-          const cards = section.querySelectorAll<HTMLElement>("[data-card]");
-
-          gsap.set([label, heading].filter(Boolean), { opacity: 0, x: -32 });
-          gsap.set(lines, { opacity: 0, y: 12 });
-          gsap.set(cards, { opacity: 0, y: 24 });
-          gsap.set(canvasWrapper, { opacity: 1 });
-
-          const tl = gsap.timeline({
-            defaults: { ease: "power2.out" },
+          particlesRef.current.forEach((p) => {
+            ctx2.beginPath();
+            ctx2.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+            ctx2.fillStyle = `rgba(230, 220, 255, ${p.alpha})`;
+            ctx2.fill();
           });
 
-          if (label) {
-            tl.fromTo(label, { opacity: 0, x: -32 }, { opacity: 1, x: 0, duration: 0.4 });
-          }
-          if (heading) {
-            tl.fromTo(
-              heading,
-              { opacity: 0, x: -32 },
-              { opacity: 1, x: 0, duration: 0.45 },
-              "-=0.25"
-            );
-          }
-          tl.fromTo(
-            lines,
-            { opacity: 0, y: 12 },
-            { opacity: 1, y: 0, duration: 0.35, stagger: 0.08 },
-            lines.length ? "-=0.1" : 0
-          )
-            .add(() => {
-              const rect = section.getBoundingClientRect();
-              burstParticles(particlesRef.current, rect.width, rect.height);
-              tickerRef.current = update;
-              gsap.ticker.add(update);
-              gsap.to(canvasWrapper, {
-                opacity: 0,
-                duration: 1,
-                ease: "power2.out",
-              });
-              gsap.to(cards, {
-                y: 0,
-                opacity: 1,
-                stagger: 0.15,
-                ease: "power3.out",
-                duration: 0.5,
-                delay: 1,
-              });
-              setTimeout(() => {
-                gsap.ticker.remove(update);
-                tickerRef.current = null;
-              }, 1000);
-            }, 0);
-        },
-      });
+          ctx2.restore();
+        };
 
-      const label = section.querySelector<HTMLElement>("[data-gt-label]");
-      const heading = section.querySelector<HTMLElement>("[data-gt-heading]");
-      const lines = section.querySelectorAll<HTMLElement>("[data-gt-line]");
-      const cards = section.querySelectorAll<HTMLElement>("[data-card]");
-      if (label) gsap.set(label, { opacity: 0, x: -32 });
-      if (heading) gsap.set(heading, { opacity: 0, x: -32 });
-      gsap.set(lines, { opacity: 0, y: 12 });
-      gsap.set(cards, { opacity: 0, y: 24 });
+        const update = () => {
+          const rect = section.getBoundingClientRect();
+          const w = rect.width;
+          const h = rect.height;
+          particlesRef.current.forEach((p) => {
+            p.x += p.vx;
+            p.y += p.vy;
+          });
+          draw();
+        };
+
+        scrollTriggerRef.current = ScrollTrigger.create({
+          trigger: section,
+          start: "top 85%",
+          once: true,
+          onEnter: () => {
+            if (triggeredRef.current) return;
+            triggeredRef.current = true;
+
+            const label = section.querySelector<HTMLElement>("[data-gt-label]");
+            const heading = section.querySelector<HTMLElement>("[data-gt-heading]");
+            const lines = section.querySelectorAll<HTMLElement>("[data-gt-line]");
+            const cards = section.querySelectorAll<HTMLElement>("[data-card]");
+
+            gsap.set([label, heading].filter(Boolean), { opacity: 0, x: -32 });
+            gsap.set(lines, { opacity: 0, y: 12 });
+            gsap.set(cards, { opacity: 0, y: 24 });
+            gsap.set(canvasWrapper, { opacity: 1 });
+
+            const tl = gsap.timeline({
+              defaults: { ease: "power2.out" },
+            });
+
+            if (label) {
+              tl.fromTo(label, { opacity: 0, x: -32 }, { opacity: 1, x: 0, duration: 0.4 });
+            }
+            if (heading) {
+              tl.fromTo(
+                heading,
+                { opacity: 0, x: -32 },
+                { opacity: 1, x: 0, duration: 0.45 },
+                "-=0.25"
+              );
+            }
+            tl.fromTo(
+              lines,
+              { opacity: 0, y: 12 },
+              { opacity: 1, y: 0, duration: 0.35, stagger: 0.08 },
+              lines.length ? "-=0.1" : 0
+            )
+              .add(() => {
+                const rect = section.getBoundingClientRect();
+                burstParticles(particlesRef.current, rect.width, rect.height);
+                tickerRef.current = update;
+                gsap.ticker.add(update);
+                gsap.to(canvasWrapper, {
+                  opacity: 0,
+                  duration: 1,
+                  ease: "power2.out",
+                });
+                gsap.to(cards, {
+                  y: 0,
+                  opacity: 1,
+                  stagger: 0.15,
+                  ease: "power3.out",
+                  duration: 0.5,
+                  delay: 1,
+                });
+                setTimeout(() => {
+                  gsap.ticker.remove(update);
+                  tickerRef.current = null;
+                }, 1000);
+              }, 0);
+          },
+        });
+
+        const label = section.querySelector<HTMLElement>("[data-gt-label]");
+        const heading = section.querySelector<HTMLElement>("[data-gt-heading]");
+        const lines = section.querySelectorAll<HTMLElement>("[data-gt-line]");
+        const cards = section.querySelectorAll<HTMLElement>("[data-card]");
+        if (label) gsap.set(label, { opacity: 0, x: -32 });
+        if (heading) gsap.set(heading, { opacity: 0, x: -32 });
+        gsap.set(lines, { opacity: 0, y: 12 });
+        gsap.set(cards, { opacity: 0, y: 24 });
       }, section);
       contextRef.current = ctx;
     });
@@ -357,8 +357,8 @@ export default function GlobalTourismTradeNetworkSection() {
                   </span>
                 </p>
                 <p
-                    className="text-left font-normal text-gray-600 max-w-md pl-7"
-                    style={{ fontSize: "17px", lineHeight: "1.6" }}
+                  className="text-left font-normal text-gray-600 max-w-md pl-7"
+                  style={{ fontSize: "17px", lineHeight: "1.6" }}
                 >
                   <span data-gt-line className="opacity-0 block">
                     LetsB2B helps you connect with the right people across India and international markets.
