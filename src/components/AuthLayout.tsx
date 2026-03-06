@@ -7,9 +7,11 @@ type AuthLayoutProps = {
   header?: React.ReactNode;
   /** When true, hides the form card border/shadow so only the inner content box is visible */
   hideCardStyle?: boolean;
+  /** When true, disables inner scroll so the page body scrolls (single scrollbar) */
+  noInnerScroll?: boolean;
 };
 
-export default function AuthLayout({ children, variant = "signin", header, hideCardStyle }: AuthLayoutProps) {
+export default function AuthLayout({ children, variant = "signin", header, hideCardStyle, noInnerScroll }: AuthLayoutProps) {
   const hideLeftPanel = variant === "signup";
 
   return (
@@ -19,7 +21,7 @@ export default function AuthLayout({ children, variant = "signin", header, hideC
     >
       {/* ── Content area ───────────────────────────────────────────────── */}
       <div
-        className={`flex-1 px-3 py-4 sm:px-6 sm:py-6 md:px-8 md:py-8 ${hideLeftPanel ? "min-h-0" : ""}`}
+        className={`flex-1 px-4 py-4 sm:px-6 sm:py-6 lg:px-8 lg:py-8 ${hideLeftPanel ? "min-h-0" : ""}`}
         style={{ background: hideLeftPanel ? "#fff" : "#FFE6FBA3" }}
       >
         <div
@@ -117,18 +119,18 @@ export default function AuthLayout({ children, variant = "signin", header, hideC
           )}
 
           {/* ── Right Panel (Form Card) ────────────────────────────────── */}
-          <div className={`relative z-10 flex flex-col items-center p-3 sm:p-6 md:p-8 min-w-0 w-full overflow-x-hidden ${hideLeftPanel ? "w-full" : ""}`}>
+          <div className={`relative z-10 flex flex-col items-center px-4 sm:px-6 lg:px-8 py-4 sm:py-6 min-w-0 w-full overflow-x-hidden ${hideLeftPanel ? "w-full" : ""}`}>
             {hideLeftPanel && header && (
-              <div className="w-full max-w-full sm:max-w-[540px] md:max-w-[680px] lg:max-w-[872px] px-4 sm:px-6 md:px-8 mb-6 sm:mb-8">
+              <div className="w-full max-w-full sm:max-w-[540px] md:max-w-[680px] lg:max-w-[872px] mb-6 sm:mb-8">
                 {header}
               </div>
             )}
             <div
-              className={`w-full py-4 px-4 sm:py-6 sm:px-6 md:px-8 ${
+              className={`w-full py-4 sm:py-6 px-4 sm:px-6 ${
                 hideCardStyle
-                  ? "w-full max-w-full sm:w-[872px] sm:max-w-[872px] min-h-0 overflow-y-auto"
+                  ? `w-full max-w-full sm:w-[872px] sm:max-w-[872px] min-h-0 ${noInnerScroll ? "overflow-visible" : "overflow-y-auto"}`
                   : hideLeftPanel
-                    ? "w-full max-w-full sm:w-[872px] sm:max-w-[872px] sm:min-h-[393px] min-h-[280px] rounded-2xl sm:rounded-[24px] bg-[#FFFFFF] overflow-y-auto"
+                    ? `w-full max-w-full sm:w-[872px] sm:max-w-[872px] rounded-2xl sm:rounded-[24px] bg-[#FFFFFF] ${noInnerScroll ? "overflow-visible" : "overflow-y-auto"}`
                     : "max-w-[460px] rounded-xl sm:rounded-[20px] overflow-y-auto"
               }`}
               style={

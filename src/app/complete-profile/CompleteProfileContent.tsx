@@ -627,7 +627,7 @@ export default function CompleteProfileContent() {
   };
 
   const stepper = !isInitializing && (
-      <div className="flex flex-wrap items-center justify-between w-full gap-2 sm:gap-1">
+      <div className="flex flex-nowrap sm:flex-wrap items-center justify-between sm:justify-between w-full gap-2 sm:gap-1 overflow-x-auto scrollbar-hide -mx-2 px-2 pb-1 min-w-0">
         {STEP_LABELS.map((label, idx) => {
           const stepNum = idx + 1;
           const effectiveStep = showAddBusinessModal ? 2 : showPreferenceAfterAdd ? 3 : currentStep;
@@ -638,9 +638,9 @@ export default function CompleteProfileContent() {
               {idx > 0 && (
                 <span className="text-gray-400 text-sm mx-1 hidden sm:inline">&gt;</span>
               )}
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
                 <span
-                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-bold transition-all duration-300"
+                  className="flex h-8 w-8 sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-full text-xs sm:text-sm font-bold transition-all duration-300"
                   style={
                     isActive
                       ? { backgroundColor: PURPLE, color: "white" }
@@ -652,7 +652,7 @@ export default function CompleteProfileContent() {
                   {stepNum}
                 </span>
                 <span
-                  className="text-sm font-medium"
+                  className="text-xs sm:text-sm font-medium whitespace-nowrap"
                   style={
                     isActive
                       ? { color: "#9b6ea8" }
@@ -700,24 +700,36 @@ export default function CompleteProfileContent() {
   };
 
   const handlePreferenceAfterAddSkip = () => {
-    if (formData.preferred_collaborations.length === 0) {
-      setFormData(prev => ({ ...prev, preferred_collaborations: [BUSINESS_TYPES[0]] }));
-    }
     setErrors({});
     setShowPreferenceAfterAdd(false);
     setCameFromAddFlow(true);
-    setCurrentStep(2);
+    setCurrentStep(4); // Skip from Add flow's preference → go to Preview
+  };
+
+  const handleSkip = () => {
+    setErrors({});
+    if (showPreferenceAfterAdd) {
+      handlePreferenceAfterAddSkip();
+      return;
+    }
+    if (currentStep === 1) {
+      setCurrentStep(3); // Business Type → Preference
+    } else if (currentStep === 2) {
+      setCurrentStep(3); // Business Information → Preference
+    } else if (currentStep === 3) {
+      setCurrentStep(4); // Preference → Preview
+    }
   };
 
   return (
-    <AuthLayout variant="signup" header={stepper} hideCardStyle={false}>
+    <AuthLayout variant="signup" header={stepper} hideCardStyle={false} noInnerScroll>
       {isInitializing ? (
         <div className="flex flex-col items-center justify-center py-20 space-y-4">
           <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
           <p className="text-gray-500 text-sm font-medium animate-pulse">Loading onboarding data...</p>
         </div>
       ) : (
-        <div className="pt-2 overflow-x-hidden">
+        <div className="pt-2 pb-8 overflow-x-hidden min-w-0">
             {currentStep === 1 && (
               showAddBusinessModal ? (
               /* Add Your Unique Business - uses same AuthLayout card as Who Are You (no extra wrapper) */
@@ -757,17 +769,7 @@ export default function CompleteProfileContent() {
                           style={{ width: "25%", backgroundColor: PURPLE }}
                         />
                       </div>
-                      <div className="flex gap-3 w-full sm:w-auto">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setAddBusinessForm({ businessName: "", description: "" });
-                            setShowAddBusinessModal(false);
-                          }}
-                          className="flex-1 sm:flex-none px-5 py-2.5 rounded-xl font-semibold text-sm text-gray-700 bg-gray-100 hover:bg-gray-200 transition-colors"
-                        >
-                          Back
-                        </button>
+                      <div className="flex gap-3 w-full sm:w-auto justify-end">
                         <button
                           type="button"
                           onClick={handleAddBusiness}
@@ -783,17 +785,17 @@ export default function CompleteProfileContent() {
               /* Business You Are Looking For - same design as Who Are You (image cards), no Add button */
               <div key="preference-after-add" className="animate-in fade-in slide-in-from-bottom-2 duration-300">
                 <div className="mb-6">
-                  <h3 className="text-2xl md:text-3xl font-bold text-gray-900">Business You Are Looking For</h3>
+                  <h3 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">Business You Are Looking For</h3>
                   <p className="text-gray-600 text-sm mt-1">Select Business you want to collaborate with</p>
                 </div>
-                <div className="grid grid-cols-2 lg:grid-cols-[repeat(4,120px)] gap-4 lg:justify-between w-full">
+                <div className="grid grid-cols-2 lg:grid-cols-[repeat(4,120px)] gap-3 sm:gap-4 lg:justify-between w-full min-w-0">
                   {BUSINESS_TYPES.map(type => {
                     const isSelected = formData.preferred_collaborations.includes(type);
                     return (
                       <div
                         key={type}
                         onClick={() => togglePreference(type)}
-                        className="w-[120px] h-[120px] rounded-[16px] border-2 transition-all cursor-pointer flex flex-col overflow-hidden shrink-0"
+                        className="w-full max-w-[160px] sm:max-w-none justify-self-center sm:justify-self-auto h-[100px] sm:h-[120px] rounded-2xl border-2 transition-all cursor-pointer flex flex-col overflow-hidden"
                         style={
                           isSelected
                             ? {
@@ -832,27 +834,27 @@ export default function CompleteProfileContent() {
               /* Who Are You - Select Your Business (Figma alignment) */
               <div key="who-are-you" className="animate-in fade-in slide-in-from-bottom-2 duration-300">
                 <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
-                  <div>
-                    <h3 className="text-2xl md:text-3xl font-bold text-gray-900">Who Are You ?</h3>
+                  <div className="min-w-0">
+                    <h3 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">Who Are You ?</h3>
                     <p className="text-gray-600 text-sm mt-1">Select Your Business</p>
                   </div>
                   <button
                     type="button"
-                    className="flex items-center justify-center gap-2 text-white font-semibold text-sm whitespace-nowrap shrink-0"
-                    style={{ width: 220.75, height: 50, borderRadius: 16, backgroundColor: PURPLE }}
+                    className="flex items-center justify-center gap-2 w-full sm:w-[220.75px] h-12 sm:h-[50px] text-white font-semibold text-sm whitespace-nowrap shrink-0 rounded-2xl"
+                    style={{ backgroundColor: PURPLE }}
                     onClick={() => setShowAddBusinessModal(true)}
                   >
                     <span className="text-lg">+</span> Add Your Business
                   </button>
                 </div>
-                <div className="grid grid-cols-2 lg:grid-cols-[repeat(4,120px)] gap-4 lg:justify-between w-full">
+                <div className="grid grid-cols-2 lg:grid-cols-[repeat(4,120px)] gap-3 sm:gap-4 lg:justify-between w-full min-w-0">
                   {BUSINESS_TYPES.map(type => {
                     const isSelected = formData.business_type.includes(type);
                     return (
                       <div 
                         key={type}
                         onClick={() => toggleBusinessType(type)}
-                        className="w-[120px] h-[120px] rounded-[16px] border-2 transition-all cursor-pointer flex flex-col overflow-hidden shrink-0"
+                        className="w-full max-w-[160px] sm:max-w-none justify-self-center sm:justify-self-auto h-[100px] sm:h-[120px] rounded-2xl border-2 transition-all cursor-pointer flex flex-col overflow-hidden"
                         style={
                           isSelected
                             ? {
@@ -896,17 +898,17 @@ export default function CompleteProfileContent() {
               /* Step 3 Preference - same design as Who Are You (image cards), no Add button */
               <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
                 <div className="mb-6">
-                  <h3 className="text-2xl md:text-3xl font-bold text-gray-900">Business You Are Looking For</h3>
+                  <h3 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">Business You Are Looking For</h3>
                   <p className="text-gray-600 text-sm mt-1">Select Business you want to collaborate with</p>
                 </div>
-                <div className="grid grid-cols-2 lg:grid-cols-[repeat(4,120px)] gap-4 lg:justify-between w-full">
+                <div className="grid grid-cols-2 lg:grid-cols-[repeat(4,120px)] gap-3 sm:gap-4 lg:justify-between w-full min-w-0">
                   {BUSINESS_TYPES.map(type => {
                     const isSelected = formData.preferred_collaborations.includes(type);
                     return (
                       <div
                         key={type}
                         onClick={() => togglePreference(type)}
-                        className="w-[120px] h-[120px] rounded-[16px] border-2 transition-all cursor-pointer flex flex-col overflow-hidden shrink-0"
+                        className="w-full max-w-[160px] sm:max-w-none justify-self-center sm:justify-self-auto h-[100px] sm:h-[120px] rounded-2xl border-2 transition-all cursor-pointer flex flex-col overflow-hidden"
                         style={
                           isSelected
                             ? {
@@ -962,8 +964,8 @@ export default function CompleteProfileContent() {
 
                 {/* Business info - company name with Edit */}
                 <div className="pt-14 sm:pt-12 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 mb-4">
-                  <div>
-                    <h4 className="text-xl sm:text-2xl font-bold text-gray-900">{String(formData.company_name || "Company Name")}</h4>
+                  <div className="min-w-0 flex-1">
+                    <h4 className="text-xl sm:text-2xl font-bold text-gray-900 break-words">{String(formData.company_name || "Company Name")}</h4>
                     <span className="text-sm text-gray-600">{String(formData.email || (user?.email != null ? user.email : ""))}</span>
                   </div>
                   <button
@@ -1076,39 +1078,21 @@ export default function CompleteProfileContent() {
                 />
               </div>
               <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto justify-end items-stretch sm:items-center">
-                {currentStep > 1 && (
-                  <button
-                    onClick={() => setCurrentStep(currentStep - 1)}
-                    disabled={isLoading}
-                    className="px-6 py-3 bg-gray-100 text-gray-700 font-semibold text-sm rounded-full hover:bg-gray-200 transition-all disabled:opacity-50"
-                  >
-                    GO BACK
-                  </button>
-                )}
                 {currentStep < 4 ? (
-                <div className="flex gap-4 w-full sm:w-auto justify-end">
+                <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full sm:w-auto justify-end">
                   <button
-                    onClick={() => {
-                      if (showPreferenceAfterAdd) {
-                        handlePreferenceAfterAddSkip();
-                      } else {
-                        if (currentStep === 1 && formData.business_type.length === 0) {
-                          setFormData(prev => ({ ...prev, business_type: [BUSINESS_TYPES[0]] }));
-                        }
-                        submitStep();
-                      }
-                    }}
+                    onClick={handleSkip}
                     disabled={isLoading}
-                    className="flex items-center justify-center text-gray-700 font-semibold text-sm hover:opacity-90 transition-all disabled:opacity-50"
-                    style={{ width: 144.51, height: 50, borderRadius: 16, backgroundColor: "#E6E6E6" }}
+                    className="flex items-center justify-center w-full sm:w-[144.51px] h-12 sm:h-[50px] text-gray-700 font-semibold text-sm hover:opacity-90 transition-all disabled:opacity-50 rounded-2xl"
+                    style={{ backgroundColor: "#E6E6E6" }}
                   >
                     Skip
                   </button>
                   <button
                     onClick={() => (showPreferenceAfterAdd ? handlePreferenceAfterAddNext() : submitStep())}
                     disabled={isLoading}
-                    className="flex items-center justify-center text-white font-semibold text-sm transition-all disabled:opacity-50"
-                    style={{ width: 144.51, height: 50, borderRadius: 16, backgroundColor: PURPLE, boxShadow: "0px 4px 10px -2px #00000040" }}
+                    className="flex items-center justify-center w-full sm:w-[144.51px] h-12 sm:h-[50px] text-white font-semibold text-sm transition-all disabled:opacity-50 rounded-2xl"
+                    style={{ backgroundColor: PURPLE, boxShadow: "0px 4px 10px -2px #00000040" }}
                   >
                     {isLoading ? "PROCESSING..." : "Next"}
                   </button>
@@ -1168,18 +1152,18 @@ export default function CompleteProfileContent() {
 
                   {/* Main content */}
                   <div className="flex-1 flex flex-col min-w-0">
-                    <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200">
-                      <div>
-                        <h2 className="text-xl font-bold text-gray-900">Add Additional Details</h2>
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 sm:p-6 border-b border-gray-200">
+                      <div className="min-w-0">
+                        <h2 className="text-lg sm:text-xl font-bold text-gray-900">Add Additional Details</h2>
                         <p className="text-sm text-gray-600 mt-0.5">This Info will be shown on your public profile.</p>
                       </div>
-                      <div className="flex gap-3">
+                      <div className="flex gap-3 shrink-0">
                         <button type="button" onClick={() => setShowAddAdditionalDetailsModal(false)} className="px-4 py-2 rounded-lg font-semibold text-sm text-gray-600 bg-gray-100 hover:bg-gray-200">Cancel</button>
                         <button type="button" onClick={() => { setShowAddAdditionalDetailsModal(false); showToast("Details saved", "success"); }} className="px-4 py-2 rounded-lg font-semibold text-sm text-white" style={{ backgroundColor: PURPLE }}>Save</button>
                       </div>
                     </div>
 
-                    <div className="flex-1 p-4 sm:p-6 overflow-y-auto">
+                    <div className="flex-1 p-4 sm:p-6 min-h-0 overflow-visible">
                       <div className="max-w-2xl">
                         <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
                           {/* Profile/Logo area */}
