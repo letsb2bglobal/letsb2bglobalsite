@@ -3,6 +3,8 @@
 import React from "react";
 import { useFormContext } from "react-hook-form";
 
+type DetailsErrors = { tourType?: { message?: string }; tourFormat?: { message?: string } };
+
 const INCLUSIONS = [
   "Accommodation",
   "Transportation",
@@ -47,7 +49,7 @@ const ToursForm = () => {
           <option value="luxury">Luxury</option>
           <option value="pilgrimage">Pilgrimage</option>
         </select>
-        {errors.details?.tourType && (
+        {errors.details && (errors.details as DetailsErrors).tourType && (
           <p className="text-red-500 text-[10px] mt-1 font-bold italic">
             Tour type is required
           </p>
@@ -68,7 +70,7 @@ const ToursForm = () => {
           <option value="private">Private (FIT)</option>
           <option value="custom">Customizable</option>
         </select>
-        {errors.details?.tourFormat && (
+        {errors.details && (errors.details as DetailsErrors).tourFormat && (
           <p className="text-red-500 text-[10px] mt-1 font-bold italic">
             Tour format is required
           </p>

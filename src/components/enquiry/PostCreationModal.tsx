@@ -115,7 +115,7 @@ const PostCreationModal: React.FC<PostCreationModalProps> = ({
           budgetType: data.budget.budgetType
         },
         tags: data.tags,
-        user_profile: activeWorkspace?.id,
+        user_profile: activeWorkspace?.data?.documentId,
         status: "Open",
         publishedAt: new Date().toISOString(),
       };

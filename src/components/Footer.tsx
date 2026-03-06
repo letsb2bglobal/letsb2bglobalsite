@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import {
   Facebook,
   Twitter,
@@ -21,13 +22,13 @@ const Footer = () => {
       { name: 'Features', href: '/aboutus#features' },
       { name: 'Membership Plans', href: '/pricing' },
       { name: 'Verification Policy', href: '/aboutus#verification' },
-      { name: 'FAQ', href: '/aboutus#faq' },
+      { name: 'FAQ', href: '/#faqs' },
     ],
     legal: [
       { name: 'Privacy Policy', href: '/privacy' },
       { name: 'Terms & Conditions', href: '/terms' },
       { name: 'Cookie Policy', href: '/cookies' },
-      { name: 'Code of Conduct', href: '/aboutus#conduct' },
+      { name: 'Code of Conduct', href: '/conduct' },
     ],
     support: [
       { name: 'Feedback & Support', href: 'mailto:support@letsb2b.com' },
@@ -43,17 +44,20 @@ const Footer = () => {
   };
 
   return (
-    <footer className="bg-slate-900 text-slate-300 pt-16 pb-8">
+    <footer className="bg-black text-slate-300 pt-16 pb-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-12 mb-16">
 
           {/* ── Brand Column ── */}
           <div className="lg:col-span-2 space-y-6">
-            <Link href="/" className="flex items-center gap-2">
-              <span className="text-blue-400 font-black text-3xl italic tracking-tighter">L</span>
-              <span className="font-black text-white uppercase tracking-tight text-lg underline decoration-blue-500 decoration-4 underline-offset-4">
-                Let's B2B
-              </span>
+            <Link href="/" className="inline-block">
+              <Image
+                src="/letsb2b_logo_white.png"
+                alt="LetsB2B - Global Tourism & Hospitality B2B Network"
+                width={200}
+                height={54}
+                className="h-12 w-auto object-contain"
+              />
             </Link>
             <p className="text-slate-400 text-sm leading-relaxed max-w-xs">
               The global B2B networking and trading platform built exclusively for the tourism and hospitality industry.
@@ -65,17 +69,22 @@ const Footer = () => {
                 All members are verified to maintain trust, credibility, and a professional ecosystem.
               </p>
             </div>
-            <div className="flex gap-3">
-              {footerLinks.social.map((item) => (
-                <a
-                  key={item.name}
-                  href={item.href}
-                  className="p-2.5 bg-white/5 text-slate-400 hover:text-blue-400 hover:bg-blue-500/10 border border-white/10 rounded-xl transition-all"
-                  aria-label={item.name}
-                >
-                  <item.icon className="w-4 h-4" />
-                </a>
-              ))}
+            <div>
+              <p className="text-[11px] font-black text-white uppercase tracking-widest mb-3">Follow us</p>
+              <div className="flex gap-3">
+                {footerLinks.social.map((item) => (
+                  <a
+                    key={item.name}
+                    href={item.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-2.5 bg-white/5 text-slate-400 hover:text-blue-400 hover:bg-blue-500/10 border border-white/10 rounded-xl transition-all"
+                    aria-label={item.name}
+                  >
+                    <item.icon className="w-5 h-5" />
+                  </a>
+                ))}
+              </div>
             </div>
           </div>
 
@@ -147,7 +156,7 @@ const Footer = () => {
         {/* ── Bottom Bar ── */}
         <div className="pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-slate-500 text-xs font-medium">
-            © {currentYear} Let's B2B — Global Tourism &amp; Hospitality B2B Network. All rights reserved.
+            © {currentYear} LetsB2B — Global Tourism &; Hospitality B2B Network. All rights reserved.
           </p>
           <div className="flex items-center gap-6">
             <Link href="/privacy" className="text-slate-500 hover:text-slate-300 text-[10px] font-bold uppercase tracking-widest transition-colors">
@@ -159,7 +168,10 @@ const Footer = () => {
             <Link href="/cookies" className="text-slate-500 hover:text-slate-300 text-[10px] font-bold uppercase tracking-widest transition-colors">
               Cookies
             </Link>
-            <Link href="/aboutus#faq" className="text-slate-500 hover:text-slate-300 text-[10px] font-bold uppercase tracking-widest transition-colors">
+            <Link href="/conduct" className="text-slate-500 hover:text-slate-300 text-[10px] font-bold uppercase tracking-widest transition-colors">
+              Code of Conduct
+            </Link>
+            <Link href="/#faqs" className="text-slate-500 hover:text-slate-300 text-[10px] font-bold uppercase tracking-widest transition-colors">
               FAQ
             </Link>
           </div>

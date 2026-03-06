@@ -3,6 +3,8 @@
 import React from "react";
 import { useFormContext } from "react-hook-form";
 
+type DetailsErrors = { propertyType?: { message?: string }; destination?: { message?: string } };
+
 const PREFERENCES = [
   "Air Conditioned",
   "Non AC",
@@ -39,7 +41,7 @@ const AccommodationForm = () => {
           <option value="apartment">Apartment</option>
           <option value="homestay">Homestay</option>
         </select>
-        {errors.details?.propertyType && (
+        {errors.details && (errors.details as DetailsErrors).propertyType && (
           <p className="text-red-500 text-[10px] mt-1 font-bold italic">
             Property type is required
           </p>
@@ -56,7 +58,7 @@ const AccommodationForm = () => {
           placeholder="e.g. Munnar, Kerala"
           className="w-full h-11 px-4 bg-[#F7F7FB] border border-gray-100 rounded-xl focus:ring-2 focus:ring-[#6B3FA0]/20 outline-none font-bold text-[13px] transition-all"
         />
-        {errors.details?.destination && (
+        {errors.details && (errors.details as DetailsErrors).destination && (
           <p className="text-red-500 text-[10px] mt-1 font-bold italic">
             Destination is required
           </p>
