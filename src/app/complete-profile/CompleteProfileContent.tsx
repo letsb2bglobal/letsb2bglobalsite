@@ -1101,7 +1101,12 @@ export default function CompleteProfileContent() {
                   <div className="flex flex-col sm:flex-row gap-3 shrink-0">
                     <button
                       type="button"
-                      onClick={() => router.push('/add-additional-details')}
+                      onClick={() => {
+                      try {
+                        sessionStorage.setItem('completeProfileFormData', JSON.stringify({ company_name: formData.company_name, business_details: formData.business_details, email: formData.email || user?.email }));
+                      } catch { /* ignore */ }
+                      router.push('/add-additional-details');
+                    }}
                       disabled={isLoading}
                       className="inline-flex items-center justify-center gap-2 font-semibold text-sm rounded-[16px] hover:bg-gray-50 transition-all disabled:opacity-50 shrink-0"
                       style={{

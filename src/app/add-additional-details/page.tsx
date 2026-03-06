@@ -18,11 +18,13 @@ const SIDEBAR_TABS = [
 ];
 
 const HOTEL_OPTIONS = ['Hotel', 'Resort', 'Boutique', 'Budget', '5 Star', '4 Star', '3 Star'];
+const BUSINESS_TYPE_OPTIONS = ['Restaurant', 'Hotel', 'Taxi Business', 'DMC', 'Tour Guide', 'TT Bus Services', 'Adventure Activity', 'Ayurveda Centre'];
 const COUNTRY_OPTIONS = ['India', 'United Arab Emirates', 'United States', 'United Kingdom', 'Other'];
 const STATE_OPTIONS = ['Kerala', 'Maharashtra', 'Karnataka', 'Delhi', 'Other'];
 const CITY_OPTIONS = ['Kochi', 'Mumbai', 'Bangalore', 'Delhi', 'Dubai', 'Other'];
 const DESIGNATION_OPTIONS = ['Manager', 'Director', 'Owner', 'CEO', 'Other'];
 const BUSINESS_CATEGORY_OPTIONS = ['Hotel', 'Restaurant', 'DMC', 'Taxi Service', 'Tour Guide', 'Other'];
+const LANGUAGE_OPTIONS = ['English', 'Hindi', 'Malayalam', 'Tamil', 'Telugu', 'Marathi', 'Bengali', 'Gujarati', 'Kannada', 'Other'];
 
 function AddAdditionalDetailsContent() {
   const router = useRouter();
@@ -63,20 +65,28 @@ function AddAdditionalDetailsContent() {
       setFormData((prev) => ({
         ...prev,
         companyName: p.company_name || prev.companyName,
-        businessType: p.business_details?.hotel_type || prev.businessType,
+        businessType: p.business_type?.[0] || p.business_details?.hotel_type || prev.businessType,
         roomCount: String(p.business_details?.number_of_rooms ?? prev.roomCount),
         email: p.email || user?.email || prev.email,
       }));
     };
-    const cached = typeof window !== 'undefined' ? getProfileData() : null;
-    if (cached?.company_name || cached?.business_details) {
-      applyProfile(cached);
-    }
-    if (user?.id) {
-      getMyProfile(user.id).then(({ exists, profile }) => {
+    (async () => {
+      const cached = typeof window !== 'undefined' ? getProfileData() : null;
+      if (cached?.company_name || cached?.business_details) applyProfile(cached);
+      if (user?.id) {
+        const { exists, profile } = await getMyProfile(user.id);
         if (exists && profile) applyProfile(profile as any);
-      });
-    }
+      }
+      if (typeof window !== 'undefined') {
+        try {
+          const fromComplete = sessionStorage.getItem('completeProfileFormData');
+          if (fromComplete) {
+            applyProfile(JSON.parse(fromComplete));
+            sessionStorage.removeItem('completeProfileFormData');
+          }
+        } catch { /* ignore */ }
+      }
+    })();
   }, [user]);
 
   const handleCancel = () => {
@@ -89,17 +99,6 @@ function AddAdditionalDetailsContent() {
     await new Promise((r) => setTimeout(r, 500));
     setSaving(false);
     router.push('/complete-profile');
-  };
-
-  const addLanguage = () => {
-    const val = formData.languageInput.trim();
-    if (val && !formData.languages.includes(val)) {
-      setFormData((prev) => ({
-        ...prev,
-        languages: [...prev.languages, val],
-        languageInput: '',
-      }));
-    }
   };
 
   const removeLanguage = (idx: number) => {
@@ -243,55 +242,50 @@ function AddAdditionalDetailsContent() {
                           onChange={(e) => setFormData((p) => ({ ...p, businessType: e.target.value }))}
                           className="w-full px-4 py-3 border border-gray-300 rounded-xl text-gray-800 bg-white focus:outline-none focus:border-[#612178]"
                         >
-                          {HOTEL_OPTIONS.map((o) => (
+                          {BUSINESS_TYPE_OPTIONS.map((o) => (
                             <option key={o} value={o}>{o}</option>
                           ))}
                         </select>
                       </div>
                       <div>
-                        <select
+                        <input
+                          type="text"
                           value={formData.roomCount}
                           onChange={(e) => setFormData((p) => ({ ...p, roomCount: e.target.value }))}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-xl text-gray-800 bg-white focus:outline-none focus:border-[#612178]"
-                        >
-                          {['24', '12', '36', '50', '100'].map((n) => (
-                            <option key={n} value={n}>{n} Rooms</option>
-                          ))}
-                        </select>
+                          placeholder="24 Rooms"
+                          className="w-full px-4 py-3 border border-gray-300 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:border-[#612178]"
+                        />
                       </div>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1.5">Provide A Description Of Your Company</label>
                       <textarea
                         value={formData.description}
                         onChange={(e) => setFormData((p) => ({ ...p, description: e.target.value }))}
                         rows={4}
-                        placeholder="Enter description..."
+                        placeholder="Provide A Description Of Your Company"
                         className="w-full px-4 py-3 border border-gray-300 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:border-[#612178] resize-none"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1.5">Select Languages Preferred</label>
-                      <div className="flex gap-2 mb-2">
-                        <input
-                          type="text"
-                          value={formData.languageInput}
-                          onChange={(e) => setFormData((p) => ({ ...p, languageInput: e.target.value }))}
-                          onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addLanguage())}
-                          placeholder="Add language"
-                          className="flex-1 px-4 py-3 border border-gray-300 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:border-[#612178]"
-                        />
-                        <button
-                          type="button"
-                          onClick={addLanguage}
-                          className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 text-white"
-                          style={{ backgroundColor: PURPLE }}
-                        >
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                          </svg>
-                        </button>
-                      </div>
+                      <select
+                        value={formData.languageInput}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (val && !formData.languages.includes(val)) {
+                            setFormData((prev) => ({
+                              ...prev,
+                              languages: [...prev.languages, val],
+                              languageInput: '',
+                            }));
+                          }
+                        }}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-xl text-gray-800 bg-white focus:outline-none focus:border-[#612178]"
+                      >
+                        <option value="">Select Languages Preferred</option>
+                        {LANGUAGE_OPTIONS.map((lang) => (
+                          <option key={lang} value={lang}>{lang}</option>
+                        ))}
+                      </select>
                       {formData.languages.length > 0 && (
                         <div className="flex flex-wrap gap-2">
                           {formData.languages.map((lang, i) => (
@@ -307,21 +301,20 @@ function AddAdditionalDetailsContent() {
                       )}
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1.5">Enter Website Link (Optional)</label>
                       <input
                         type="url"
                         value={formData.website}
                         onChange={(e) => setFormData((p) => ({ ...p, website: e.target.value }))}
-                        placeholder="https://"
+                        placeholder="Enter Website Link (Optional)"
                         className="w-full px-4 py-3 border border-gray-300 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:border-[#612178]"
                       />
                     </div>
                     <button
                       type="button"
-                      className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm"
-                      style={{ backgroundColor: PURPLE_LIGHT, color: PURPLE }}
+                      className="inline-flex items-center gap-2 font-normal text-base"
+                      style={{ color: '#1F1E25' }}
                     >
-                      <span className="w-8 h-8 rounded-full flex items-center justify-center text-white" style={{ backgroundColor: PURPLE }}>
+                      <span className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-white" style={{ backgroundColor: PURPLE }}>
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                         </svg>
@@ -332,26 +325,23 @@ function AddAdditionalDetailsContent() {
 
                 {/* Location */}
                 <div>
-                  <h2 className="text-base font-bold text-gray-900 mb-4">Location</h2>
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1.5">Location</label>
                       <input
                         type="text"
                         value={formData.location}
                         onChange={(e) => setFormData((p) => ({ ...p, location: e.target.value }))}
-                        placeholder="Enter location"
+                        placeholder="Location"
                         className="w-full px-4 py-3 border border-gray-300 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:border-[#612178]"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1.5">Country</label>
                       <select
                         value={formData.country}
                         onChange={(e) => setFormData((p) => ({ ...p, country: e.target.value }))}
                         className="w-full px-4 py-3 border border-gray-300 rounded-xl text-gray-800 bg-white focus:outline-none focus:border-[#612178]"
                       >
-                        <option value="">Select Country</option>
+                        <option value="">Country</option>
                         {COUNTRY_OPTIONS.map((c) => (
                           <option key={c} value={c}>{c}</option>
                         ))}
@@ -359,26 +349,24 @@ function AddAdditionalDetailsContent() {
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1.5">State</label>
                         <select
                           value={formData.state}
                           onChange={(e) => setFormData((p) => ({ ...p, state: e.target.value }))}
                           className="w-full px-4 py-3 border border-gray-300 rounded-xl text-gray-800 bg-white focus:outline-none focus:border-[#612178]"
                         >
-                          <option value="">Select State</option>
+                          <option value="">State</option>
                           {STATE_OPTIONS.map((s) => (
                             <option key={s} value={s}>{s}</option>
                           ))}
                         </select>
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1.5">City</label>
                         <select
                           value={formData.city}
                           onChange={(e) => setFormData((p) => ({ ...p, city: e.target.value }))}
                           className="w-full px-4 py-3 border border-gray-300 rounded-xl text-gray-800 bg-white focus:outline-none focus:border-[#612178]"
                         >
-                          <option value="">Select City</option>
+                          <option value="">City</option>
                           {CITY_OPTIONS.map((c) => (
                             <option key={c} value={c}>{c}</option>
                           ))}
@@ -392,18 +380,14 @@ function AddAdditionalDetailsContent() {
                 <div>
                   <h2 className="text-base font-bold text-gray-900 mb-4">Contact Information</h2>
                   <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1.5">Enter The Contact Person</label>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <input
                         type="text"
                         value={formData.contactPerson}
                         onChange={(e) => setFormData((p) => ({ ...p, contactPerson: e.target.value }))}
-                        placeholder="Contact person name"
+                        placeholder="Enter The Contact Person"
                         className="w-full px-4 py-3 border border-gray-300 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:border-[#612178]"
                       />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1.5">Select Designation</label>
                       <select
                         value={formData.designation}
                         onChange={(e) => setFormData((p) => ({ ...p, designation: e.target.value }))}
@@ -416,7 +400,6 @@ function AddAdditionalDetailsContent() {
                       </select>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1.5">Email</label>
                       <input
                         type="email"
                         value={formData.email}
@@ -430,6 +413,7 @@ function AddAdditionalDetailsContent() {
                         value={formData.countryCode}
                         onChange={(e) => setFormData((p) => ({ ...p, countryCode: e.target.value }))}
                         className="w-20 px-3 py-3 border border-gray-300 rounded-xl text-gray-800 bg-white focus:outline-none focus:border-[#612178]"
+                        aria-label="Country code"
                       >
                         <option value="+91">+91</option>
                         <option value="+1">+1</option>
@@ -441,15 +425,16 @@ function AddAdditionalDetailsContent() {
                         value={formData.phone}
                         onChange={(e) => setFormData((p) => ({ ...p, phone: e.target.value }))}
                         placeholder="Enter Phone No."
+                        aria-label="Phone number"
                         className="flex-1 px-4 py-3 border border-gray-300 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:border-[#612178]"
                       />
                     </div>
                     <button
                       type="button"
-                      className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm"
-                      style={{ backgroundColor: PURPLE_LIGHT, color: PURPLE }}
+                      className="inline-flex items-center gap-2 font-normal text-base"
+                      style={{ color: '#1F1E25' }}
                     >
-                      <span className="w-8 h-8 rounded-full flex items-center justify-center text-white" style={{ backgroundColor: PURPLE }}>
+                      <span className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-white" style={{ backgroundColor: PURPLE }}>
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                         </svg>
