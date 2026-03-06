@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import ProtectedRoute, { useAuth } from '@/components/ProtectedRoute';
 import { getMyProfile } from '@/lib/profile';
+import { getProfileData } from '@/lib/auth';
 
 const PURPLE = '#612178';
 const PURPLE_LIGHT = '#E0CCF0';
@@ -58,18 +59,22 @@ function AddAdditionalDetailsContent() {
   const completionPercent = 25;
 
   useEffect(() => {
+    const applyProfile = (p: any) => {
+      setFormData((prev) => ({
+        ...prev,
+        companyName: p.company_name || prev.companyName,
+        businessType: p.business_details?.hotel_type || prev.businessType,
+        roomCount: String(p.business_details?.number_of_rooms ?? prev.roomCount),
+        email: p.email || user?.email || prev.email,
+      }));
+    };
+    const cached = typeof window !== 'undefined' ? getProfileData() : null;
+    if (cached?.company_name || cached?.business_details) {
+      applyProfile(cached);
+    }
     if (user?.id) {
       getMyProfile(user.id).then(({ exists, profile }) => {
-        if (exists && profile) {
-          const p = profile as any;
-          setFormData((prev) => ({
-            ...prev,
-            companyName: p.company_name || prev.companyName,
-            businessType: p.business_details?.hotel_type || prev.businessType,
-            roomCount: String(p.business_details?.number_of_rooms ?? prev.roomCount),
-            email: p.email || user?.email || prev.email,
-          }));
-        }
+        if (exists && profile) applyProfile(profile as any);
       });
     }
   }, [user]);
@@ -155,42 +160,50 @@ function AddAdditionalDetailsContent() {
       <div className="flex flex-1 flex-col lg:flex-row min-h-0">
         <div className="flex flex-1 gap-0 lg:gap-8 p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full overflow-auto">
           {/* Left sidebar */}
-        <aside className="w-full lg:w-64 shrink-0 mb-6 lg:mb-0">
+        <aside className="w-full lg:w-[309px] shrink-0 mb-6 lg:mb-0">
           <div
-            className="rounded-2xl p-5 mb-4"
-            style={{ backgroundColor: PURPLE_LIGHT }}
+            className="rounded-[16px] p-5"
+            style={{
+              width: '100%',
+              minHeight: 242.14,
+              maxWidth: 308.59,
+              backgroundColor: '#FFFFFF',
+              border: '1px solid #D9D9D9',
+              boxShadow: '0px 4px 4px 0px #00000040',
+            }}
           >
             <p className="font-bold text-gray-900 mb-3">Profile Completed</p>
-            <div className="flex items-center gap-3 mb-3">
+            <div className="flex items-center gap-3 mb-4">
               <div className="relative w-14 h-14 shrink-0">
                 <svg className="w-14 h-14 -rotate-90" viewBox="0 0 36 36">
                   <path fill="none" stroke="#E5E7EB" strokeWidth="3" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                  <path fill="none" strokeWidth="3" strokeDasharray={`${completionPercent}, 100`} strokeLinecap="round" stroke={PURPLE} d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                  <path fill="none" strokeWidth="3" strokeDasharray={`${completionPercent}, 100`} strokeLinecap="round" stroke="#F22822" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
                 </svg>
-                <span className="absolute inset-0 flex items-center justify-center text-xs font-bold" style={{ color: PURPLE }}>
+                <span className="absolute inset-0 flex items-center justify-center text-xs font-bold" style={{ color: '#F22822' }}>
                   {completionPercent}%
                 </span>
               </div>
               <p className="text-sm text-gray-600">Complete Your Profile To Be Verified</p>
             </div>
+            <nav className="space-y-1">
+              {SIDEBAR_TABS.map((tab) => (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => setActiveTab(tab.id)}
+                  className="w-full text-left px-4 rounded-[8px] text-sm font-semibold transition-all"
+                  style={{
+                    width: '100%',
+                    height: 41.97,
+                    backgroundColor: activeTab === tab.id ? '#E7C7F2' : '#FFFFFF',
+                    color: '#1F1E25',
+                  }}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </nav>
           </div>
-          <nav className="space-y-1">
-            {SIDEBAR_TABS.map((tab) => (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => setActiveTab(tab.id)}
-                className="w-full text-left px-4 py-3 rounded-xl text-sm font-semibold transition-all"
-                style={
-                  activeTab === tab.id
-                    ? { backgroundColor: PURPLE, color: 'white' }
-                    : { backgroundColor: PURPLE_LIGHT, color: PURPLE }
-                }
-              >
-                {tab.label}
-              </button>
-            ))}
-          </nav>
         </aside>
 
         {/* Main content */}
@@ -198,31 +211,33 @@ function AddAdditionalDetailsContent() {
           <div className="bg-white rounded-2xl border border-gray-200 p-6 sm:p-8 space-y-8">
             {activeTab === 'company' && (
               <>
-                {/* Profile picture upload */}
-                <div
-                  className="w-full aspect-[3/1] min-h-[120px] rounded-xl flex items-center justify-center cursor-pointer border-2 border-dashed transition-colors hover:opacity-90"
-                  style={{ backgroundColor: PURPLE_LIGHT, borderColor: PURPLE_LIGHT }}
-                >
-                  <Image src="/profilecamera.png" alt="" width={48} height={48} className="opacity-70" />
+                {/* Profile visuals - cover banner + profile pic (same UI as 4 Preview) */}
+                <div className="mb-6">
+                  <div className="relative h-32 sm:h-40 w-full rounded-t-2xl" style={{ backgroundColor: '#E3BFDD' }}>
+                    <button type="button" className="absolute top-3 right-3 w-10 h-10 rounded-full flex items-center justify-center overflow-hidden" style={{ backgroundColor: PURPLE }} aria-label="Edit cover">
+                      <Image src="/cover_cameralogo.png" alt="" width={20} height={20} className="object-contain" />
+                    </button>
+                  </div>
+                  <div className="flex justify-start relative -mt-12 pl-6">
+                    <div className="w-24 h-24 rounded-full bg-white border-4 border-white shadow-lg flex items-center justify-center overflow-hidden z-10 cursor-pointer">
+                      <Image src="/profilecamera.png" alt="" width={24} height={24} className="object-contain" />
+                    </div>
+                  </div>
                 </div>
 
-                {/* Company Details */}
-                <div>
-                  <h2 className="text-base font-bold text-gray-900 mb-4">Company Details</h2>
-                  <div className="space-y-4">
+                {/* Company Name, Business Type, Rooms - auto-populated from Business Information */}
+                <div className="space-y-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1.5">Company Name</label>
                       <input
                         type="text"
                         value={formData.companyName}
                         onChange={(e) => setFormData((p) => ({ ...p, companyName: e.target.value }))}
-                        placeholder="Lorem Ipsum"
+                        placeholder="Company Name"
                         className="w-full px-4 py-3 border border-gray-300 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:border-[#612178]"
                       />
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1.5">Business Type</label>
                         <select
                           value={formData.businessType}
                           onChange={(e) => setFormData((p) => ({ ...p, businessType: e.target.value }))}
@@ -234,7 +249,6 @@ function AddAdditionalDetailsContent() {
                         </select>
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1.5">Rooms</label>
                         <select
                           value={formData.roomCount}
                           onChange={(e) => setFormData((p) => ({ ...p, roomCount: e.target.value }))}
@@ -315,7 +329,6 @@ function AddAdditionalDetailsContent() {
                       Add Social Media Profile
                     </button>
                   </div>
-                </div>
 
                 {/* Location */}
                 <div>
