@@ -182,9 +182,9 @@ export default function CompleteProfileContent() {
     setFormData((prev) => {
       const isSelected = prev.preferred_collaborations.includes(type);
       if (isSelected) {
-        return { ...prev, preferred_collaborations: [] };
+        return { ...prev, preferred_collaborations: prev.preferred_collaborations.filter((t) => t !== type) };
       } else {
-        return { ...prev, preferred_collaborations: [type] };
+        return { ...prev, preferred_collaborations: [...prev.preferred_collaborations, type] };
       }
     });
     if (errors.preferred_collaborations) {
@@ -596,6 +596,7 @@ export default function CompleteProfileContent() {
     if (currentStep === 1) return 25;
     if (currentStep === 2) return 50;
     if (currentStep === 3) return 75;
+    if (currentStep === 4) return 25; // Preview page shows 25% per design
     return 100;
   };
 
@@ -925,7 +926,7 @@ export default function CompleteProfileContent() {
 
                 {/* Profile visuals - cover banner + profile pic */}
                 <div className="mb-6">
-                  <div className="relative h-32 sm:h-40 w-full rounded-t-2xl" style={{ backgroundColor: PURPLE_LIGHT }}>
+                  <div className="relative h-32 sm:h-40 w-full rounded-t-2xl" style={{ backgroundColor: '#E3BFDD' }}>
                     <button type="button" className="absolute top-3 right-3 w-10 h-10 rounded-full flex items-center justify-center overflow-hidden" style={{ backgroundColor: PURPLE }} aria-label="Edit cover">
                       <Image src="/cover_cameralogo.png" alt="" width={20} height={20} className="object-contain" />
                     </button>
@@ -940,8 +941,34 @@ export default function CompleteProfileContent() {
                 {/* Business info - company name with Edit */}
                 <div className="pt-14 sm:pt-12 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 mb-4">
                   <div className="min-w-0 flex-1">
-                    <h4 className="text-xl sm:text-2xl font-bold text-gray-900 break-words">{String(formData.company_name || "Company Name")}</h4>
-                    <span className="text-sm text-gray-600">{String(formData.email || (user?.email != null ? user.email : ""))}</span>
+                    <h4
+                      className="break-words"
+                      style={{
+                        fontFamily: '"Inter", "Inter Display", sans-serif',
+                        fontWeight: 600,
+                        fontStyle: 'normal',
+                        fontSize: 32,
+                        lineHeight: '40px',
+                        letterSpacing: 0,
+                        color: '#1F1E25',
+                      }}
+                    >
+                      {String(formData.company_name || "Company Name")}
+                    </h4>
+                    <span
+                      className="break-words"
+                      style={{
+                        fontFamily: '"Inter", "Inter Display", sans-serif',
+                        fontWeight: 400,
+                        fontStyle: 'normal',
+                        fontSize: 16,
+                        lineHeight: 1.5,
+                        letterSpacing: 0,
+                        color: '#612178',
+                      }}
+                    >
+                      {String(formData.email || (user?.email != null ? user.email : ""))}
+                    </span>
                   </div>
                   <button
                     type="button"
@@ -958,11 +985,21 @@ export default function CompleteProfileContent() {
 
                 {/* Business stats - Hotel/DMC/Restaurant details */}
                 {(formData.business_type.length > 0 || !!(formData.business_details?.hotel_type || formData.business_details?.areas_serviced)) && (
-                  <div className="flex flex-wrap items-center gap-2 text-sm font-semibold text-gray-800 mb-6">
+                  <div
+                    className="flex flex-wrap items-center gap-2 mb-6"
+                    style={{
+                      fontFamily: '"Inter", "Inter Display", sans-serif',
+                      fontWeight: 400,
+                      fontSize: 16,
+                      lineHeight: 1.5,
+                      letterSpacing: 0,
+                      color: '#545454',
+                    }}
+                  >
                     {formData.business_type.includes("Hotel") && (
                       <>
                         <span>{String(formData.business_details?.hotel_type ?? "-")}</span>
-                        <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: PURPLE }} />
+                        <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: '#545454' }} />
                         <span>{String(formData.business_details?.number_of_rooms ?? "-")} Rooms</span>
                       </>
                     )}
@@ -972,7 +1009,7 @@ export default function CompleteProfileContent() {
                     {(formData.business_type.includes("Restaurant") || formData.business_type.includes("Ayurveda Centre")) && (
                       <>
                         <span>{String(formData.business_details?.location ?? "-")}</span>
-                        <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: PURPLE }} />
+                        <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: '#545454' }} />
                         <span>Capacity: {String(formData.business_details?.capacity ?? "-")}</span>
                       </>
                     )}
@@ -981,12 +1018,33 @@ export default function CompleteProfileContent() {
 
                 {/* Business You Are Finding For - tags with x and + */}
                 <div className="mb-8">
-                  <p className="text-base font-bold text-gray-900 mb-3">Business You Are Finding For</p>
+                  <p
+                    className="mb-3"
+                    style={{
+                      fontFamily: '"Inter", "Inter Display", sans-serif',
+                      fontWeight: 700,
+                      fontSize: 20,
+                      lineHeight: 1.5,
+                      letterSpacing: 0,
+                      color: '#000000',
+                    }}
+                  >
+                    Business You Are Finding For
+                  </p>
                   <div className="flex flex-wrap items-center gap-2">
                     {formData.preferred_collaborations.map((type) => (
                       <span
                         key={type}
-                        className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold text-gray-800 bg-gray-100"
+                        className="inline-flex items-center gap-2 px-3 py-2 rounded-lg"
+                        style={{
+                          fontFamily: '"Inter", "Inter Display", sans-serif',
+                          fontWeight: 400,
+                          fontSize: 16,
+                          lineHeight: 1.5,
+                          letterSpacing: 0,
+                          color: '#1F1E25',
+                          backgroundColor: '#FDF5FF',
+                        }}
                       >
                         {type}
                         <button
@@ -1024,9 +1082,9 @@ export default function CompleteProfileContent() {
                     <div className="relative w-14 h-14 shrink-0">
                       <svg className="w-14 h-14 -rotate-90" viewBox="0 0 36 36">
                         <path fill="none" stroke="#E5E7EB" strokeWidth="3" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                        <path fill="none" strokeWidth="3" strokeDasharray={`${calculateCompletionPercentage()}, 100`} strokeLinecap="round" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" style={{ stroke: PURPLE }} />
+                        <path fill="none" strokeWidth="3" strokeDasharray={`${calculateCompletionPercentage()}, 100`} strokeLinecap="round" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" style={{ stroke: "#F22822" }} />
                       </svg>
-                      <span className="absolute inset-0 flex items-center justify-center text-xs font-bold" style={{ color: PURPLE }}>
+                      <span className="absolute inset-0 flex items-center justify-center text-xs font-bold" style={{ color: "#F22822" }}>
                         {calculateCompletionPercentage()}%
                       </span>
                     </div>
@@ -1040,8 +1098,14 @@ export default function CompleteProfileContent() {
                       type="button"
                       onClick={() => router.push('/add-additional-details')}
                       disabled={isLoading}
-                      className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-white border-2 font-semibold text-sm rounded-full hover:bg-gray-50 transition-all disabled:opacity-50"
-                      style={{ borderColor: PURPLE, color: PURPLE }}
+                      className="inline-flex items-center justify-center gap-2 font-semibold text-sm rounded-[16px] hover:bg-gray-50 transition-all disabled:opacity-50 shrink-0"
+                      style={{
+                        width: 218.6,
+                        height: 50,
+                        backgroundColor: '#FFFFFF',
+                        border: '1px solid #612178',
+                        color: PURPLE,
+                      }}
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -1051,8 +1115,13 @@ export default function CompleteProfileContent() {
                     <button
                       onClick={() => submitStep()}
                       disabled={isLoading}
-                      className="px-6 py-3 text-white font-semibold text-sm rounded-full transition-all disabled:opacity-50"
-                      style={{ backgroundColor: PURPLE }}
+                      className="text-white font-semibold text-sm rounded-[16px] transition-all disabled:opacity-50 shrink-0"
+                      style={{
+                        width: 218.6,
+                        height: 50,
+                        backgroundColor: PURPLE,
+                        boxShadow: '0px 4px 10px -2px #00000040',
+                      }}
                     >
                       {isLoading ? "PROCESSING..." : "Lets Find Other Business"}
                     </button>
