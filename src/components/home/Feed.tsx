@@ -38,12 +38,13 @@ const Feed: React.FC<FeedProps> = ({ posts, isLoading }) => {
       <CreatePost />
       
       {/* Filter Row */}
-      <div className="flex items-center justify-between px-2">
-        <div className="flex items-center gap-1">
-           <span className="text-gray-400 text-xs font-semibold uppercase tracking-wider">Sort By</span>
-           <button className="flex items-center gap-1 text-gray-800 text-xs font-bold hover:text-[#6B3FA0] transition-colors">
-             Recent <ChevronDown size={14} />
-           </button>
+      <div className="flex items-center gap-3 px-2">
+        <div className="flex-1 h-px bg-gray-200" aria-hidden />
+        <div className="flex items-center gap-1.5 shrink-0">
+          <span className="text-[#848484] text-[12px] font-regular">Sort by</span>
+          <button className="flex items-center gap-1 text-gray-800 text-[12px] font-medium hover:text-gray-900 transition-colors">
+            Recent <ChevronDown size={14} className="text-gray-700" />
+          </button>
         </div>
       </div>
 

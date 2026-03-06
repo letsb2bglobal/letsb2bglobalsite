@@ -13,7 +13,6 @@ import Header from "@/components/Header";
 import SidebarLeft from "@/components/home/SidebarLeft";
 import SidebarRight from "@/components/home/SidebarRight";
 import Feed from "@/components/home/Feed";
-import EnquiryArchitecture from "@/components/home/EnquiryArchitecture";
 import { useTeam } from "@/context/TeamContext";
 
 export default function HomeRoute() {
@@ -82,7 +81,6 @@ export default function HomeRoute() {
 
           {/* Feed - 50% (lg:col-span-6) */}
           <div className="col-span-1 lg:col-span-6 flex flex-col gap-6">
-            <EnquiryArchitecture />
             <Feed posts={posts} isLoading={postsLoading} />
           </div>
 
