@@ -42,7 +42,10 @@ const SuggestionsCard = () => {
         ))}
       </div>
 
-      <button className="text-[11px] font-bold text-[#6B3FA0] hover:underline mt-1">
+
+
+
+      <button className="text-[11px] font-bold text-[#6B3FA0] hover:underline mt-2">
         See All Suggestions
       </button>
     </div>
