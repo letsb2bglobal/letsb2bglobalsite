@@ -108,17 +108,6 @@ function AddAdditionalDetailsContent() {
     }));
   };
 
-  const addFindingFor = () => {
-    const val = formData.findingBusiness.trim();
-    if (val && !formData.findingFor.includes(val)) {
-      setFormData((prev) => ({
-        ...prev,
-        findingFor: [...prev.findingFor, val],
-        findingBusiness: '',
-      }));
-    }
-  };
-
   const removeFindingFor = (idx: number) => {
     setFormData((prev) => ({
       ...prev,
@@ -207,12 +196,27 @@ function AddAdditionalDetailsContent() {
 
         {/* Main content */}
         <div className="flex-1 min-w-0">
-          <div className="bg-white rounded-2xl border border-gray-200 p-6 sm:p-8 space-y-8">
+          <div
+            className={`rounded-2xl p-6 sm:p-8 space-y-6 ${
+              activeTab === 'company' || activeTab === 'business' || activeTab === 'kyc'
+                ? ''
+                : 'bg-white border border-gray-200'
+            }`}
+            style={
+              activeTab === 'company' || activeTab === 'business' || activeTab === 'kyc'
+                ? {
+                    background: 'linear-gradient(306.38deg, rgba(255, 255, 255, 0.43) 19.03%, rgba(243, 222, 255, 0.3096) 81.81%)',
+                    backdropFilter: 'blur(104px)',
+                    WebkitBackdropFilter: 'blur(104px)',
+                  }
+                : undefined
+            }
+          >
             {activeTab === 'company' && (
               <>
-                {/* Profile visuals - cover banner + profile pic (same UI as 4 Preview) */}
-                <div className="mb-6">
-                  <div className="relative h-32 sm:h-40 w-full rounded-t-2xl" style={{ backgroundColor: '#E3BFDD' }}>
+                {/* Combined: Profile + Company Details */}
+                <div className="rounded-2xl overflow-hidden bg-white border border-gray-200 shadow-sm">
+                  <div className="relative h-32 sm:h-40 w-full" style={{ backgroundColor: '#E3BFDD' }}>
                     <button type="button" className="absolute top-3 right-3 w-10 h-10 rounded-full flex items-center justify-center overflow-hidden" style={{ backgroundColor: PURPLE }} aria-label="Edit cover">
                       <Image src="/cover_cameralogo.png" alt="" width={20} height={20} className="object-contain" />
                     </button>
@@ -222,109 +226,98 @@ function AddAdditionalDetailsContent() {
                       <Image src="/profilecamera.png" alt="" width={24} height={24} className="object-contain" />
                     </div>
                   </div>
+                  <div className="px-6 sm:px-8 pt-4 pb-6 sm:pb-8 space-y-4">
+                  <input
+                    type="text"
+                    value={formData.companyName}
+                    onChange={(e) => setFormData((p) => ({ ...p, companyName: e.target.value }))}
+                    placeholder="Company Name"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:border-[#612178]"
+                  />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <select
+                      value={formData.businessType}
+                      onChange={(e) => setFormData((p) => ({ ...p, businessType: e.target.value }))}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl text-gray-800 bg-white focus:outline-none focus:border-[#612178]"
+                    >
+                      {BUSINESS_TYPE_OPTIONS.map((o) => (
+                        <option key={o} value={o}>{o}</option>
+                      ))}
+                    </select>
+                    <input
+                      type="text"
+                      value={formData.roomCount}
+                      onChange={(e) => setFormData((p) => ({ ...p, roomCount: e.target.value }))}
+                      placeholder="24 Rooms"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:border-[#612178]"
+                    />
+                  </div>
+                  <textarea
+                    value={formData.description}
+                    onChange={(e) => setFormData((p) => ({ ...p, description: e.target.value }))}
+                    rows={4}
+                    placeholder="Provide A Description Of Your Company"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:border-[#612178] resize-none"
+                  />
+                  <div>
+                    <select
+                      value={formData.languageInput}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val && !formData.languages.includes(val)) {
+                          setFormData((prev) => ({
+                            ...prev,
+                            languages: [...prev.languages, val],
+                            languageInput: '',
+                          }));
+                        }
+                      }}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl text-gray-800 bg-white focus:outline-none focus:border-[#612178]"
+                    >
+                      <option value="">Select Languages Preferred</option>
+                      {LANGUAGE_OPTIONS.map((lang) => (
+                        <option key={lang} value={lang}>{lang}</option>
+                      ))}
+                    </select>
+                    {formData.languages.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {formData.languages.map((lang, i) => (
+                          <span
+                            key={i}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-gray-100 text-gray-800"
+                          >
+                            {lang}
+                            <button type="button" onClick={() => removeLanguage(i)} className="text-gray-500 hover:text-red-600">×</button>
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <input
+                    type="url"
+                    value={formData.website}
+                    onChange={(e) => setFormData((p) => ({ ...p, website: e.target.value }))}
+                    placeholder="Enter Website Link (Optional)"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:border-[#612178]"
+                  />
+                  <button
+                    type="button"
+                    className="inline-flex items-center gap-2 font-normal text-base"
+                    style={{ color: '#1F1E25' }}
+                  >
+                    <span className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-white" style={{ backgroundColor: PURPLE }}>
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                      </svg>
+                    </span>
+                    Add Social Media Profile
+                  </button>
+                  </div>
                 </div>
 
-                {/* Company Name, Business Type, Rooms - auto-populated from Business Information */}
-                <div className="space-y-4">
-                    <div>
-                      <input
-                        type="text"
-                        value={formData.companyName}
-                        onChange={(e) => setFormData((p) => ({ ...p, companyName: e.target.value }))}
-                        placeholder="Company Name"
-                        className="w-full px-4 py-3 border border-gray-300 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:border-[#612178]"
-                      />
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div>
-                        <select
-                          value={formData.businessType}
-                          onChange={(e) => setFormData((p) => ({ ...p, businessType: e.target.value }))}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-xl text-gray-800 bg-white focus:outline-none focus:border-[#612178]"
-                        >
-                          {BUSINESS_TYPE_OPTIONS.map((o) => (
-                            <option key={o} value={o}>{o}</option>
-                          ))}
-                        </select>
-                      </div>
-                      <div>
-                        <input
-                          type="text"
-                          value={formData.roomCount}
-                          onChange={(e) => setFormData((p) => ({ ...p, roomCount: e.target.value }))}
-                          placeholder="24 Rooms"
-                          className="w-full px-4 py-3 border border-gray-300 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:border-[#612178]"
-                        />
-                      </div>
-                    </div>
-                    <div>
-                      <textarea
-                        value={formData.description}
-                        onChange={(e) => setFormData((p) => ({ ...p, description: e.target.value }))}
-                        rows={4}
-                        placeholder="Provide A Description Of Your Company"
-                        className="w-full px-4 py-3 border border-gray-300 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:border-[#612178] resize-none"
-                      />
-                    </div>
-                    <div>
-                      <select
-                        value={formData.languageInput}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          if (val && !formData.languages.includes(val)) {
-                            setFormData((prev) => ({
-                              ...prev,
-                              languages: [...prev.languages, val],
-                              languageInput: '',
-                            }));
-                          }
-                        }}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-xl text-gray-800 bg-white focus:outline-none focus:border-[#612178]"
-                      >
-                        <option value="">Select Languages Preferred</option>
-                        {LANGUAGE_OPTIONS.map((lang) => (
-                          <option key={lang} value={lang}>{lang}</option>
-                        ))}
-                      </select>
-                      {formData.languages.length > 0 && (
-                        <div className="flex flex-wrap gap-2">
-                          {formData.languages.map((lang, i) => (
-                            <span
-                              key={i}
-                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-gray-100 text-gray-800"
-                            >
-                              {lang}
-                              <button type="button" onClick={() => removeLanguage(i)} className="text-gray-500 hover:text-red-600">×</button>
-                            </span>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                    <div>
-                      <input
-                        type="url"
-                        value={formData.website}
-                        onChange={(e) => setFormData((p) => ({ ...p, website: e.target.value }))}
-                        placeholder="Enter Website Link (Optional)"
-                        className="w-full px-4 py-3 border border-gray-300 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:border-[#612178]"
-                      />
-                    </div>
-                    <button
-                      type="button"
-                      className="inline-flex items-center gap-2 font-normal text-base"
-                      style={{ color: '#1F1E25' }}
-                    >
-                      <span className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-white" style={{ backgroundColor: PURPLE }}>
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                        </svg>
-                      </span>
-                      Add Social Media Profile
-                    </button>
-                  </div>
-
-                {/* Location */}
-                <div>
+                {/* Card 2: Location */}
+                <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 sm:p-8">
+                  <h2 className="text-base font-bold text-gray-900 mb-4">Location</h2>
                   <div className="space-y-4">
                     <div>
                       <input
@@ -376,8 +369,8 @@ function AddAdditionalDetailsContent() {
                   </div>
                 </div>
 
-                {/* Contact Information */}
-                <div>
+                {/* Card 3: Contact Information */}
+                <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 sm:p-8">
                   <h2 className="text-base font-bold text-gray-900 mb-4">Contact Information</h2>
                   <div className="space-y-4">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -448,8 +441,8 @@ function AddAdditionalDetailsContent() {
 
             {activeTab === 'business' && (
               <div className="space-y-6">
-                {/* Business information card */}
-                <div className="bg-white rounded-2xl border border-gray-200 p-6 sm:p-8">
+                {/* Card 1: Upload Business Card + fields */}
+                <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 sm:p-8">
                   {/* Upload business card */}
                   <div className="border border-dashed border-gray-300 rounded-2xl px-6 py-10 flex flex-col items-center justify-center text-center">
                     <p className="text-sm font-medium text-gray-600 mb-3">Upload Business Card</p>
@@ -512,32 +505,30 @@ function AddAdditionalDetailsContent() {
                   </div>
                 </div>
 
-                {/* Business you are finding for */}
-                <div className="bg-white rounded-2xl border border-gray-200 p-6 sm:p-8">
+                {/* Card 2: Business you are finding for */}
+                <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 sm:p-8">
                   <p className="text-sm font-bold text-gray-900 mb-4">Business You Are Finding For</p>
 
-                  <div className="flex items-center gap-3 mb-4">
+                  <div className="mb-4">
                     <select
                       value={formData.findingBusiness}
-                      onChange={(e) => setFormData((p) => ({ ...p, findingBusiness: e.target.value }))}
-                      className="flex-1 px-4 py-3 border border-gray-300 rounded-xl text-sm text-gray-800 bg-white focus:outline-none focus:border-[#612178]"
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val && !formData.findingFor.includes(val)) {
+                          setFormData((prev) => ({
+                            ...prev,
+                            findingFor: [...prev.findingFor, val],
+                            findingBusiness: '',
+                          }));
+                        }
+                      }}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl text-sm text-gray-800 bg-white focus:outline-none focus:border-[#612178]"
                     >
                       <option value="">Select Business</option>
                       {BUSINESS_CATEGORY_OPTIONS.map((o) => (
                         <option key={o} value={o}>{o}</option>
                       ))}
                     </select>
-                    <button
-                      type="button"
-                      onClick={addFindingFor}
-                      className="w-10 h-10 rounded-full flex items-center justify-center shrink-0"
-                      style={{ backgroundColor: PURPLE }}
-                      aria-label="Add business"
-                    >
-                      <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                      </svg>
-                    </button>
                   </div>
 
                   <div className="flex flex-wrap gap-3">
@@ -559,8 +550,8 @@ function AddAdditionalDetailsContent() {
 
             {activeTab === 'kyc' && (
               <div className="space-y-6">
-                {/* Business Verification */}
-                <div className="bg-white rounded-2xl border border-gray-200 p-6 sm:p-8 space-y-4">
+                {/* Card 1: Business Verification */}
+                <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 sm:p-8 space-y-4">
                   <p className="text-base font-bold text-gray-900">Business Verification</p>
                   <div className="border border-dashed border-gray-300 rounded-2xl px-6 py-10 flex flex-col items-center justify-center text-center">
                     <p className="text-sm font-medium text-gray-600 mb-3">Upload Business Registration Certificate</p>
@@ -581,8 +572,8 @@ function AddAdditionalDetailsContent() {
                   />
                 </div>
 
-                {/* GST Information */}
-                <div className="bg-white rounded-2xl border border-gray-200 p-6 sm:p-8 space-y-4">
+                {/* Card 2: GST Information */}
+                <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 sm:p-8 space-y-4">
                   <p className="text-base font-bold text-gray-900">GST Information</p>
                   <div className="border border-dashed border-gray-300 rounded-2xl px-6 py-10 flex flex-col items-center justify-center text-center">
                     <p className="text-sm font-medium text-gray-600 mb-3">Upload Business Registration Certificate</p>
@@ -603,8 +594,8 @@ function AddAdditionalDetailsContent() {
                   />
                 </div>
 
-                {/* PAN Information */}
-                <div className="bg-white rounded-2xl border border-gray-200 p-6 sm:p-8 space-y-4">
+                {/* Card 3: PAN Information */}
+                <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 sm:p-8 space-y-4">
                   <p className="text-base font-bold text-gray-900">PAN Information</p>
                   <div className="border border-dashed border-gray-300 rounded-2xl px-6 py-10 flex flex-col items-center justify-center text-center">
                     <p className="text-sm font-medium text-gray-600 mb-3">Upload PAN Copy</p>
@@ -628,10 +619,10 @@ function AddAdditionalDetailsContent() {
                 {/* Add Tourism License (Optional) */}
                 <button
                   type="button"
-                  className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm"
-                  style={{ backgroundColor: PURPLE_LIGHT, color: PURPLE }}
+                  className="inline-flex items-center gap-2 font-normal text-base rounded-2xl px-5 py-3 w-full justify-start bg-white border border-gray-200"
+                  style={{ color: '#1F1E25' }}
                 >
-                  <span className="w-8 h-8 rounded-full flex items-center justify-center text-white shrink-0" style={{ backgroundColor: PURPLE }}>
+                  <span className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-white" style={{ backgroundColor: PURPLE }}>
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                     </svg>
