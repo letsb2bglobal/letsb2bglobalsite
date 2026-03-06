@@ -9,32 +9,35 @@ type AuthLayoutProps = {
   hideCardStyle?: boolean;
   /** When true, disables inner scroll so the page body scrolls (single scrollbar) */
   noInnerScroll?: boolean;
+  /** When true, uses transparent page background so only the card has white bg (for single-card layout) */
+  usePageBackground?: boolean;
 };
 
-export default function AuthLayout({ children, variant = "signin", header, hideCardStyle, noInnerScroll }: AuthLayoutProps) {
+export default function AuthLayout({ children, variant = "signin", header, hideCardStyle, noInnerScroll, usePageBackground }: AuthLayoutProps) {
   const hideLeftPanel = variant === "signup";
+  const transparentBg = usePageBackground && hideLeftPanel;
 
   return (
     <div
-      className="flex flex-col overflow-x-hidden min-h-screen"
-      style={{ background: hideLeftPanel ? "#fff" : "#FFE6FBA3" }}
+      className={`flex flex-col w-full ${noInnerScroll && hideLeftPanel ? "min-h-0 overflow-visible" : "min-h-screen overflow-x-hidden"} ${transparentBg ? "bg-transparent" : ""}`}
+      style={transparentBg ? undefined : { background: hideLeftPanel ? "#fff" : "#FFE6FBA3" }}
     >
       {/* ── Content area ───────────────────────────────────────────────── */}
       <div
-        className={`flex-1 px-4 py-4 sm:px-6 sm:py-6 lg:px-8 lg:py-8 ${hideLeftPanel ? "min-h-0" : ""}`}
-        style={{ background: hideLeftPanel ? "#fff" : "#FFE6FBA3" }}
+        className={`flex-1 w-full ${hideLeftPanel ? "px-0 py-0" : "px-4 py-4 sm:px-6 sm:py-6 lg:px-8 lg:py-8"} ${noInnerScroll && hideLeftPanel ? "overflow-visible min-h-0" : ""} ${transparentBg ? "bg-transparent" : ""}`}
+        style={transparentBg ? undefined : { background: hideLeftPanel ? "#fff" : "#FFE6FBA3" }}
       >
         <div
-          className={`relative w-full flex items-center justify-center ${hideLeftPanel ? "min-h-full overflow-visible rounded-2xl" : "min-h-screen overflow-x-hidden"} ${
+          className={`relative w-full flex items-center justify-center ${hideLeftPanel ? "min-h-0 overflow-visible rounded-2xl" : "min-h-screen overflow-x-hidden"} ${
             hideLeftPanel ? "" : "grid lg:grid-cols-2 grid-cols-1"
-          }`}
-          style={{
+          } ${transparentBg ? "bg-transparent" : ""}`}
+          style={transparentBg ? { border: "none" } : {
             background: hideLeftPanel ? "transparent" : "#FFE6FBA3",
             border: "none",
           }}
         >
           {/* ── Signup: Ellipse 36 — localized blur (per Figma) ─────────── */}
-          {hideLeftPanel && (
+          {hideLeftPanel && !usePageBackground && (
             <div
               className="absolute pointer-events-none"
               style={{
@@ -119,7 +122,7 @@ export default function AuthLayout({ children, variant = "signin", header, hideC
           )}
 
           {/* ── Right Panel (Form Card) ────────────────────────────────── */}
-          <div className={`relative z-10 flex flex-col items-center px-4 sm:px-6 lg:px-8 py-4 sm:py-6 min-w-0 w-full overflow-x-hidden ${hideLeftPanel ? "w-full" : ""}`}>
+          <div className={`relative z-10 flex flex-col items-center px-4 sm:px-6 lg:px-8 py-4 sm:py-6 min-w-0 w-full ${noInnerScroll && hideLeftPanel ? "overflow-visible" : "overflow-x-hidden"} ${hideLeftPanel ? "w-full" : ""}`}>
             {hideLeftPanel && header && (
               <div className="w-full max-w-full sm:max-w-[540px] md:max-w-[680px] lg:max-w-[872px] mb-6 sm:mb-8">
                 {header}
@@ -130,14 +133,16 @@ export default function AuthLayout({ children, variant = "signin", header, hideC
                 hideCardStyle
                   ? `w-full max-w-full sm:w-[872px] sm:max-w-[872px] min-h-0 ${noInnerScroll ? "overflow-visible" : "overflow-y-auto"}`
                   : hideLeftPanel
-                    ? `w-full max-w-full sm:w-[872px] sm:max-w-[872px] rounded-2xl sm:rounded-[24px] bg-[#FFFFFF] ${noInnerScroll ? "overflow-visible" : "overflow-y-auto"}`
+                    ? `w-full max-w-full sm:w-[872px] sm:max-w-[872px] rounded-2xl sm:rounded-[24px] bg-white shadow-lg ${noInnerScroll ? "overflow-visible overflow-y-visible" : "overflow-y-auto"}`
                     : "max-w-[460px] rounded-xl sm:rounded-[20px] overflow-y-auto"
               }`}
               style={
                 hideCardStyle
                   ? { background: "transparent", boxShadow: "none" }
                   : hideLeftPanel
-                    ? { boxShadow: "2px 5px 13px 0px #E1C0EC" }
+                    ? usePageBackground
+                      ? undefined
+                      : { boxShadow: "2px 5px 13px 0px #E1C0EC" }
                     : { background: "#FFFFFF", boxShadow: "0px 4px 24px 0px rgba(180,100,200,0.13)" }
               }
             >

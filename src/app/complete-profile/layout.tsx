@@ -6,12 +6,12 @@ export default function CompleteProfileLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col min-h-screen min-h-dvh overflow-x-hidden">
+    <div className="min-h-screen min-h-dvh flex flex-col bg-gray-100" style={{ overflowX: "clip" }}>
       <header className="flex-shrink-0">
-        <SignupHeader sticky={false} />
+        <SignupHeader sticky />
       </header>
 
-      <main className="flex-1 min-h-0">
+      <main className="flex-1 pt-16 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto w-full overflow-visible py-10">
         {children}
       </main>
     </div>

@@ -85,35 +85,8 @@ export default function CompleteProfileContent() {
   const [cameFromAddFlow, setCameFromAddFlow] = useState(false);
   const [addBusinessForm, setAddBusinessForm] = useState({ businessName: "", description: "" });
   const [areaInputValue, setAreaInputValue] = useState("");
-  const [showAddAdditionalDetailsModal, setShowAddAdditionalDetailsModal] = useState(false);
-  const [additionalDetailsForm, setAdditionalDetailsForm] = useState({
-    companyName: "",
-    businessType: "",
-    capacity: "",
-    description: "",
-    languages: [] as string[],
-    languageInput: "",
-    website: "",
-    country: "",
-    state: "",
-    city: "",
-    contactPerson: "",
-    designation: "",
-    email: "",
-    phoneCode: "+91",
-    phone: "",
-  });
-
   // Form State
   const [formData, setFormData] = useState<FormData>(initialFormData);
-
-  // Open Add Additional Details when ?view=additional-details
-  useEffect(() => {
-    if (searchParams.get("view") === "additional-details") {
-      setCurrentStep(4);
-      setShowAddAdditionalDetailsModal(true);
-    }
-  }, [searchParams]);
 
   // Check if profile exists and potentially resume
   useEffect(() => {
@@ -722,7 +695,7 @@ export default function CompleteProfileContent() {
   };
 
   return (
-    <AuthLayout variant="signup" header={stepper} hideCardStyle={false} noInnerScroll>
+    <AuthLayout variant="signup" header={stepper} hideCardStyle={false} noInnerScroll usePageBackground>
       {isInitializing ? (
         <div className="flex flex-col items-center justify-center py-20 space-y-4">
           <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
@@ -951,14 +924,16 @@ export default function CompleteProfileContent() {
                 <p className="text-gray-600 text-sm mb-6">Check The Details You Have Filled Till Now</p>
 
                 {/* Profile visuals - cover banner + profile pic */}
-                <div className="relative rounded-2xl overflow-hidden mb-6">
-                  <div className="h-32 sm:h-40 w-full relative" style={{ backgroundColor: PURPLE_LIGHT }}>
+                <div className="mb-6">
+                  <div className="relative h-32 sm:h-40 w-full rounded-t-2xl" style={{ backgroundColor: PURPLE_LIGHT }}>
                     <button type="button" className="absolute top-3 right-3 w-10 h-10 rounded-full flex items-center justify-center overflow-hidden" style={{ backgroundColor: PURPLE }} aria-label="Edit cover">
                       <Image src="/cover_cameralogo.png" alt="" width={20} height={20} className="object-contain" />
                     </button>
                   </div>
-                  <div className="absolute -bottom-10 left-6 w-20 h-20 rounded-full bg-white border-4 border-white shadow-lg flex items-center justify-center overflow-hidden">
-                    <Image src="/profile_cameralogo.png" alt="" width={40} height={40} className="object-contain" />
+                  <div className="flex justify-start relative -mt-12 pl-6">
+                    <div className="w-24 h-24 rounded-full bg-white border-4 border-white shadow-lg flex items-center justify-center overflow-hidden z-10">
+                      <Image src="/profilecamera.png" alt="" width={24} height={24} className="object-contain" />
+                    </div>
                   </div>
                 </div>
 
@@ -1040,10 +1015,13 @@ export default function CompleteProfileContent() {
                   </div>
                 </div>
 
-                {/* Profile completion + message */}
-                <div className="flex flex-col sm:flex-row sm:items-center gap-4 py-6 border-t" style={{ borderColor: PURPLE_LIGHT }}>
+                {/* Profile completion + buttons in one row */}
+                <div
+                  className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 py-6 mt-6 rounded-[24px] px-4 sm:px-6"
+                  style={{ backgroundColor: "#FCF5FF", minHeight: "91px" }}
+                >
                   <div className="flex items-center gap-3">
-                    <div className="relative w-14 h-14">
+                    <div className="relative w-14 h-14 shrink-0">
                       <svg className="w-14 h-14 -rotate-90" viewBox="0 0 36 36">
                         <path fill="none" stroke="#E5E7EB" strokeWidth="3" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
                         <path fill="none" strokeWidth="3" strokeDasharray={`${calculateCompletionPercentage()}, 100`} strokeLinecap="round" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" style={{ stroke: PURPLE }} />
@@ -1052,10 +1030,32 @@ export default function CompleteProfileContent() {
                         {calculateCompletionPercentage()}%
                       </span>
                     </div>
-                    <div>
+                    <div className="min-w-0">
                       <p className="font-bold text-gray-900">Profile Completed</p>
                       <p className="text-sm text-gray-600">Complete profile now to get verified, or start finding businesses.</p>
                     </div>
+                  </div>
+                  <div className="flex flex-col sm:flex-row gap-3 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => router.push('/add-additional-details')}
+                      disabled={isLoading}
+                      className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-white border-2 font-semibold text-sm rounded-full hover:bg-gray-50 transition-all disabled:opacity-50"
+                      style={{ borderColor: PURPLE, color: PURPLE }}
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                      </svg>
+                      Add Additional Info
+                    </button>
+                    <button
+                      onClick={() => submitStep()}
+                      disabled={isLoading}
+                      className="px-6 py-3 text-white font-semibold text-sm rounded-full transition-all disabled:opacity-50"
+                      style={{ backgroundColor: PURPLE }}
+                    >
+                      {isLoading ? "PROCESSING..." : "Lets Find Other Business"}
+                    </button>
                   </div>
                 </div>
               </div>
@@ -1067,8 +1067,8 @@ export default function CompleteProfileContent() {
               </div>
             )}
 
-            {/* Progress bar left, buttons right - shown for Who Are You and preference-after-add */}
-            {!showAddBusinessModal && (
+            {/* Progress bar left, buttons right - steps 1-3 only (step 4 buttons are in Profile Completed row) */}
+            {!showAddBusinessModal && currentStep < 4 && (
             <>
             <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
               <div className="w-full sm:w-48 h-1.5 bg-gray-200 rounded-full overflow-hidden shrink-0">
@@ -1077,202 +1077,26 @@ export default function CompleteProfileContent() {
                   style={{ width: String(calculateCompletionPercentage()) + "%", backgroundColor: PURPLE }}
                 />
               </div>
-              <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto justify-end items-stretch sm:items-center">
-                {currentStep < 4 ? (
-                <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full sm:w-auto justify-end">
-                  <button
-                    onClick={handleSkip}
-                    disabled={isLoading}
-                    className="flex items-center justify-center w-full sm:w-[144.51px] h-12 sm:h-[50px] text-gray-700 font-semibold text-sm hover:opacity-90 transition-all disabled:opacity-50 rounded-2xl"
-                    style={{ backgroundColor: "#E6E6E6" }}
-                  >
-                    Skip
-                  </button>
-                  <button
-                    onClick={() => (showPreferenceAfterAdd ? handlePreferenceAfterAddNext() : submitStep())}
-                    disabled={isLoading}
-                    className="flex items-center justify-center w-full sm:w-[144.51px] h-12 sm:h-[50px] text-white font-semibold text-sm transition-all disabled:opacity-50 rounded-2xl"
-                    style={{ backgroundColor: PURPLE, boxShadow: "0px 4px 10px -2px #00000040" }}
-                  >
-                    {isLoading ? "PROCESSING..." : "Next"}
-                  </button>
-                </div>
-                ) : (
-                <div className="flex flex-col sm:flex-row gap-3 w-full sm:justify-end">
-                  <button
-                    onClick={() => setShowAddAdditionalDetailsModal(true)}
-                    disabled={isLoading}
-                    className="inline-flex items-center gap-2 px-6 py-3 bg-white border-2 font-semibold text-sm rounded-full hover:bg-gray-50 transition-all disabled:opacity-50"
-                    style={{ borderColor: PURPLE, color: PURPLE }}
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                    </svg>
-                    Add Additional Info
-                  </button>
-                  <button
-                    onClick={() => submitStep()}
-                    disabled={isLoading}
-                    className="px-6 py-3 text-white font-semibold text-sm rounded-full transition-all disabled:opacity-50"
-                    style={{ backgroundColor: PURPLE }}
-                  >
-                    {isLoading ? "PROCESSING..." : "Lets Find Other Business"}
-                  </button>
-                </div>
-                )}
+              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full sm:w-auto justify-end items-stretch sm:items-center">
+                <button
+                  onClick={handleSkip}
+                  disabled={isLoading}
+                  className="flex items-center justify-center w-full sm:w-[144.51px] h-12 sm:h-[50px] text-gray-700 font-semibold text-sm hover:opacity-90 transition-all disabled:opacity-50 rounded-2xl"
+                  style={{ backgroundColor: "#E6E6E6" }}
+                >
+                  Skip
+                </button>
+                <button
+                  onClick={() => (showPreferenceAfterAdd ? handlePreferenceAfterAddNext() : submitStep())}
+                  disabled={isLoading}
+                  className="flex items-center justify-center w-full sm:w-[144.51px] h-12 sm:h-[50px] text-white font-semibold text-sm transition-all disabled:opacity-50 rounded-2xl"
+                  style={{ backgroundColor: PURPLE, boxShadow: "0px 4px 10px -2px #00000040" }}
+                >
+                  {isLoading ? "PROCESSING..." : "Next"}
+                </button>
               </div>
             </div>
             </>
-            )}
-
-            {/* Add Additional Details modal */}
-            {showAddAdditionalDetailsModal && (
-              <div className="fixed inset-0 z-50 flex flex-col bg-white overflow-y-auto">
-                <SignupHeader sticky={false} />
-                <div className="flex flex-1 min-h-0">
-                  {/* Left Sidebar */}
-                  <div className="hidden lg:flex flex-col w-64 shrink-0 p-6 border-r border-gray-200" style={{ backgroundColor: "#FAFAFA" }}>
-                    <div className="flex flex-col items-center gap-2 mb-8">
-                      <div className="relative w-20 h-20">
-                        <svg className="w-20 h-20 -rotate-90" viewBox="0 0 36 36">
-                          <path fill="none" stroke="#E5E7EB" strokeWidth="2" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                          <path fill="none" strokeWidth="2" strokeDasharray="25, 100" strokeLinecap="round" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" style={{ stroke: PURPLE }} />
-                        </svg>
-                        <span className="absolute inset-0 flex items-center justify-center text-sm font-bold" style={{ color: PURPLE }}>25%</span>
-                      </div>
-                      <p className="text-sm font-semibold text-center" style={{ color: PURPLE }}>Profile Completed</p>
-                      <p className="text-xs text-gray-500 text-center">Complete Your Profile To Be Verified</p>
-                    </div>
-                    <nav className="space-y-1">
-                      <a href="#" className="block px-3 py-2 rounded-lg text-sm font-semibold" style={{ backgroundColor: PURPLE_LIGHT, color: PURPLE }}>Company Information</a>
-                      <a href="#" className="block px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100">Business Information</a>
-                      <a href="#" className="block px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100">KYC Verification</a>
-                    </nav>
-                  </div>
-
-                  {/* Main content */}
-                  <div className="flex-1 flex flex-col min-w-0">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 sm:p-6 border-b border-gray-200">
-                      <div className="min-w-0">
-                        <h2 className="text-lg sm:text-xl font-bold text-gray-900">Add Additional Details</h2>
-                        <p className="text-sm text-gray-600 mt-0.5">This Info will be shown on your public profile.</p>
-                      </div>
-                      <div className="flex gap-3 shrink-0">
-                        <button type="button" onClick={() => setShowAddAdditionalDetailsModal(false)} className="px-4 py-2 rounded-lg font-semibold text-sm text-gray-600 bg-gray-100 hover:bg-gray-200">Cancel</button>
-                        <button type="button" onClick={() => { setShowAddAdditionalDetailsModal(false); showToast("Details saved", "success"); }} className="px-4 py-2 rounded-lg font-semibold text-sm text-white" style={{ backgroundColor: PURPLE }}>Save</button>
-                      </div>
-                    </div>
-
-                    <div className="flex-1 p-4 sm:p-6 min-h-0 overflow-visible">
-                      <div className="max-w-2xl">
-                        <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-                          {/* Profile/Logo area */}
-                          <div className="relative h-32 sm:h-40 rounded-xl mb-6 overflow-hidden" style={{ backgroundColor: PURPLE_LIGHT }}>
-                            <button type="button" className="absolute top-3 right-3 w-10 h-10 rounded-full flex items-center justify-center overflow-hidden" style={{ backgroundColor: PURPLE }} aria-label="Add cover">
-                              <Image src="/cover_cameralogo.png" alt="" width={20} height={20} className="object-contain" />
-                            </button>
-                            <div className="absolute bottom-4 left-6 w-20 h-20 rounded-full bg-white flex items-center justify-center shadow overflow-hidden">
-                              <Image src="/profile_cameralogo.png" alt="" width={40} height={40} className="object-contain" />
-                            </div>
-                          </div>
-
-                          <div className="space-y-4">
-                            <div>
-                              <input type="text" value={additionalDetailsForm.companyName || formData.company_name} onChange={(e) => setAdditionalDetailsForm(p => ({ ...p, companyName: e.target.value }))} placeholder="Company Name" className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-[#612178] text-gray-800 placeholder-gray-400" />
-                            </div>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                              <select value={additionalDetailsForm.businessType || formData.business_type[0]} onChange={(e) => setAdditionalDetailsForm(p => ({ ...p, businessType: e.target.value }))} className="px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-[#612178] text-gray-800 bg-white">
-                                <option value="">Business Type</option>
-                                {BUSINESS_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
-                              </select>
-                              <input type="text" value={additionalDetailsForm.capacity || (formData.business_details?.number_of_rooms as string) || (formData.business_details?.capacity as string)} onChange={(e) => setAdditionalDetailsForm(p => ({ ...p, capacity: e.target.value }))} placeholder="24 Rooms" className="px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-[#612178] text-gray-800 placeholder-gray-400" />
-                            </div>
-                            <div>
-                              <textarea value={additionalDetailsForm.description || (formData.business_details?.description as string)} onChange={(e) => setAdditionalDetailsForm(p => ({ ...p, description: e.target.value }))} rows={4} placeholder="Provide A Description Of Your Company" className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-[#612178] text-gray-800 placeholder-gray-400 resize-none" />
-                            </div>
-                            <div>
-                              <select value={additionalDetailsForm.languageInput} onChange={(e) => { const v = e.target.value; if (v) { setAdditionalDetailsForm(p => ({ ...p, languages: [...p.languages, v], languageInput: "" })); } }} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-[#612178] text-gray-800 bg-white">
-                                <option value="">Select Languages Preferred</option>
-                                <option value="English">English</option>
-                                <option value="Hindi">Hindi</option>
-                                <option value="Arabic">Arabic</option>
-                                <option value="Malayalam">Malayalam</option>
-                              </select>
-                              {additionalDetailsForm.languages.length > 0 && (
-                                <div className="flex flex-wrap gap-2 mt-2">
-                                  {additionalDetailsForm.languages.map((l, i) => (
-                                    <span key={i} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-sm bg-gray-100 text-gray-800">
-                                      {l}
-                                      <button type="button" onClick={() => setAdditionalDetailsForm(p => ({ ...p, languages: p.languages.filter((_, idx) => idx !== i) }))} className="hover:opacity-70">×</button>
-                                    </span>
-                                  ))}
-                                </div>
-                              )}
-                            </div>
-                            <div>
-                              <input type="text" value={additionalDetailsForm.website} onChange={(e) => setAdditionalDetailsForm(p => ({ ...p, website: e.target.value }))} placeholder="Enter Website Link (Optional)" className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-[#612178] text-gray-800 placeholder-gray-400" />
-                            </div>
-                            <button type="button" className="inline-flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-sm" style={{ color: PURPLE, border: `2px solid ${PURPLE}` }}>
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
-                              Add Social Media Profile
-                            </button>
-                          </div>
-
-                          <div className="mt-8 pt-6 border-t border-gray-200">
-                            <p className="font-bold text-gray-900 mb-4">Location</p>
-                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                              <select value={additionalDetailsForm.country} onChange={(e) => setAdditionalDetailsForm(p => ({ ...p, country: e.target.value }))} className="px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-[#612178] text-gray-800 bg-white">
-                                <option value="">Country</option>
-                                <option value="India">India</option>
-                                <option value="UAE">UAE</option>
-                                <option value="Kuwait">Kuwait</option>
-                              </select>
-                              <select value={additionalDetailsForm.state} onChange={(e) => setAdditionalDetailsForm(p => ({ ...p, state: e.target.value }))} className="px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-[#612178] text-gray-800 bg-white">
-                                <option value="">State</option>
-                                <option value="Kerala">Kerala</option>
-                                <option value="Karnataka">Karnataka</option>
-                              </select>
-                              <select value={additionalDetailsForm.city} onChange={(e) => setAdditionalDetailsForm(p => ({ ...p, city: e.target.value }))} className="px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-[#612178] text-gray-800 bg-white">
-                                <option value="">City</option>
-                                <option value="Kochi">Kochi</option>
-                                <option value="Bangalore">Bangalore</option>
-                              </select>
-                            </div>
-                          </div>
-
-                          <div className="mt-8 pt-6 border-t border-gray-200">
-                            <p className="font-bold text-gray-900 mb-4">Contact Information</p>
-                            <div className="space-y-4">
-                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <input type="text" value={additionalDetailsForm.contactPerson} onChange={(e) => setAdditionalDetailsForm(p => ({ ...p, contactPerson: e.target.value }))} placeholder="Enter The Contact Person" className="px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-[#612178] text-gray-800 placeholder-gray-400" />
-                                <select value={additionalDetailsForm.designation} onChange={(e) => setAdditionalDetailsForm(p => ({ ...p, designation: e.target.value }))} className="px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-[#612178] text-gray-800 bg-white">
-                                  <option value="">Select Designation</option>
-                                  <option value="Manager">Manager</option>
-                                  <option value="Owner">Owner</option>
-                                  <option value="Director">Director</option>
-                                </select>
-                              </div>
-                              <input type="email" value={additionalDetailsForm.email || formData.email || (user ? String(user.email) : "")} onChange={(e) => setAdditionalDetailsForm(p => ({ ...p, email: e.target.value }))} placeholder="Email" className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-[#612178] text-gray-800 placeholder-gray-400" />
-                              <div className="flex gap-2">
-                                <select value={additionalDetailsForm.phoneCode} onChange={(e) => setAdditionalDetailsForm(p => ({ ...p, phoneCode: e.target.value }))} className="w-24 px-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-[#612178] text-gray-800 bg-white">
-                                  <option value="+91">+91</option>
-                                  <option value="+971">+971</option>
-                                  <option value="+965">+965</option>
-                                </select>
-                                <input type="tel" value={additionalDetailsForm.phone} onChange={(e) => setAdditionalDetailsForm(p => ({ ...p, phone: e.target.value }))} placeholder="Enter Phone No." className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-[#612178] text-gray-800 placeholder-gray-400" />
-                              </div>
-                              <button type="button" className="inline-flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-sm" style={{ color: PURPLE, border: `2px solid ${PURPLE}` }}>
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
-                                Add Phone Number
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
             )}
 
             {/* Business Added success modal */}
