@@ -41,7 +41,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${outfit.variable} ${inter.variable} antialiased font-inter`}
       >
@@ -54,7 +54,7 @@ export default function RootLayout({
             </MembershipProvider>
           </TeamProvider>
         </ToastProvider>
-        <Script src="https://checkout.razorpay.com/v1/checkout.js" />
+        <Script id="razorpay-checkout-js" src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
       </body>
     </html>
   );

@@ -108,6 +108,7 @@ const Feed: React.FC<FeedProps> = ({ posts, isLoading }) => {
                 imageUrl={post.media_items?.[0]?.url || post.media?.[0]?.url || post.custom_attachments?.[0]?.url}
                 budget={post.budget}
                 mediaItems={post.media_items}
+                authorProfileId={post.user_profile?.documentId}
               />
             );
           })

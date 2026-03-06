@@ -8,7 +8,7 @@ export interface Post {
   destination: string;
   // category is now a plain JSON string or string[] — NOT a Strapi relation
   category?: string | string[];
-  user_profile?: { id: number; company_name: string };
+  user_profile?: { id: number; company_name: string; documentId?: string };
   status?: 'Open' | 'Closed';
   tags?: string[];
   createdAt: string;

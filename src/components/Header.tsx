@@ -22,14 +22,17 @@ import { fetchUserConversations } from '@/lib/messages';
 const Header = () => {
   const router = useRouter();
   const pathname = usePathname();
-  const [user] = useState<any>(() => {
-    if (typeof window !== 'undefined') return getUser();
-    return null;
-  });
-  const [isLoggedIn] = useState(() => {
-    if (typeof window !== 'undefined') return isAuthenticated();
-    return false;
-  });
+  const [mounted, setMounted] = useState(false);
+  const [user, setUser] = useState<any>(null);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    if (typeof window !== 'undefined') {
+      setUser(getUser());
+      setIsLoggedIn(isAuthenticated());
+    }
+  }, []);
   const { activeWorkspace } = useTeam();
   const [hasNewNotifications, setHasNewNotifications] = useState(false);
   const [searchText, setSearchText] = useState("");
@@ -66,6 +69,8 @@ const Header = () => {
     clearAuthData();
     router.push('/signin');
   };
+
+  if (!mounted) return null;
 
   if (!isLoggedIn && pathname !== '/signin' && pathname !== '/signup') {
     return null;

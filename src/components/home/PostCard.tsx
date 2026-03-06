@@ -1,7 +1,10 @@
 "use client";
 
-import React from 'react';
-import { Bookmark, MoreHorizontal, Share2, MapPin, Calendar, Users, FileText, CheckCircle2, Info, Building2, Ticket, Briefcase, Car, Luggage, Stethoscope, HeartPulse, Activity } from 'lucide-react';
+import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { Bookmark, MoreHorizontal, Share2, MapPin, Calendar, Users, FileText, CheckCircle2, Info, Building2, Ticket, Briefcase, Car, Luggage, Stethoscope, HeartPulse, Activity, Loader2 } from 'lucide-react';
+import { createEnquiryThread } from '@/lib/enquiry';
+import { useToast } from '@/components/Toast';
 
 interface PostCardProps {
   author: {
@@ -25,11 +28,36 @@ interface PostCardProps {
     budgetType: string;
   };
   mediaItems?: any[];
+  authorProfileId?: string;
 }
 
 const PostCard: React.FC<PostCardProps> = ({ 
-  author, time, title, description, type, details, imageUrl, location, date, guests, tags, budget, mediaItems
+  author, time, title, description, type, details, imageUrl, location, date, guests, tags, budget, mediaItems, authorProfileId
 }) => {
+  const router = useRouter();
+  const { showToast } = useToast();
+  const [responding, setResponding] = useState(false);
+
+  const handleRespond = async () => {
+    if (!authorProfileId) {
+      showToast("Cannot respond to this partner at the moment.", "error");
+      return;
+    }
+
+    setResponding(true);
+    try {
+      // Step A: Create the Thread with 'enquiry' type as per guide
+      const thread = await createEnquiryThread(authorProfileId, `Enquiry: ${title}`, 'enquiry');
+      if (thread && thread.documentId) {
+         router.push(`/enquiries?threadId=${thread.documentId}`);
+      }
+    } catch (error: any) {
+      console.error("Error creating thread:", error);
+      showToast(error.message || "Failed to initiate conversation", "error");
+    } finally {
+      setResponding(false);
+    }
+  };
   return (
     <div className="bg-white rounded-[12px] shadow-sm p-5 border border-gray-100 flex flex-col gap-4">
       {/* Header */}
@@ -318,8 +346,13 @@ const PostCard: React.FC<PostCardProps> = ({
             </div>
           )}
         </div>
-        <button className="bg-[#6B3FA0] text-white px-10 py-3.5 rounded-2xl font-black text-xs uppercase tracking-[0.2em] hover:bg-black transition-all flex items-center gap-2 shadow-xl shadow-purple-100 transform hover:-translate-y-0.5 active:translate-y-0">
-          <span>Respond</span>
+        <button 
+          onClick={handleRespond}
+          disabled={responding}
+          className="bg-[#6B3FA0] text-white px-10 py-3.5 rounded-2xl font-black text-xs uppercase tracking-[0.2em] hover:bg-black transition-all flex items-center gap-2 shadow-xl shadow-purple-100 transform hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-70 disabled:cursor-not-allowed"
+        >
+          {responding ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+          <span>{responding ? 'Connecting...' : 'Respond'}</span>
         </button>
       </div>
     </div>
