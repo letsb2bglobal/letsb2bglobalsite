@@ -4,7 +4,7 @@
  */
 
 export const howItWorksSteps = [
-  "Register as an Individual Professional or Business Entity",
+  "Register as an Individual Business or Business Entity",
   "Complete your profile and submit verification details",
   "Get approved by the platform",
   "Connect digitally with verified global trade partners",

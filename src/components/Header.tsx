@@ -58,7 +58,7 @@ const Header = () => {
   // On landing / pricing / aboutus / contact / policy pages: switch header to dark once user scrolls past the hero
   useEffect(() => {
     if (!LANDING_HEADER_PAGES.includes(pathname)) return;
-    const check = () => setScrolledPastLanding(window.scrollY >= window.innerHeight);
+    const check = () => setScrolledPastLanding(window.scrollY >= (window.innerHeight - 80));
     check();
     window.addEventListener('scroll', check, { passive: true });
     return () => window.removeEventListener('scroll', check);

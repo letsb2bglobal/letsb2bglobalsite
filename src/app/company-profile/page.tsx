@@ -331,16 +331,16 @@ export default function CompanyProfilePage() {
 
         about: formData.about
           ? [
-              {
-                type: "paragraph",
-                children: [
-                  {
-                    type: "text",
-                    text: formData.about,
-                  },
-                ],
-              },
-            ]
+            {
+              type: "paragraph",
+              children: [
+                {
+                  type: "text",
+                  text: formData.about,
+                },
+              ],
+            },
+          ]
           : undefined,
 
         website: formData.website,
@@ -368,17 +368,17 @@ export default function CompanyProfilePage() {
         category_items:
           categoriesData.length > 0
             ? categoriesData.map((cat) => ({
-                category: cat.type,
-                sub_categories: cat.subtype ? [cat.subtype] : [],
-                description: cat.description,
-              }))
+              category: cat.type,
+              sub_categories: cat.subtype ? [cat.subtype] : [],
+              description: cat.description,
+            }))
             : [
-                {
-                  category: categories[0] || "General",
-                  sub_categories: subcategory ? [subcategory] : [],
-                  description: categoryDescription || undefined,
-                },
-              ],
+              {
+                category: categories[0] || "General",
+                sub_categories: subcategory ? [subcategory] : [],
+                description: categoryDescription || undefined,
+              },
+            ],
 
         image_sections: imageSections,
       });
@@ -397,7 +397,7 @@ export default function CompanyProfilePage() {
       <header className="flex items-center justify-between px-8 py-4 bg-slate-50 border-b border-slate-200">
         <div className="flex items-center gap-2">
           <Image
-            src="/images/logo.png"
+            src="/images/favi_lb2b.png"
             alt="LetsB2B Logo"
             width={36}
             height={36}
@@ -859,9 +859,8 @@ export default function CompanyProfilePage() {
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className={`w-full h-12 bg-blue-600 text-white font-bold rounded-md transition-all hover:bg-blue-700 active:scale-[0.98] ${
-                    isLoading ? "opacity-70 cursor-not-allowed" : ""
-                  }`}
+                  className={`w-full h-12 bg-blue-600 text-white font-bold rounded-md transition-all hover:bg-blue-700 active:scale-[0.98] ${isLoading ? "opacity-70 cursor-not-allowed" : ""
+                    }`}
                 >
                   {isLoading ? "SUBMITTING..." : "CONTINUE"}
                 </button>
@@ -993,11 +992,10 @@ export default function CompanyProfilePage() {
                 <button
                   onClick={handleSocialMediaSave}
                   disabled={uploading || socialFiles.length === 0}
-                  className={`px-5 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 ${
-                    uploading || socialFiles.length === 0
+                  className={`px-5 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 ${uploading || socialFiles.length === 0
                       ? "opacity-70 cursor-not-allowed"
                       : ""
-                  }`}
+                    }`}
                 >
                   {uploading ? "Uploading..." : "Save"}
                 </button>

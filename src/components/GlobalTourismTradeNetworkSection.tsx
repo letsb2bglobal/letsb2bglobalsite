@@ -54,17 +54,19 @@ function ImageCard({
 function SolidCard({
   title,
   href = "/signup",
+  color = "bg-neutral-900"
 }: {
   title: string;
   href?: string;
+  color?: string;
 }) {
   return (
     <Link
       href={href}
       data-card
-      className="opacity-0 flex rounded-2xl overflow-hidden min-h-[180px] md:min-h-[220px] lg:min-h-[240px] bg-neutral-900 shadow-lg hover:shadow-xl transition-shadow cursor-pointer items-end justify-start p-5 lg:p-6"
+      className={`opacity-0 flex rounded-2xl overflow-hidden min-h-[160px] md:min-h-[200px] lg:min-h-[220px] ${color} shadow-lg hover:shadow-xl transition-all cursor-pointer items-end justify-start p-6 group`}
     >
-      <span className="text-white font-bold text-base lg:text-lg leading-snug text-left">
+      <span className="text-white font-black text-lg md:text-xl lg:text-2xl leading-none text-left group-hover:scale-105 transition-transform duration-500">
         {title}
       </span>
     </Link>
@@ -324,37 +326,46 @@ export default function GlobalTourismTradeNetworkSection() {
           <div className={`${poppins.className} lg:sticky lg:top-24 self-start`}>
             <p
               data-gt-label
-              className="opacity-0 text-left font-semibold text-[#040534]"
-              style={{ fontSize: "18px", lineHeight: "48px" }}
+              className="opacity-0 text-left font-black tracking-[0.2em] text-[#612178] uppercase"
+              style={{ fontSize: "14px", lineHeight: "2" }}
             >
-              GLOBAL TOURISM TRADE NETWORK
+              Professional Ecosystem
             </p>
             <h2
               data-gt-heading
-              className="opacity-0 text-left font-bold text-black mt-2 mb-6"
-              style={{ fontSize: "44px", lineHeight: "1.2" }}
+              className="opacity-0 text-left font-black text-gray-900 mt-4 mb-8"
+              style={{ fontSize: "clamp(32px, 5vw, 56px)", lineHeight: "1.1", letterSpacing: "-0.02em" }}
             >
-              Who can connect and trade on LetsB2B?
+              Who can <span className="text-[#612178]">connect & trade</span> on LetsB2B?
             </h2>
-            <p
-              className="text-left font-medium text-black mb-4"
-              style={{ fontSize: "26px", lineHeight: "1.4" }}
-            >
-              <span data-gt-line className="opacity-0 block">
-                LetsB2B brings together industry players who are actively looking to collaborate, contract services, and build trusted trade partnerships.
-              </span>
-            </p>
-            <p
-              className="text-left font-normal text-black"
-              style={{ fontSize: "22px", lineHeight: "1.5" }}
-            >
-              <span data-gt-line className="opacity-0 block">
-                Whether you are an individual professional seeking industry connections or a registered business looking for reliable trade partners,
-              </span>
-              <span data-gt-line className="opacity-0 block mt-2">
-                LetsB2B helps you connect with the right people and opportunities across India and international markets.
-              </span>
-            </p>
+            <div className="space-y-8">
+              <p
+                className="text-left font-medium text-gray-700 max-w-lg"
+                style={{ fontSize: "20px", lineHeight: "1.5" }}
+              >
+                <span data-gt-line className="opacity-0 block">
+                  LetsB2B brings together industry players who are actively looking to collaborate, contract services, and build trusted trade partnerships.
+                </span>
+              </p>
+              <div className="space-y-4">
+                <p
+                  className="text-left font-normal text-gray-600 max-w-md border-l-4 border-emerald-500 pl-6"
+                  style={{ fontSize: "17px", lineHeight: "1.6" }}
+                >
+                  <span data-gt-line className="opacity-0 block">
+                    Whether you are an individual business seeking industry connections or a registered business looking for reliable partners,
+                  </span>
+                </p>
+                <p
+                    className="text-left font-normal text-gray-600 max-w-md pl-7"
+                    style={{ fontSize: "17px", lineHeight: "1.6" }}
+                >
+                  <span data-gt-line className="opacity-0 block">
+                    LetsB2B helps you connect with the right people across India and international markets.
+                  </span>
+                </p>
+              </div>
+            </div>
           </div>
 
           {/* Right: Hero card + cards grid — scrolls */}
@@ -378,7 +389,7 @@ export default function GlobalTourismTradeNetworkSection() {
                 title="Travel Agents & Tour Operators"
                 imageSrc={`${BASE}/travel_block.png`}
               />
-              <SolidCard title="Destination Management Companies (DMCs)" />
+              <SolidCard title="DMCs" color="bg-indigo-600" />
             </div>
 
             {/* Row 2: one full-width image card */}
@@ -390,12 +401,12 @@ export default function GlobalTourismTradeNetworkSection() {
             {/* Row 3: three equal-width cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
               <ImageCard
-                title="Transport & Mobility Providers"
+                title="Transport & Mobility"
                 imageSrc={`${BASE}/transport-mobility-block.png`}
               />
-              <SolidCard title="Experience & Adventure Providers" />
+              <SolidCard title="Experiential Providers" color="bg-[#612178]" />
               <ImageCard
-                title="Tourism Technology & Service Providers"
+                title="Technology Providers"
                 imageSrc={`${BASE}/tourism-technology.png`}
               />
             </div>

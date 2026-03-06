@@ -272,7 +272,7 @@ export default function HowItWorksFlow() {
               <div
                 key={step.number}
                 data-how-card
-                className="absolute w-[520px] h-[180px] rounded-3xl shadow-sm flex items-center gap-6 px-8 py-6 opacity-0"
+                className="absolute w-[520px] h-[180px] rounded-3xl shadow-sm flex items-center gap-8 px-10 py-6 opacity-0 group"
                 style={{
                   left: pos.left,
                   right: pos.right,
@@ -281,33 +281,25 @@ export default function HowItWorksFlow() {
                   color: isPurple ? "white" : "#111827",
                 }}
               >
-                <div className="flex-1 min-w-0">
-                  <div
-                    className={`inline-flex items-center gap-2 rounded-full pl-1 pr-3 py-1.5 mb-3 ${
-                      isPurple
-                        ? "bg-white/20 text-white"
-                        : "bg-gray-800 text-white"
-                    }`}
-                  >
-                    <span className="flex items-center justify-center w-7 h-7 rounded-full bg-white/30 text-sm font-bold">
-                      {step.number}
-                    </span>
-                    <span className="text-lg font-semibold">{step.title}</span>
+                <div className="relative shrink-0 flex flex-col items-center">
+                  <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-2 ${isPurple ? 'bg-white/10 text-white' : 'bg-gray-100 text-gray-700'}`}>
+                    <Icon />
                   </div>
+                  <span className={`flex items-center justify-center w-8 h-8 rounded-full font-black text-sm border-2 ${isPurple ? 'bg-amber-400 border-[#6B2A7A] text-[#6B2A7A]' : 'bg-gray-900 border-[#F5F6F8] text-white'}`}>
+                    {step.number}
+                  </span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-xl font-black mb-2 tracking-tight">
+                    {step.title}
+                  </h3>
                   <p
-                    className={`text-lg leading-relaxed ${
-                      isPurple ? "text-white/90" : "text-gray-600"
+                    className={`text-lg leading-snug ${
+                      isPurple ? "text-white/80" : "text-gray-600"
                     }`}
                   >
                     {step.description}
                   </p>
-                </div>
-                <div
-                  className={`shrink-0 ${
-                    isPurple ? "text-white" : "text-gray-700"
-                  }`}
-                >
-                  <Icon />
                 </div>
               </div>
             );
@@ -324,40 +316,32 @@ export default function HowItWorksFlow() {
               <div key={step.number} className="relative flex">
                 {i < steps.length - 1 && (
                   <div
-                    className="absolute left-6 top-[72px] bottom-0 w-0 border-l-4 border-dashed border-gray-300 -mb-6"
+                    className="absolute left-7 top-[80px] bottom-0 w-0 border-l-4 border-dashed border-gray-300 -mb-6"
                     style={{ height: "calc(100% + 24px)" }}
                   />
                 )}
                 <div
-                  className="relative w-full rounded-3xl shadow-sm flex items-center gap-4 px-6 py-6 min-h-[160px]"
+                  className="relative w-full rounded-3xl shadow-sm flex items-start gap-5 px-6 py-8 min-h-[160px]"
                   style={{
                     backgroundColor: isPurple ? "#6B2A7A" : "#F5F6F8",
                     color: isPurple ? "white" : "#111827",
                   }}
                 >
-                  <div
-                    className={`shrink-0 ${
-                      isPurple ? "text-white" : "text-gray-700"
-                    }`}
-                  >
-                    <Icon />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div
-                      className={`inline-flex items-center gap-2 rounded-full pl-1 pr-3 py-1.5 mb-2 ${
-                        isPurple
-                          ? "bg-white/20 text-white"
-                          : "bg-gray-800 text-white"
-                      }`}
-                    >
-                      <span className="flex items-center justify-center w-7 h-7 rounded-full bg-white/30 text-sm font-bold">
-                        {step.number}
-                      </span>
-                      <span className="text-lg font-semibold">{step.title}</span>
+                  <div className="relative shrink-0 flex flex-col items-center">
+                    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-2 ${isPurple ? 'bg-white/10 text-white' : 'bg-gray-200 text-gray-700'}`}>
+                      <Icon />
                     </div>
+                    <span className={`flex items-center justify-center w-8 h-8 rounded-full font-black text-sm border-2 ${isPurple ? 'bg-amber-400 border-[#6B2A7A] text-[#6B2A7A]' : 'bg-gray-900 border-[#F5F6F8] text-white'}`}>
+                      {step.number}
+                    </span>
+                  </div>
+                  <div className="flex-1 min-w-0 container-pt-1">
+                    <h3 className="text-xl font-black mb-2 tracking-tight">
+                      {step.title}
+                    </h3>
                     <p
-                      className={`text-lg leading-relaxed ${
-                        isPurple ? "text-white/90" : "text-gray-600"
+                      className={`text-lg leading-snug ${
+                        isPurple ? "text-white/80" : "text-gray-600"
                       }`}
                     >
                       {step.description}

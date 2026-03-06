@@ -23,7 +23,7 @@ const FEATURES = [
   {
     title: "Global B2B Networking",
     description:
-      "Connect with verified tourism professionals and businesses across India and international markets.",
+      "Connect with verified travel & tourism businesses across India and International markets.",
     Icon: IconGlobe,
   },
   {
@@ -119,22 +119,36 @@ export default function FeaturesSection() {
 
           gsap.set(strip, { x: 0 });
           gsap.set(section, { opacity: 1, y: 0 });
+          
+          const featureCards = strip.querySelectorAll(".feature-card");
+          gsap.set(featureCards, { opacity: 0.2, scale: 0.9 });
 
           tl = gsap.timeline({
             scrollTrigger: {
               trigger: wrap,
               start: "top top",
               end: "bottom top",
-              scrub: true,
+              scrub: 1,
               pin: true,
               anticipatePin: 1,
               invalidateOnRefresh: true,
             },
           });
+          
           tl.to(strip, {
             x: -maxX,
             ease: "none",
           });
+
+          // Stagger animation for cards as they scroll through
+          tl.to(featureCards, {
+            opacity: 1,
+            scale: 1,
+            stagger: 0.1,
+            duration: 0.5,
+            ease: "power2.out"
+          }, 0);
+
           tl.to(
             section,
             {
@@ -143,7 +157,7 @@ export default function FeaturesSection() {
               ease: "power2.in",
               duration: 0.18,
             },
-            0.82
+            0.9
           );
         }
 
@@ -171,7 +185,7 @@ export default function FeaturesSection() {
     <div
       ref={wrapRef}
       className="relative"
-      style={{ height: "200vh" }}
+      style={{ height: "350vh" }}
     >
       <section
         ref={sectionRef}
@@ -179,83 +193,72 @@ export default function FeaturesSection() {
         data-section="features"
         className="sticky top-0 left-0 right-0 z-0 h-screen w-full overflow-hidden"
       >
-      {/* Video background - no overlay */}
-      <div className="absolute inset-0 z-0">
-        <video
-          autoPlay
-          muted
-          loop
-          playsInline
-          className="h-full w-full object-cover"
-          src="/our-features-section/our-featuers-v2.mp4"
-        />
-      </div>
-
-      {/* Content */}
-      <div className="relative z-10 flex h-full flex-col">
-        {/* Title + subtitle */}
-        <div className={`shrink-0 w-full px-4 pt-8 sm:px-5 sm:pt-10 md:pt-12 lg:px-10 lg:pt-16 text-center ${poppins.className}`}>
-          <div className="relative w-full min-h-[72px] sm:min-h-[90px] md:min-h-[100px] flex items-center justify-center">
-            <span
-              className="pointer-events-none select-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 font-bold text-white whitespace-nowrap text-[100px] leading-[1.1] sm:text-[140px] md:text-[160px] lg:text-[200px] lg:leading-[1.2]"
-              style={{ opacity: 0.07 }}
-              aria-hidden
-            >
-              Features
-            </span>
-            <h2
-              className="relative left-0 right-0 font-bold text-white text-[40px] leading-tight sm:text-[50px] md:text-[58px] lg:text-[68px]"
-            >
-              Features
-            </h2>
-          </div>
-          <p
-            className="mx-auto mt-4 sm:mt-5 max-w-2xl text-center font-normal text-white text-lg leading-snug sm:text-xl lg:text-2xl"
-            style={{ lineHeight: "1.5" }}
-          >
-            Features that help tourism partners connect, collaborate, and trade
-            with confidence. Built to support trusted partnerships and real business growth across
-            global markets.
-          </p>
+        {/* Video background - no overlay */}
+        <div className="absolute inset-0 z-0">
+          <video
+            autoPlay
+            muted
+            loop
+            playsInline
+            className="h-full w-full object-cover"
+            src="/our-features-section/our-featuers-v2.mp4"
+          />
         </div>
 
-        {/* Horizontal scroll area: 9 features + 4 blank cards so last card scrolls off */}
-        <div className="flex-1 min-h-0 px-4 sm:px-5 lg:px-10 flex items-center pb-8 sm:pb-10">
-          <div ref={containerRef} className="w-full overflow-hidden">
-            <div
-              ref={stripRef}
-              className="flex gap-4 sm:gap-5 lg:gap-8 will-change-transform"
-              style={{ width: "max-content" }}
-            >
-              {FEATURES.map((f) => (
-                <div
-                  key={f.title}
-                  className="flex w-[82vw] min-w-[280px] max-w-[400px] shrink-0 flex-col items-start rounded-xl sm:rounded-2xl p-5 sm:p-6 lg:p-6 text-left lg:w-[calc(33.333vw-2rem)] lg:min-w-0 lg:max-w-[360px]"
-                >
-                  <div className="flex h-10 w-10 sm:h-11 sm:w-11 lg:h-12 lg:w-12 items-center justify-start text-white">
-                    <f.Icon />
+        {/* Content */}
+        <div className="relative z-10 flex h-full flex-col">
+          {/* Title + subtitle */}
+          <div className={`shrink-0 w-full px-4 pt-8 sm:px-5 sm:pt-10 md:pt-12 lg:px-10 lg:pt-16 text-center ${poppins.className}`}>
+            <div className="relative w-full min-h-[72px] sm:min-h-[90px] md:min-h-[100px] flex items-center justify-center">
+              <span
+                className="pointer-events-none select-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 font-bold text-white whitespace-nowrap text-[100px] leading-[1.1] sm:text-[140px] md:text-[160px] lg:text-[200px] lg:leading-[1.2]"
+                style={{ opacity: 0.07 }}
+                aria-hidden
+              >
+                Features
+              </span>
+              <h2
+                className="relative left-0 right-0 font-bold text-white text-[40px] leading-tight sm:text-[50px] md:text-[58px] lg:text-[68px]"
+              >
+                Platform Features
+              </h2>
+            </div>
+          </div>
+
+          {/* Horizontal scroll area */}
+          <div className="flex-1 min-h-0 px-4 sm:px-5 lg:px-10 flex items-center pb-8 sm:pb-10">
+            <div ref={containerRef} className="w-full overflow-hidden">
+              <div
+                ref={stripRef}
+                className="flex gap-4 sm:gap-6 lg:gap-10 will-change-transform"
+                style={{ width: "max-content" }}
+              >
+                {FEATURES.map((f) => (
+                  <div
+                    key={f.title}
+                    className="feature-card flex w-[85vw] min-w-[300px] max-w-[420px] shrink-0 flex-col items-start rounded-3xl bg-white/10 backdrop-blur-md border border-white/20 p-6 sm:p-8 lg:p-10 text-left lg:w-[30vw] lg:min-w-0"
+                  >
+                    <div className="flex h-12 w-12 items-center justify-start text-emerald-400">
+                      <f.Icon />
+                    </div>
+                    <h3 className="mt-6 text-2xl font-black leading-tight text-white sm:text-3xl">
+                      {f.title}
+                    </h3>
+                    <p className="mt-4 text-base leading-relaxed text-white/80 sm:text-lg lg:text-xl">
+                      {f.description}
+                    </p>
                   </div>
-                  <h3 className="mt-4 sm:mt-5 text-xl font-bold leading-tight text-white sm:text-2xl lg:text-[28px]">
-                    {f.title}
-                  </h3>
-                  <p className="mt-2 sm:mt-3 text-base leading-relaxed text-white/75 sm:text-lg lg:text-[22px]">
-                    {f.description}
-                  </p>
-                </div>
-              ))}
-              {/* Blank cards so Industry Collaboration can scroll off before next section */}
-              {[0, 1,2,3,4].map((i) => (
+                ))}
+                {/* Single blank card for smooth exit */}
                 <div
-                  key={`blank-${i}`}
-                  className="flex w-[82vw] min-w-[280px] max-w-[400px] shrink-0 lg:w-[calc(33.333vw-2rem)] lg:min-w-0 lg:max-w-[360px]"
+                  className="flex w-[50vw] shrink-0"
                   aria-hidden
                 />
-              ))}
+              </div>
             </div>
           </div>
         </div>
-      </div>
-    </section>
+      </section>
     </div>
   );
 }

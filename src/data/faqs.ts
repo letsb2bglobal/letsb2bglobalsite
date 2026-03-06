@@ -25,6 +25,6 @@ export const faqs = [
   },
   {
     q: "Who can join LetsB2B?",
-    a: "Both individual tourism/hospitality professionals and registered business entities can join. Individuals seeking networking and career growth, and companies seeking B2B partnerships, enquiries, and market expansion.",
+    a: "Both individual tourism/hospitality businesses and registered business entities seeking networking, career growth, B2B partnerships, enquiries, and market expansion can join the platform",
   },
 ];
