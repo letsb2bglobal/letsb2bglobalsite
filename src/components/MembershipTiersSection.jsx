@@ -42,7 +42,7 @@ const tiers = [
   },
   {
     id: "premium",
-    name: "PREMIUM",
+    name: "PROFESSIONAL",
     price: "599",
     description:
       "Boost your visibility with priority placement, media uploads, and enhanced profile features.",
@@ -59,7 +59,7 @@ const tiers = [
   },
   {
     id: "tradewall",
-    name: "TRADEWALL",
+    name: "TRADE ELITE",
     price: "999",
     description:
       "Access buyer requirements, respond to trade enquiries, and promote your offerings to serious buyers.",
@@ -70,7 +70,7 @@ const tiers = [
       "Subscription access",
     ],
     variant: "light",
-    badge: "Premium",
+    badge: "Elite",
     buttonClass:
       "bg-amber-400 text-gray-900 hover:bg-amber-500 font-semibold rounded-xl",
   },

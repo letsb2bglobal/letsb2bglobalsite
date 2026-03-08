@@ -386,7 +386,7 @@ export default function CompleteProfileContent() {
         <div className="flex items-center mb-2">
           <Image src="/headerB2B_logo.png" alt="Logo" width={100} height={40} className="object-contain mr-3" />
         </div>
-        <p className="text-gray-500 text-sm font-medium">Build your professional B2B identity</p>
+        <p className="text-gray-500 text-sm font-medium">Build your professional identity</p>
       </div>
 
       {isInitializing ? (
@@ -498,24 +498,23 @@ export default function CompleteProfileContent() {
                 <h3 className="text-xl font-bold text-gray-900 mb-6 text-center">We Are Ready For You. Check The Details You Have Filled Till Now</h3>
                 
                 {/* Profile Card Summary */}
-                <div className="p-6 bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-100 rounded-3xl shadow-sm relative overflow-hidden">
-                  <div className="absolute top-0 right-0 p-4">
-                    <span className="inline-block bg-white text-blue-800 text-xs font-bold px-3 py-1 rounded-full shadow-sm">
+                <div className="p-6 md:p-8 bg-gradient-to-br from-purple-50 to-indigo-50 border border-purple-100 rounded-3xl shadow-sm relative overflow-hidden">
+                  <div className="flex justify-between items-start mb-6 pt-2">
+                    <div className="flex flex-col gap-2">
+                      <h4 className="text-2xl md:text-3xl font-black text-[#612178] leading-tight break-words pr-20">{formData.company_name || "Company Name"}</h4>
+                      <span className="text-xs md:text-sm font-medium text-gray-500 bg-white/60 self-start px-2 py-1 rounded-md">{formData.email || user?.email}</span>
+                    </div>
+                    <span className="shrink-0 bg-white text-[#612178] text-[10px] md:text-xs font-bold px-3 py-1.5 rounded-full shadow-sm border border-purple-100">
                       Setup {calculateCompletionPercentage()}%
                     </span>
-                  </div>
-                  
-                  <div className="flex flex-col gap-2 mb-6 pt-2">
-                    <h4 className="text-2xl font-bold text-blue-900">{formData.company_name || "Company Name"}</h4>
-                    <span className="text-sm font-medium text-gray-500 bg-white/60 self-start px-2 py-0.5 rounded-md">{formData.email || user?.email}</span>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-1 col-span-1 md:col-span-2">
-                      <p className="text-xs font-bold text-blue-400 uppercase tracking-wide">Category</p>
+                      <p className="text-[10px] font-black text-purple-400 uppercase tracking-widest">Category</p>
                       <div className="flex flex-wrap gap-2 mt-1">
                         {formData.business_type.map(type => (
-                           <span key={type} className="text-sm font-semibold text-gray-800 bg-white px-2 py-1 rounded border border-blue-100">{type}</span>
+                           <span key={type} className="text-xs font-bold text-gray-800 bg-white px-3 py-1.5 rounded-lg border border-purple-100 shadow-sm">{type}</span>
                         ))}
                       </div>
                     </div>
@@ -532,18 +531,18 @@ export default function CompleteProfileContent() {
                          <p className="text-sm font-semibold text-gray-800">{(formData.business_details?.areas_serviced as string[] || []).join(', ') || '-'}</p>
                        </div>
                     )}
-                    {(formData.business_type.includes('Restaurant') || formData.business_type.includes('Ayurveda Centre')) && (
+                    {formData.business_type.includes('Restaurant') || formData.business_type.includes('Ayurveda Centre') && (
                        <div className="space-y-1">
-                         <p className="text-xs font-bold text-blue-400 uppercase tracking-wide">Restaurant / Centre Stats</p>
-                         <p className="text-sm font-semibold text-gray-800">{formData.business_details?.location as string || '-'}, Capacity: {formData.business_details?.capacity as string || '-'}</p>
+                         <p className="text-[10px] font-black text-purple-400 uppercase tracking-widest">Details</p>
+                         <p className="text-sm font-bold text-gray-800">{formData.business_details?.location as string || '-'}, Capacity: {formData.business_details?.capacity as string || '-'}</p>
                        </div>
                     )}
 
                     <div className="space-y-1 md:col-span-2 mt-2">
-                      <p className="text-xs font-bold text-blue-400 uppercase tracking-wide">Business You Are Finding For</p>
+                      <p className="text-[10px] font-black text-purple-400 uppercase tracking-widest">Collaborating With</p>
                       <div className="flex flex-wrap gap-2 mt-1">
                         {formData.preferred_collaborations.map(type => (
-                          <span key={type} className="px-2 py-1 bg-white text-blue-700 text-xs font-bold rounded-md shadow-sm border border-blue-50">
+                          <span key={type} className="px-3 py-1.5 bg-white text-[#612178] text-[10px] font-black rounded-lg shadow-sm border border-purple-50">
                             {type}
                           </span>
                         ))}
@@ -551,8 +550,8 @@ export default function CompleteProfileContent() {
                     </div>
                   </div>
                   
-                  <div className="mt-8 pt-4 border-t border-blue-200/50">
-                     <p className="text-sm text-center text-blue-800 font-medium">Complete profile now to get verified, or start finding businesses.</p>
+                  <div className="mt-8 pt-4 border-t border-purple-200/50">
+                     <p className="text-sm text-center text-purple-800 font-bold">Complete profile now to get verified, or start finding businesses.</p>
                   </div>
                 </div>
               </div>
@@ -564,57 +563,45 @@ export default function CompleteProfileContent() {
               </div>
             )}
 
-            <div className="pt-8 flex flex-col md:flex-row gap-4">
-              {currentStep > 1 && (
-                <button
-                  onClick={() => setCurrentStep(currentStep - 1)}
-                  disabled={isLoading}
-                  className="w-full md:w-auto px-6 py-4 bg-gray-100 text-gray-700 font-bold text-sm rounded-xl hover:bg-gray-200 transition-all disabled:opacity-50"
-                >
-                  GO BACK
-                </button>
-              )}
-              
-              {currentStep < 4 ? (
-                <div className="flex gap-2 w-full">
+            <div className="pt-8">
+              <div className="flex flex-row items-stretch gap-3">
+                {currentStep > 1 && (
                   <button
-                    onClick={() => {
-                      if(currentStep === 1 && formData.business_type.length === 0) {
-                         setFormData({...formData, business_type: [BUSINESS_TYPES[0]]}); 
-                      }
-                      submitStep();
-                    }}
+                    onClick={() => setCurrentStep(currentStep - 1)}
                     disabled={isLoading}
-                    className="flex-1 py-4 bg-white border-2 border-gray-200 text-gray-600 font-bold text-sm rounded-xl hover:bg-gray-50 transition-all disabled:opacity-50"
+                    className={`flex-1 py-4 px-2 bg-gray-50/50 border-2 border-gray-100 text-gray-500 font-bold text-[10px] md:text-xs rounded-2xl hover:bg-gray-100 transition-all disabled:opacity-50 uppercase tracking-widest ${currentStep === 4 ? '' : 'md:flex-none md:px-10'}`}
                   >
-                    SKIP
+                    Go Back
                   </button>
+                )}
+                
+                {currentStep < 4 ? (
                   <button
                     onClick={() => submitStep()}
                     disabled={isLoading}
-                    className="flex-[2] py-4 bg-blue-600 text-white font-bold text-sm rounded-xl hover:bg-blue-700 transition-all shadow-lg hover:shadow-blue-200 disabled:opacity-50"
+                    className="flex-[2] py-4 bg-[#612178] text-white font-black text-sm rounded-2xl hover:bg-[#4d1a5f] transition-all shadow-lg hover:shadow-purple-100 disabled:opacity-50 uppercase tracking-widest"
                   >
                     {isLoading ? "PROCESSING..." : "NEXT →"}
                   </button>
-                </div>
-              ) : (
-                <div className="flex flex-col md:flex-row gap-3 w-full">
-                  <button
-                    onClick={() => setCurrentStep(2)}
-                    disabled={isLoading}
-                    className="flex-1 py-4 bg-white border-2 border-blue-200 text-blue-600 font-bold text-sm rounded-xl hover:bg-blue-50 transition-all disabled:opacity-50"
-                  >
-                    Add Additional Info
-                  </button>
-                  <button
-                    onClick={() => submitStep()}
-                    disabled={isLoading}
-                    className="flex-1 py-4 bg-blue-600 text-white font-bold text-sm rounded-xl hover:bg-blue-700 transition-all shadow-lg hover:shadow-blue-200 disabled:opacity-50"
-                  >
-                    {isLoading ? "PROCESSING..." : "Lets Find Other Business"}
-                  </button>
-                </div>
-              )}
+                ) : (
+                  <>
+                    <button
+                      onClick={() => setCurrentStep(2)}
+                      disabled={isLoading}
+                      className="flex-1 py-4 px-2 bg-white border-2 border-[#612178] text-[#612178] font-black text-[9px] md:text-xs rounded-2xl hover:bg-purple-50 transition-all disabled:opacity-50 uppercase tracking-widest leading-tight"
+                    >
+                      Additional Info
+                    </button>
+                    <button
+                      onClick={() => submitStep()}
+                      disabled={isLoading}
+                      className="flex-1 py-4 px-2 bg-[#612178] text-white font-black text-[9px] md:text-xs rounded-2xl hover:bg-[#4d1a5f] transition-all shadow-lg hover:shadow-purple-100 disabled:opacity-50 uppercase tracking-widest"
+                    >
+                      {isLoading ? "PROCESSING..." : "Get Started"}
+                    </button>
+                  </>
+                )}
+              </div>
             </div>
           </div>
         </>

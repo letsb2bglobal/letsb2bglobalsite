@@ -54,17 +54,19 @@ function ImageCard({
 function SolidCard({
   title,
   href = "/signup",
+  color = "bg-neutral-900"
 }: {
   title: string;
   href?: string;
+  color?: string;
 }) {
   return (
     <Link
       href={href}
       data-card
-      className="opacity-0 flex rounded-2xl overflow-hidden min-h-[180px] md:min-h-[220px] lg:min-h-[240px] bg-neutral-900 shadow-lg hover:shadow-xl transition-shadow cursor-pointer items-end justify-start p-5 lg:p-6"
+      className={`opacity-0 flex rounded-2xl overflow-hidden min-h-[160px] md:min-h-[200px] lg:min-h-[220px] ${color} shadow-lg hover:shadow-xl transition-all cursor-pointer items-end justify-start p-6 group`}
     >
-      <span className="text-white font-bold text-base lg:text-lg leading-snug text-left">
+      <span className="text-white font-black text-lg md:text-xl lg:text-2xl leading-none text-left group-hover:scale-105 transition-transform duration-500">
         {title}
       </span>
     </Link>
@@ -164,115 +166,115 @@ export default function GlobalTourismTradeNetworkSection() {
       resizeRef.current = handleResize;
 
       const ctx = gsap.context(() => {
-      const ctx2 = canvas.getContext("2d");
-      if (!ctx2) return;
+        const ctx2 = canvas.getContext("2d");
+        if (!ctx2) return;
 
-      const dpr = window.devicePixelRatio || 1;
+        const dpr = window.devicePixelRatio || 1;
 
-      const draw = () => {
-        const rect = section.getBoundingClientRect();
-        const w = rect.width;
-        const h = rect.height;
+        const draw = () => {
+          const rect = section.getBoundingClientRect();
+          const w = rect.width;
+          const h = rect.height;
 
-        ctx2.save();
-        ctx2.setTransform(1, 0, 0, 1, 0, 0);
-        ctx2.clearRect(0, 0, canvas.width, canvas.height);
-        ctx2.scale(dpr, dpr);
+          ctx2.save();
+          ctx2.setTransform(1, 0, 0, 1, 0, 0);
+          ctx2.clearRect(0, 0, canvas.width, canvas.height);
+          ctx2.scale(dpr, dpr);
 
-        particlesRef.current.forEach((p) => {
-          ctx2.beginPath();
-          ctx2.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-          ctx2.fillStyle = `rgba(230, 220, 255, ${p.alpha})`;
-          ctx2.fill();
-        });
-
-        ctx2.restore();
-      };
-
-      const update = () => {
-        const rect = section.getBoundingClientRect();
-        const w = rect.width;
-        const h = rect.height;
-        particlesRef.current.forEach((p) => {
-          p.x += p.vx;
-          p.y += p.vy;
-        });
-        draw();
-      };
-
-      scrollTriggerRef.current = ScrollTrigger.create({
-        trigger: section,
-        start: "top 85%",
-        once: true,
-        onEnter: () => {
-          if (triggeredRef.current) return;
-          triggeredRef.current = true;
-
-          const label = section.querySelector<HTMLElement>("[data-gt-label]");
-          const heading = section.querySelector<HTMLElement>("[data-gt-heading]");
-          const lines = section.querySelectorAll<HTMLElement>("[data-gt-line]");
-          const cards = section.querySelectorAll<HTMLElement>("[data-card]");
-
-          gsap.set([label, heading].filter(Boolean), { opacity: 0, x: -32 });
-          gsap.set(lines, { opacity: 0, y: 12 });
-          gsap.set(cards, { opacity: 0, y: 24 });
-          gsap.set(canvasWrapper, { opacity: 1 });
-
-          const tl = gsap.timeline({
-            defaults: { ease: "power2.out" },
+          particlesRef.current.forEach((p) => {
+            ctx2.beginPath();
+            ctx2.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+            ctx2.fillStyle = `rgba(230, 220, 255, ${p.alpha})`;
+            ctx2.fill();
           });
 
-          if (label) {
-            tl.fromTo(label, { opacity: 0, x: -32 }, { opacity: 1, x: 0, duration: 0.4 });
-          }
-          if (heading) {
-            tl.fromTo(
-              heading,
-              { opacity: 0, x: -32 },
-              { opacity: 1, x: 0, duration: 0.45 },
-              "-=0.25"
-            );
-          }
-          tl.fromTo(
-            lines,
-            { opacity: 0, y: 12 },
-            { opacity: 1, y: 0, duration: 0.35, stagger: 0.08 },
-            lines.length ? "-=0.1" : 0
-          )
-            .add(() => {
-              const rect = section.getBoundingClientRect();
-              burstParticles(particlesRef.current, rect.width, rect.height);
-              tickerRef.current = update;
-              gsap.ticker.add(update);
-              gsap.to(canvasWrapper, {
-                opacity: 0,
-                duration: 1,
-                ease: "power2.out",
-              });
-              gsap.to(cards, {
-                y: 0,
-                opacity: 1,
-                stagger: 0.15,
-                ease: "power3.out",
-                duration: 0.5,
-                delay: 1,
-              });
-              setTimeout(() => {
-                gsap.ticker.remove(update);
-                tickerRef.current = null;
-              }, 1000);
-            }, 0);
-        },
-      });
+          ctx2.restore();
+        };
 
-      const label = section.querySelector<HTMLElement>("[data-gt-label]");
-      const heading = section.querySelector<HTMLElement>("[data-gt-heading]");
-      const lines = section.querySelectorAll<HTMLElement>("[data-gt-line]");
-      const cards = section.querySelectorAll<HTMLElement>("[data-card]");
-      if (label) gsap.set(label, { opacity: 0, x: -32 });
-      if (heading) gsap.set(heading, { opacity: 0, x: -32 });
-      gsap.set(lines, { opacity: 0, y: 12 });
-      gsap.set(cards, { opacity: 0, y: 24 });
+        const update = () => {
+          const rect = section.getBoundingClientRect();
+          const w = rect.width;
+          const h = rect.height;
+          particlesRef.current.forEach((p) => {
+            p.x += p.vx;
+            p.y += p.vy;
+          });
+          draw();
+        };
+
+        scrollTriggerRef.current = ScrollTrigger.create({
+          trigger: section,
+          start: "top 85%",
+          once: true,
+          onEnter: () => {
+            if (triggeredRef.current) return;
+            triggeredRef.current = true;
+
+            const label = section.querySelector<HTMLElement>("[data-gt-label]");
+            const heading = section.querySelector<HTMLElement>("[data-gt-heading]");
+            const lines = section.querySelectorAll<HTMLElement>("[data-gt-line]");
+            const cards = section.querySelectorAll<HTMLElement>("[data-card]");
+
+            gsap.set([label, heading].filter(Boolean), { opacity: 0, x: -32 });
+            gsap.set(lines, { opacity: 0, y: 12 });
+            gsap.set(cards, { opacity: 0, y: 24 });
+            gsap.set(canvasWrapper, { opacity: 1 });
+
+            const tl = gsap.timeline({
+              defaults: { ease: "power2.out" },
+            });
+
+            if (label) {
+              tl.fromTo(label, { opacity: 0, x: -32 }, { opacity: 1, x: 0, duration: 0.4 });
+            }
+            if (heading) {
+              tl.fromTo(
+                heading,
+                { opacity: 0, x: -32 },
+                { opacity: 1, x: 0, duration: 0.45 },
+                "-=0.25"
+              );
+            }
+            tl.fromTo(
+              lines,
+              { opacity: 0, y: 12 },
+              { opacity: 1, y: 0, duration: 0.35, stagger: 0.08 },
+              lines.length ? "-=0.1" : 0
+            )
+              .add(() => {
+                const rect = section.getBoundingClientRect();
+                burstParticles(particlesRef.current, rect.width, rect.height);
+                tickerRef.current = update;
+                gsap.ticker.add(update);
+                gsap.to(canvasWrapper, {
+                  opacity: 0,
+                  duration: 1,
+                  ease: "power2.out",
+                });
+                gsap.to(cards, {
+                  y: 0,
+                  opacity: 1,
+                  stagger: 0.15,
+                  ease: "power3.out",
+                  duration: 0.5,
+                  delay: 1,
+                });
+                setTimeout(() => {
+                  gsap.ticker.remove(update);
+                  tickerRef.current = null;
+                }, 1000);
+              }, 0);
+          },
+        });
+
+        const label = section.querySelector<HTMLElement>("[data-gt-label]");
+        const heading = section.querySelector<HTMLElement>("[data-gt-heading]");
+        const lines = section.querySelectorAll<HTMLElement>("[data-gt-line]");
+        const cards = section.querySelectorAll<HTMLElement>("[data-card]");
+        if (label) gsap.set(label, { opacity: 0, x: -32 });
+        if (heading) gsap.set(heading, { opacity: 0, x: -32 });
+        gsap.set(lines, { opacity: 0, y: 12 });
+        gsap.set(cards, { opacity: 0, y: 24 });
       }, section);
       contextRef.current = ctx;
     });
@@ -324,37 +326,46 @@ export default function GlobalTourismTradeNetworkSection() {
           <div className={`${poppins.className} lg:sticky lg:top-24 self-start`}>
             <p
               data-gt-label
-              className="opacity-0 text-left font-semibold text-[#040534]"
-              style={{ fontSize: "18px", lineHeight: "48px" }}
+              className="opacity-0 text-left font-black tracking-[0.2em] text-[#612178] uppercase"
+              style={{ fontSize: "14px", lineHeight: "2" }}
             >
-              GLOBAL TOURISM TRADE NETWORK
+              Professional Ecosystem
             </p>
             <h2
               data-gt-heading
-              className="opacity-0 text-left font-bold text-black mt-2 mb-6"
-              style={{ fontSize: "44px", lineHeight: "1.2" }}
+              className="opacity-0 text-left font-black text-gray-900 mt-4 mb-8"
+              style={{ fontSize: "clamp(32px, 5vw, 56px)", lineHeight: "1.1", letterSpacing: "-0.02em" }}
             >
-              Who can connect and trade on LetsB2B?
+              Who can <span className="text-[#612178]">connect & trade</span> on LetsB2B?
             </h2>
-            <p
-              className="text-left font-medium text-black mb-4"
-              style={{ fontSize: "26px", lineHeight: "1.4" }}
-            >
-              <span data-gt-line className="opacity-0 block">
-                LetsB2B brings together industry players who are actively looking to collaborate, contract services, and build trusted trade partnerships.
-              </span>
-            </p>
-            <p
-              className="text-left font-normal text-black"
-              style={{ fontSize: "22px", lineHeight: "1.5" }}
-            >
-              <span data-gt-line className="opacity-0 block">
-                Whether you are an individual professional seeking industry connections or a registered business looking for reliable trade partners,
-              </span>
-              <span data-gt-line className="opacity-0 block mt-2">
-                LetsB2B helps you connect with the right people and opportunities across India and international markets.
-              </span>
-            </p>
+            <div className="space-y-8">
+              <p
+                className="text-left font-medium text-gray-700 max-w-lg"
+                style={{ fontSize: "20px", lineHeight: "1.5" }}
+              >
+                <span data-gt-line className="opacity-0 block">
+                  LetsB2B brings together industry players who are actively looking to collaborate, contract services, and build trusted trade partnerships.
+                </span>
+              </p>
+              <div className="space-y-4">
+                <p
+                  className="text-left font-normal text-gray-600 max-w-md border-l-4 border-emerald-500 pl-6"
+                  style={{ fontSize: "17px", lineHeight: "1.6" }}
+                >
+                  <span data-gt-line className="opacity-0 block">
+                    Whether you are an individual business seeking industry connections or a registered business looking for reliable partners,
+                  </span>
+                </p>
+                <p
+                  className="text-left font-normal text-gray-600 max-w-md pl-7"
+                  style={{ fontSize: "17px", lineHeight: "1.6" }}
+                >
+                  <span data-gt-line className="opacity-0 block">
+                    LetsB2B helps you connect with the right people across India and international markets.
+                  </span>
+                </p>
+              </div>
+            </div>
           </div>
 
           {/* Right: Hero card + cards grid — scrolls */}
@@ -378,7 +389,7 @@ export default function GlobalTourismTradeNetworkSection() {
                 title="Travel Agents & Tour Operators"
                 imageSrc={`${BASE}/travel_block.png`}
               />
-              <SolidCard title="Destination Management Companies (DMCs)" />
+              <SolidCard title="DMCs" color="bg-indigo-600" />
             </div>
 
             {/* Row 2: one full-width image card */}
@@ -390,12 +401,12 @@ export default function GlobalTourismTradeNetworkSection() {
             {/* Row 3: three equal-width cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
               <ImageCard
-                title="Transport & Mobility Providers"
+                title="Transport & Mobility"
                 imageSrc={`${BASE}/transport-mobility-block.png`}
               />
-              <SolidCard title="Experience & Adventure Providers" />
+              <SolidCard title="Experiential Providers" color="bg-[#612178]" />
               <ImageCard
-                title="Tourism Technology & Service Providers"
+                title="Technology Providers"
                 imageSrc={`${BASE}/tourism-technology.png`}
               />
             </div>
