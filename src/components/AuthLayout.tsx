@@ -1,32 +1,43 @@
 import Image from "next/image";
 import Link from "next/link";
 
-type AuthLayoutProps = { children: React.ReactNode; variant?: "signin" | "signup" };
+type AuthLayoutProps = {
+  children: React.ReactNode;
+  variant?: "signin" | "signup";
+  header?: React.ReactNode;
+  /** When true, hides the form card border/shadow so only the inner content box is visible */
+  hideCardStyle?: boolean;
+  /** When true, disables inner scroll so the page body scrolls (single scrollbar) */
+  noInnerScroll?: boolean;
+  /** When true, uses transparent page background so only the card has white bg (for single-card layout) */
+  usePageBackground?: boolean;
+};
 
-export default function AuthLayout({ children, variant = "signin" }: AuthLayoutProps) {
+export default function AuthLayout({ children, variant = "signin", header, hideCardStyle, noInnerScroll, usePageBackground }: AuthLayoutProps) {
   const hideLeftPanel = variant === "signup";
+  const transparentBg = usePageBackground && hideLeftPanel;
 
   return (
     <div
-      className={`flex flex-col overflow-x-hidden ${hideLeftPanel ? "h-screen overflow-y-auto" : "min-h-screen"}`}
-      style={{ background: hideLeftPanel ? "#fff" : "#FFE6FBA3" }}
+      className={`flex flex-col w-full ${noInnerScroll && hideLeftPanel ? "min-h-0 overflow-visible" : "min-h-screen overflow-x-hidden"} ${transparentBg ? "bg-transparent" : ""}`}
+      style={transparentBg ? undefined : { background: hideLeftPanel ? "#fff" : "#FFE6FBA3" }}
     >
       {/* ── Content area ───────────────────────────────────────────────── */}
       <div
-        className={`flex-1 px-3 py-4 sm:px-6 sm:py-6 md:px-8 md:py-8 ${hideLeftPanel ? "min-h-0" : ""}`}
-        style={{ background: hideLeftPanel ? "#fff" : "#FDF7FF" }}
+        className={`flex-1 w-full ${hideLeftPanel ? "px-0 py-0" : "px-4 py-4 sm:px-6 sm:py-6 lg:px-8 lg:py-8"} ${noInnerScroll && hideLeftPanel ? "overflow-visible min-h-0" : ""} ${transparentBg ? "bg-transparent" : ""}`}
+        style={transparentBg ? undefined : { background: hideLeftPanel ? "#fff" : "#FFE6FBA3" }}
       >
         <div
-          className={`relative w-full flex items-center justify-center ${hideLeftPanel ? "min-h-full overflow-visible rounded-2xl" : "min-h-screen overflow-x-hidden"} ${
+          className={`relative w-full flex items-center justify-center ${hideLeftPanel ? "min-h-0 overflow-visible rounded-2xl" : "min-h-screen overflow-x-hidden"} ${
             hideLeftPanel ? "" : "grid lg:grid-cols-2 grid-cols-1"
-          }`}
-          style={{
-            background: hideLeftPanel ? "transparent" : "#FDF7FF",
+          } ${transparentBg ? "bg-transparent" : ""}`}
+          style={transparentBg ? { border: "none" } : {
+            background: hideLeftPanel ? "transparent" : "#FFE6FBA3",
             border: "none",
           }}
         >
           {/* ── Signup: Ellipse 36 — localized blur (per Figma) ─────────── */}
-          {hideLeftPanel && (
+          {hideLeftPanel && !usePageBackground && (
             <div
               className="absolute pointer-events-none"
               style={{
@@ -111,17 +122,28 @@ export default function AuthLayout({ children, variant = "signin" }: AuthLayoutP
           )}
  
           {/* ── Right Panel (Form Card) ────────────────────────────────── */}
-          <div className={`relative z-10 flex items-center justify-center p-3 sm:p-6 md:p-8 min-w-0 w-full overflow-x-hidden ${hideLeftPanel ? "w-full" : ""}`}>
+          <div className={`relative z-10 flex flex-col items-center px-4 sm:px-6 lg:px-8 py-4 sm:py-6 min-w-0 w-full overflow-x-hidden ${hideLeftPanel ? "w-full" : ""}`}>
+            {hideLeftPanel && header && (
+              <div className="w-full max-w-full sm:max-w-[540px] md:max-w-[680px] lg:max-w-[872px] mb-6 sm:mb-8">
+                {header}
+              </div>
+            )}
             <div
-              className={`w-full py-5 px-4 sm:py-8 sm:px-6 md:px-10 ${
-                hideLeftPanel
-                  ? "max-w-full sm:max-w-[540px] md:max-w-[680px] lg:max-w-[872px] min-h-0 sm:min-h-[393px] rounded-2xl sm:rounded-[24px] bg-[#FFFFFF]"
-                  : "max-w-[560px] rounded-xl sm:rounded-[20px] overflow-y-auto"
+              className={`w-full py-4 sm:py-6 px-4 sm:px-6 ${
+                hideCardStyle
+                  ? `w-full max-w-full sm:w-[872px] sm:max-w-[872px] min-h-0 overflow-x-hidden ${noInnerScroll ? "overflow-y-visible" : "overflow-y-auto"}`
+                  : hideLeftPanel
+                    ? `w-full max-w-full sm:w-[872px] sm:max-w-[872px] rounded-2xl sm:rounded-[24px] bg-white shadow-lg overflow-x-hidden ${noInnerScroll ? "overflow-y-visible" : "overflow-y-auto"}`
+                    : "max-w-[460px] rounded-xl sm:rounded-[20px] overflow-y-auto"
               }`}
               style={
-                hideLeftPanel
-                  ? { boxShadow: "2px 2px 6px 0px #00000040" }
-                  : { background: "#FFFFFF", boxShadow: "0px 4px 24px 0px rgba(180,100,200,0.13)" }
+                hideCardStyle
+                  ? { background: "transparent", boxShadow: "none" }
+                  : hideLeftPanel
+                    ? usePageBackground
+                      ? undefined
+                      : { boxShadow: "2px 5px 13px 0px #E1C0EC" }
+                    : { background: "#FFFFFF", boxShadow: "0px 4px 24px 0px rgba(180,100,200,0.13)" }
               }
             >
               {children}

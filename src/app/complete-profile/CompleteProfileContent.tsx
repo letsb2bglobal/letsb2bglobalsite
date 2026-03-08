@@ -3,14 +3,11 @@
 import React, { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/components/ProtectedRoute";
-import { 
-  completeOnboardingStep,
-  getMyProfile,
-} from "@/lib/profile";
-import AuthLayout from "@/components/AuthLayout";
+import { getMyProfile } from "@/lib/profile";
 import Image from "next/image";
+import AuthLayout from "@/components/AuthLayout";
+import SignupHeader from "@/components/SignupHeader";
 import { useToast } from "@/components/Toast";
-import { useTeam } from "@/context/TeamContext";
 
 const BUSINESS_TYPES = [
   "Restaurant",
@@ -23,12 +20,58 @@ const BUSINESS_TYPES = [
   "Ayurveda Centre"
 ];
 
+const BUSINESS_TYPE_IMAGES: Record<string, string> = {
+  Restaurant: "/Restaurant.png",
+  Hotel: "/hotel.png",
+  "Taxi Business": "/taxi_business.png",
+  DMC: "/DMC.png",
+  "Tour Guide": "/tour_guid.png",
+  "TT Bus Services": "/tt_busservies.png",
+  "Adventure Activity": "/adventure_activity.png",
+  "Ayurveda Centre": "/Ayurveda_Centre.png",
+};
+
+const STEP_LABELS = [
+  "Business Type",
+  "Business Information",
+  "Preference",
+  "Preview"
+];
+
+const HOTEL_TYPE_OPTIONS = ["5 Star", "4 Star", "3 Star", "Resort", "Boutique", "Budget", "Other"];
+
+/* DMC, Travel Agents, Taxi, TT Travel, Adventure Activity - same form (Establishment Name + Areas You Service) */
+const DMC_STYLE_TYPES = ["DMC", "Tour Guide", "Taxi Business", "TT Bus Services", "Adventure Activity"];
+
+/* Restaurant & Ayurveda Centre - same form (Establishment Name + Location + Capacity) */
+const RESTAURANT_STYLE_TYPES = ["Restaurant", "Ayurveda Centre"];
+const LOCATION_OPTIONS = ["Kochi", "Mumbai", "Delhi", "Bangalore", "Dubai", "Kuwait", "Singapore", "Other"];
+
+const PURPLE = "#612178";
+const PURPLE_LIGHT = "#E0CCF0";   // light purple circle for inactive steps
+const PURPLE_DARK = "#8C4D9F";    // dark purple for inactive number & text
+
+interface FormData {
+  business_type: string[];
+  company_name: string;
+  business_details: Record<string, unknown>;
+  preferred_collaborations: string[];
+  email: string;
+}
+
+const initialFormData: FormData = {
+  business_type: [],
+  company_name: "",
+  business_details: {},
+  preferred_collaborations: [],
+  email: "",
+};
+
 export default function CompleteProfileContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const user = useAuth();
   const { showToast } = useToast();
-  const { refreshWorkspaces } = useTeam();
   
   // State for flow control
   const [currentStep, setCurrentStep] = useState(1);
@@ -36,15 +79,14 @@ export default function CompleteProfileContent() {
   const [submitError, setSubmitError] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isInitializing, setIsInitializing] = useState(true);
-
+  const [showAddBusinessModal, setShowAddBusinessModal] = useState(false);
+  const [showBusinessAddedModal, setShowBusinessAddedModal] = useState(false);
+  const [showPreferenceAfterAdd, setShowPreferenceAfterAdd] = useState(false);
+  const [cameFromAddFlow, setCameFromAddFlow] = useState(false);
+  const [addBusinessForm, setAddBusinessForm] = useState({ businessName: "", description: "" });
+  const [areaInputValue, setAreaInputValue] = useState("");
   // Form State
-  const [formData, setFormData] = useState({
-    business_type: [] as string[],
-    company_name: "",
-    business_details: {} as Record<string, unknown>,
-    preferred_collaborations: [] as string[],
-    email: ""
-  });
+  const [formData, setFormData] = useState<FormData>(initialFormData);
 
   // Check if profile exists and potentially resume
   useEffect(() => {
@@ -77,10 +119,10 @@ export default function CompleteProfileContent() {
             setFormData(prev => ({
               ...prev,
               business_type: initialBusinessTypes,
-              company_name: profile.company_name || "",
+              company_name: String(profile.company_name ?? ""),
               business_details: ((profile as unknown) as Record<string, unknown>).business_details as Record<string, unknown> || {},
               preferred_collaborations: ((profile as unknown) as { preferred_collaborations: string[] }).preferred_collaborations || [],
-              email: profile.email || user.email || ""
+              email: String(profile.email ?? user.email ?? "")
             }));
 
             const step = ((profile as unknown) as { onboarding_step?: number }).onboarding_step 
@@ -91,7 +133,7 @@ export default function CompleteProfileContent() {
             // New user - pre-fill email
             setFormData(prev => ({
               ...prev,
-              email: user.email || ""
+              email: String(user.email ?? "")
             }));
           }
         } catch (err) {
@@ -126,15 +168,9 @@ export default function CompleteProfileContent() {
     setFormData((prev) => {
       const isSelected = prev.business_type.includes(type);
       if (isSelected) {
-        return {
-          ...prev,
-          business_type: prev.business_type.filter(t => t !== type)
-        };
+        return { ...prev, business_type: [] };
       } else {
-        return {
-          ...prev,
-          business_type: [...prev.business_type, type]
-        };
+        return { ...prev, business_type: [type] };
       }
     });
     if (errors.business_type) {
@@ -146,15 +182,9 @@ export default function CompleteProfileContent() {
     setFormData((prev) => {
       const isSelected = prev.preferred_collaborations.includes(type);
       if (isSelected) {
-        return {
-          ...prev,
-          preferred_collaborations: prev.preferred_collaborations.filter(t => t !== type)
-        };
+        return { ...prev, preferred_collaborations: prev.preferred_collaborations.filter((t) => t !== type) };
       } else {
-        return {
-          ...prev,
-          preferred_collaborations: [...prev.preferred_collaborations, type]
-        };
+        return { ...prev, preferred_collaborations: [...prev.preferred_collaborations, type] };
       }
     });
     if (errors.preferred_collaborations) {
@@ -166,7 +196,11 @@ export default function CompleteProfileContent() {
     const newErrors: Record<string, string> = {};
     
     if (currentStep === 1) {
-      if (formData.business_type.length === 0) {
+      if (showPreferenceAfterAdd) {
+        if (formData.preferred_collaborations.length === 0) {
+          newErrors.preferred_collaborations = "Please select at least one preferred collaboration";
+        }
+      } else if (formData.business_type.length === 0) {
         newErrors.business_type = "Please select at least one business type";
       }
     } else if (currentStep === 2) {
@@ -176,9 +210,9 @@ export default function CompleteProfileContent() {
       const bts = formData.business_type;
       const details = formData.business_details;
 
-      if (bts.includes("DMC")) {
+      if (DMC_STYLE_TYPES.some((t) => bts.includes(t))) {
         if (!details.areas_serviced || (details.areas_serviced as string[]).length === 0) {
-          newErrors.areas_serviced = "Areas serviced is required for DMC";
+          newErrors.areas_serviced = "Please add at least one area you service";
         }
       }
       if (bts.includes("Restaurant") || bts.includes("Ayurveda Centre")) {
@@ -193,8 +227,9 @@ export default function CompleteProfileContent() {
       const requiresLocationAndCapacity = bts.includes("Restaurant") || bts.includes("Ayurveda Centre");
       const requiresHotelDetails = bts.includes("Hotel");
       const requiresDMC = bts.includes("DMC");
+      const requiresDmcStyle = DMC_STYLE_TYPES.some((t) => bts.includes(t));
 
-      if (!requiresLocationAndCapacity && !requiresHotelDetails && !requiresDMC) {
+      if (!requiresLocationAndCapacity && !requiresHotelDetails && !requiresDMC && !requiresDmcStyle) {
          if (!details.location) newErrors.location = "Location is required";
       }
 
@@ -209,32 +244,24 @@ export default function CompleteProfileContent() {
   };
 
   const submitStep = async (stepToSubmit?: number) => {
-    const step = stepToSubmit || currentStep;
+    const step = stepToSubmit ?? currentStep;
     if (!validateStep()) return;
 
     setIsLoading(true);
     setSubmitError("");
 
     try {
-      const payloadData: Record<string, unknown> = { step };
-
-      if (step === 1) {
-        payloadData.business_type = formData.business_type;
-      } else if (step === 2) {
-        payloadData.company_name = formData.company_name;
-        payloadData.business_details = formData.business_details;
-      } else if (step === 3) {
-        payloadData.preferred_collaborations = formData.preferred_collaborations;
-      } else if (step === 4) {
-        // Nothing extra for 4, it just confirms completion
+      // API disabled for now - advance steps locally
+      // Add flow: Step 2 -> Step 4 (skip 3); Who Are You flow: Step 2 -> Step 3
+      let nextStep = step < 4 ? step + 1 : 4;
+      if (step === 2 && cameFromAddFlow) {
+        nextStep = 4;
+        setCameFromAddFlow(false);
       }
 
-      await completeOnboardingStep(payloadData);
-
       if (step < 4) {
-        setCurrentStep(step + 1);
+        setCurrentStep(Math.min(nextStep, 4));
       } else {
-        await refreshWorkspaces();
         showToast("Profile set up successfully", "success");
         const redirectTo = searchParams.get("redirect") || "/";
         router.push(redirectTo);
@@ -255,6 +282,197 @@ export default function CompleteProfileContent() {
     const hasRestaurantOrCentre = bts.includes("Restaurant") || bts.includes("Ayurveda Centre");
     const hasHotel = bts.includes("Hotel");
     const requiresDefaultLocation = !hasDMC && !hasRestaurantOrCentre && !hasHotel;
+    const hotelOnly = hasHotel && !hasDMC && !hasRestaurantOrCentre;
+    const dmcStyleOnly = DMC_STYLE_TYPES.some((t) => bts.includes(t)) && !hasHotel && !hasRestaurantOrCentre;
+    const selectedDmcStyleType = bts.find((t) => DMC_STYLE_TYPES.includes(t)) || "DMC";
+    const restaurantStyleOnly = RESTAURANT_STYLE_TYPES.some((t) => bts.includes(t)) && !hasHotel && !hasDMC;
+    const selectedRestaurantStyleType = bts.find((t) => RESTAURANT_STYLE_TYPES.includes(t)) || "Restaurant";
+
+    /* Hotel form per Figma - when Hotel is selected */
+    if (hotelOnly) {
+      return (
+        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+          <div>
+            <h3 className="text-xl sm:text-2xl font-bold text-gray-900">
+              Lets learn more about your{" "}
+              <span style={{ color: PURPLE }}>Hotel</span>
+            </h3>
+            <p className="text-sm text-gray-600 mt-1">Enter Your Business Detail Below</p>
+          </div>
+          <div className="space-y-4">
+            <div>
+              <input
+                type="text"
+                name="company_name"
+                value={formData.company_name}
+                onChange={handleInputChange}
+                placeholder="Hotel Name"
+                className={`w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-800 placeholder-gray-400 bg-white focus:outline-none focus:border-[#612178] transition-colors ${errors.company_name ? "border-red-500" : ""}`}
+              />
+              {errors.company_name && <p className="text-red-500 text-xs font-bold mt-1">{errors.company_name}</p>}
+            </div>
+            <div>
+              <select
+                value={(details.hotel_type as string) || ""}
+                onChange={(e) => updateDetails("hotel_type", e.target.value)}
+                className={`w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-800 bg-white focus:outline-none focus:border-[#612178] transition-colors ${errors.hotel_type ? "border-red-500" : ""}`}
+              >
+                <option value="">Hotel Type</option>
+                {HOTEL_TYPE_OPTIONS.map((opt) => (
+                  <option key={opt} value={opt}>{opt}</option>
+                ))}
+              </select>
+              {errors.hotel_type && <p className="text-red-500 text-xs font-bold mt-1">{errors.hotel_type}</p>}
+            </div>
+            <div>
+              <input
+                type="text"
+                inputMode="numeric"
+                value={(details.number_of_rooms as string) || ""}
+                onChange={(e) => updateDetails("number_of_rooms", e.target.value)}
+                placeholder="No. Of Rooms You Have"
+                className={`w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-800 placeholder-gray-400 bg-white focus:outline-none focus:border-[#612178] transition-colors ${errors.number_of_rooms ? "border-red-500" : ""}`}
+              />
+              {errors.number_of_rooms && <p className="text-red-500 text-xs font-bold mt-1">{errors.number_of_rooms}</p>}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    /* DMC, Taxi, TT Bus, Tour Guide form per Figma */
+    if (dmcStyleOnly) {
+      const areas = (details.areas_serviced as string[]) || [];
+      const addArea = (val: string) => {
+        const trimmed = val.trim();
+        if (trimmed && !areas.includes(trimmed)) {
+          updateDetails("areas_serviced", [...areas, trimmed]);
+          setAreaInputValue("");
+        }
+      };
+      const removeArea = (idx: number) => {
+        updateDetails("areas_serviced", areas.filter((_, i) => i !== idx));
+      };
+      return (
+        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+          <div>
+            <h3 className="text-xl sm:text-2xl font-bold text-gray-900">
+              Lets learn more about your{" "}
+              <span style={{ color: PURPLE }}>{selectedDmcStyleType} business</span>
+            </h3>
+            <p className="text-sm text-gray-600 mt-1">Enter Your Business Detail Below</p>
+          </div>
+          <div className="space-y-4">
+            <div>
+              <input
+                type="text"
+                name="company_name"
+                value={formData.company_name}
+                onChange={handleInputChange}
+                placeholder="Establishment Name"
+                className={`w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-800 placeholder-gray-400 bg-white focus:outline-none focus:border-[#612178] transition-colors ${errors.company_name ? "border-red-500" : ""}`}
+              />
+              {errors.company_name && <p className="text-red-500 text-xs font-bold mt-1">{errors.company_name}</p>}
+            </div>
+            <div>
+              <div className={`min-h-[44px] px-4 py-2 border border-gray-300 rounded-lg bg-white focus-within:border-[#612178] transition-colors ${errors.areas_serviced ? "border-red-500" : ""}`}>
+                <input
+                  type="text"
+                  value={areaInputValue}
+                  onChange={(e) => setAreaInputValue(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === ",") {
+                      e.preventDefault();
+                      addArea(areaInputValue || (e.target as HTMLInputElement).value);
+                    }
+                  }}
+                  onBlur={() => areaInputValue.trim() && addArea(areaInputValue)}
+                  placeholder="Areas You Service"
+                  className="w-full min-w-[120px] py-2 border-0 outline-none focus:ring-0 text-gray-800 placeholder-gray-400"
+                />
+                {areas.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {areas.map((area, idx) => (
+                      <span
+                        key={idx}
+                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-sm font-medium"
+                        style={{ backgroundColor: PURPLE_LIGHT, color: PURPLE }}
+                      >
+                        #{area}
+                        <button
+                          type="button"
+                          onClick={() => removeArea(idx)}
+                          className="ml-0.5 hover:opacity-70 text-current"
+                          aria-label={`Remove ${area}`}
+                        >
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+              {errors.areas_serviced && <p className="text-red-500 text-xs font-bold mt-1">{errors.areas_serviced}</p>}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    /* Restaurant & Ayurveda Centre form per Figma */
+    if (restaurantStyleOnly) {
+      const capacityPlaceholder = selectedRestaurantStyleType === "Restaurant" ? "Restaurant Capacity" : "Ayurveda Centre Capacity";
+      return (
+        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+          <div>
+            <h3 className="text-xl sm:text-2xl font-bold text-gray-900">
+              Lets learn more about your{" "}
+              <span style={{ color: PURPLE }}>{selectedRestaurantStyleType}</span>
+            </h3>
+            <p className="text-sm text-gray-600 mt-1">Enter Your Business Detail Below</p>
+          </div>
+          <div className="space-y-4">
+            <div>
+              <input
+                type="text"
+                name="company_name"
+                value={formData.company_name}
+                onChange={handleInputChange}
+                placeholder="Establishment Name"
+                className={`w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-800 placeholder-gray-400 bg-white focus:outline-none focus:border-[#612178] transition-colors ${errors.company_name ? "border-red-500" : ""}`}
+              />
+              {errors.company_name && <p className="text-red-500 text-xs font-bold mt-1">{errors.company_name}</p>}
+            </div>
+            <div>
+              <select
+                value={(details.location as string) || ""}
+                onChange={(e) => updateDetails("location", e.target.value)}
+                className={`w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-800 bg-white focus:outline-none focus:border-[#612178] transition-colors ${errors.location ? "border-red-500" : ""}`}
+              >
+                <option value="">Location</option>
+                {LOCATION_OPTIONS.map((opt) => (
+                  <option key={opt} value={opt}>{opt}</option>
+                ))}
+              </select>
+              {errors.location && <p className="text-red-500 text-xs font-bold mt-1">{errors.location}</p>}
+            </div>
+            <div>
+              <input
+                type="text"
+                inputMode="numeric"
+                value={(details.capacity as string) || ""}
+                onChange={(e) => updateDetails("capacity", e.target.value)}
+                placeholder={capacityPlaceholder}
+                className={`w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-800 placeholder-gray-400 bg-white focus:outline-none focus:border-[#612178] transition-colors ${errors.capacity ? "border-red-500" : ""}`}
+              />
+              {errors.capacity && <p className="text-red-500 text-xs font-bold mt-1">{errors.capacity}</p>}
+            </div>
+          </div>
+        </div>
+      );
+    }
 
     return (
       <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
@@ -374,184 +592,541 @@ export default function CompleteProfileContent() {
   };
 
   const calculateCompletionPercentage = () => {
+    if (showPreferenceAfterAdd) return 75;
     if (currentStep === 1) return 25;
     if (currentStep === 2) return 50;
     if (currentStep === 3) return 75;
+    if (currentStep === 4) return 25; // Preview page shows 25% per design
     return 100;
   };
 
-  return (
-    <AuthLayout>
-      <div className="flex flex-col items-center mb-8">
-        <div className="flex items-center mb-2">
-          <Image src="/headerB2B_logo.png" alt="Logo" width={100} height={40} className="object-contain mr-3" />
-        </div>
-        <p className="text-gray-500 text-sm font-medium">Build your professional identity</p>
+  const stepper = !isInitializing && (
+      <div className="flex flex-nowrap sm:flex-wrap items-center justify-between sm:justify-between w-full gap-2 sm:gap-1 overflow-x-auto scrollbar-hide -mx-2 px-2 pb-1 min-w-0">
+        {STEP_LABELS.map((label, idx) => {
+          const stepNum = idx + 1;
+          const effectiveStep = showAddBusinessModal ? 2 : showPreferenceAfterAdd ? 3 : currentStep;
+          const isActive = effectiveStep === stepNum;
+          const isCompleted = effectiveStep > stepNum;
+          return (
+            <React.Fragment key={stepNum}>
+              {idx > 0 && (
+                <span className="text-gray-400 text-sm mx-1 hidden sm:inline">&gt;</span>
+              )}
+              <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+                <span
+                  className="flex h-8 w-8 sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-full text-xs sm:text-sm font-bold transition-all duration-300"
+                  style={
+                    isActive
+                      ? { backgroundColor: PURPLE, color: "white" }
+                      : isCompleted
+                        ? { backgroundColor: PURPLE, color: "white" }
+                        : { backgroundColor: PURPLE_LIGHT, color: PURPLE_DARK }
+                  }
+                >
+                  {stepNum}
+                </span>
+                <span
+                  className="text-xs sm:text-sm font-medium whitespace-nowrap"
+                  style={
+                    isActive
+                      ? { color: "#9b6ea8" }
+                      : isCompleted
+                        ? { color: PURPLE }
+                        : { color: PURPLE_DARK }
+                  }
+                >
+                  {label}
+                </span>
+              </div>
+            </React.Fragment>
+          );
+        })}
       </div>
+    );
 
+  const handleAddBusiness = () => {
+    if (addBusinessForm.businessName.trim()) {
+      setFormData(prev => ({
+        ...prev,
+        company_name: addBusinessForm.businessName,
+        business_details: { ...prev.business_details, description: addBusinessForm.description },
+      }));
+      setShowBusinessAddedModal(true);
+    }
+  };
+
+  const handleBusinessAddedContinue = () => {
+    setAddBusinessForm({ businessName: "", description: "" });
+    setShowBusinessAddedModal(false);
+    setShowAddBusinessModal(false);
+    setShowPreferenceAfterAdd(true);
+  };
+
+  const handlePreferenceAfterAddNext = () => {
+    if (formData.preferred_collaborations.length === 0) {
+      setErrors({ preferred_collaborations: "Please select at least one preferred collaboration" });
+      return;
+    }
+    setErrors({});
+    setShowPreferenceAfterAdd(false);
+    setCameFromAddFlow(true);
+    setCurrentStep(2);
+  };
+
+  const handlePreferenceAfterAddSkip = () => {
+    setErrors({});
+    setShowPreferenceAfterAdd(false);
+    setCameFromAddFlow(true);
+    setCurrentStep(4); // Skip from Add flow's preference → go to Preview
+  };
+
+  const handleSkip = () => {
+    setErrors({});
+    if (showPreferenceAfterAdd) {
+      handlePreferenceAfterAddSkip();
+      return;
+    }
+    if (currentStep === 1) {
+      setCurrentStep(3); // Business Type → Preference
+    } else if (currentStep === 2) {
+      setCurrentStep(3); // Business Information → Preference
+    } else if (currentStep === 3) {
+      setCurrentStep(4); // Preference → Preview
+    }
+  };
+
+  return (
+    <AuthLayout variant="signup" header={stepper} hideCardStyle={false} noInnerScroll usePageBackground>
       {isInitializing ? (
         <div className="flex flex-col items-center justify-center py-20 space-y-4">
           <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
           <p className="text-gray-500 text-sm font-medium animate-pulse">Loading onboarding data...</p>
         </div>
       ) : (
-        <>
-          <div className="mb-8">
-            <div className="flex items-center justify-between mb-4">
-              <span className="text-sm font-bold text-blue-600 bg-blue-50 px-3 py-1 rounded-full">
-                Step {currentStep} of 4
-              </span>
-            </div>
-            
-            {/* Dynamic Progress Indicator */}
-            <div className="flex items-center justify-between relative mb-6">
-              <div className="absolute left-0 top-1/2 -z-10 h-1 w-full -translate-y-1/2 bg-gray-200 rounded-full"></div>
-              <div 
-                className="absolute left-0 top-1/2 -z-10 h-1 -translate-y-1/2 bg-blue-600 rounded-full transition-all duration-500"
-                style={{ width: `${((currentStep - 1) / 3) * 100}%` }}
-              ></div>
-              
-              {[1, 2, 3, 4].map((step) => (
-                <div 
-                  key={step} 
-                  className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold transition-all duration-300 ${
-                    step < currentStep 
-                    ? "bg-blue-600 text-white shadow-md" 
-                    : step === currentStep
-                      ? "bg-white border-2 border-blue-600 text-blue-600 shadow-md scale-110"
-                      : "bg-white border-2 border-gray-200 text-gray-400"
-                  }`}
-                >
-                  {step < currentStep ? "✓" : step}
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="bg-white rounded-3xl border border-gray-100 shadow-lg p-6 md:p-8">
+        <div className="pt-2 pb-8 overflow-x-hidden min-w-0 w-full">
             {currentStep === 1 && (
-              <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
-                <h3 className="text-2xl font-bold text-gray-900 mb-6 text-center">Who Are You? Select Your Business</h3>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              showAddBusinessModal ? (
+              /* Add Your Unique Business - uses same AuthLayout card as Who Are You (no extra wrapper) */
+              <div key="add-business" className="animate-in fade-in slide-in-from-bottom-2 duration-300 space-y-5">
+                    <div>
+                      <h3 className="text-xl sm:text-2xl font-bold text-gray-900">Add Your Unique Business</h3>
+                      <p className="text-sm text-gray-600 mt-1">Enter Your Business Detail Below</p>
+                    </div>
+
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">Business Name</label>
+                        <input
+                          type="text"
+                          value={addBusinessForm.businessName}
+                          onChange={(e) => setAddBusinessForm(prev => ({ ...prev, businessName: e.target.value }))}
+                          placeholder="Business Name"
+                          className="w-full px-4 py-2.5 sm:py-3 border border-gray-300 rounded-lg text-sm text-gray-800 placeholder-gray-400 bg-white focus:outline-none focus:border-[#612178] transition-colors"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">Add Description</label>
+                        <textarea
+                          value={addBusinessForm.description}
+                          onChange={(e) => setAddBusinessForm(prev => ({ ...prev, description: e.target.value }))}
+                          placeholder="Add Description"
+                          rows={4}
+                          className="w-full px-4 py-2.5 sm:py-3 border border-gray-300 rounded-lg text-sm text-gray-800 placeholder-gray-400 bg-white resize-none focus:outline-none focus:border-[#612178] transition-colors"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
+                      <div className="w-full sm:w-48 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                        <div
+                          className="h-full rounded-full transition-all"
+                          style={{ width: "25%", backgroundColor: PURPLE }}
+                        />
+                      </div>
+                      <div className="flex gap-3 w-full sm:w-auto justify-end">
+                        <button
+                          type="button"
+                          onClick={handleAddBusiness}
+                          className="flex-1 sm:flex-none px-5 py-2.5 rounded-xl font-semibold text-sm text-white transition-colors"
+                          style={{ backgroundColor: PURPLE, boxShadow: "0px 4px 10px -2px rgba(0,0,0,0.25)" }}
+                        >
+                          Add
+                        </button>
+                      </div>
+                    </div>
+              </div>
+              ) : showPreferenceAfterAdd ? (
+              /* Business You Are Looking For - same design as Who Are You (image cards), no Add button */
+              <div key="preference-after-add" className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+                <div className="mb-6">
+                  <h3 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">Business You Are Looking For</h3>
+                  <p className="text-gray-600 text-sm mt-1">Select Business you want to collaborate with</p>
+                </div>
+                <div className="grid grid-cols-2 lg:grid-cols-[repeat(4,120px)] gap-3 sm:gap-4 lg:justify-between w-full min-w-0">
+                  {BUSINESS_TYPES.map(type => {
+                    const isSelected = formData.preferred_collaborations.includes(type);
+                    return (
+                      <div
+                        key={type}
+                        onClick={() => togglePreference(type)}
+                        className="w-full max-w-[160px] sm:max-w-none justify-self-center sm:justify-self-auto h-[100px] sm:h-[120px] rounded-2xl border-2 transition-all cursor-pointer flex flex-col overflow-hidden"
+                        style={
+                          isSelected
+                            ? {
+                                borderColor: PURPLE,
+                                background: "linear-gradient(114.72deg, #612178 16.64%, #801E7C 50.66%, #801E7C 94.01%)",
+                                boxShadow: "2px 5px 13px 0px #E1C0EC",
+                              }
+                            : {
+                                borderColor: "#E8D5F0",
+                                backgroundColor: "#FFFFFF",
+                                boxShadow: "2px 5px 13px 0px #E1C0EC",
+                              }
+                        }
+                      >
+                        {BUSINESS_TYPE_IMAGES[type] && (
+                          <div className="relative w-full flex-1 min-h-0 rounded-t-[14px] overflow-hidden">
+                            <Image
+                              src={BUSINESS_TYPE_IMAGES[type]!}
+                              alt={type}
+                              fill
+                              className="object-cover object-center"
+                              sizes="120px"
+                            />
+                          </div>
+                        )}
+                        <div className="flex-shrink-0 flex items-center justify-center h-8 px-1.5 py-0.5">
+                          <h4 className={`font-bold text-[11px] text-center leading-tight truncate max-w-full ${isSelected ? "text-white" : "text-gray-900"}`}>{type}</h4>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                {errors.preferred_collaborations && <p className="text-red-500 text-sm font-bold mt-4 text-left">{errors.preferred_collaborations}</p>}
+              </div>
+              ) : (
+              /* Who Are You - Select Your Business (Figma alignment) */
+              <div key="who-are-you" className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
+                  <div className="min-w-0">
+                    <h3 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">Who Are You ?</h3>
+                    <p className="text-gray-600 text-sm mt-1">Select Your Business</p>
+                  </div>
+                  <button
+                    type="button"
+                    className="flex items-center justify-center gap-2 w-full sm:w-[220.75px] h-12 sm:h-[50px] text-white font-semibold text-sm whitespace-nowrap shrink-0 rounded-2xl"
+                    style={{ backgroundColor: PURPLE }}
+                    onClick={() => setShowAddBusinessModal(true)}
+                  >
+                    <span className="text-lg">+</span> Add Your Business
+                  </button>
+                </div>
+                <div className="grid grid-cols-2 lg:grid-cols-[repeat(4,120px)] gap-3 sm:gap-4 lg:justify-between w-full min-w-0">
                   {BUSINESS_TYPES.map(type => {
                     const isSelected = formData.business_type.includes(type);
                     return (
                       <div 
                         key={type}
                         onClick={() => toggleBusinessType(type)}
-                        className={`p-4 rounded-2xl border-2 transition-all cursor-pointer flex flex-col items-center justify-center text-center gap-3 relative ${
-                          isSelected 
-                            ? "border-blue-600 bg-blue-50/50 shadow-md" 
-                            : "border-gray-100 bg-white hover:border-blue-200 hover:shadow-sm"
-                        }`}
+                        className="w-full max-w-[160px] sm:max-w-none justify-self-center sm:justify-self-auto h-[100px] sm:h-[120px] rounded-2xl border-2 transition-all cursor-pointer flex flex-col overflow-hidden"
+                        style={
+                          isSelected
+                            ? {
+                                borderColor: PURPLE,
+                                background: "linear-gradient(114.72deg, #612178 16.64%, #801E7C 50.66%, #801E7C 94.01%)",
+                                boxShadow: "2px 5px 13px 0px #E1C0EC",
+                              }
+                            : {
+                                borderColor: "#E8D5F0",
+                                backgroundColor: "#FFFFFF",
+                                boxShadow: "2px 5px 13px 0px #E1C0EC",
+                              }
+                        }
                       >
-                        <h4 className={`font-bold text-sm ${isSelected ? "text-blue-900" : "text-gray-700"}`}>{type}</h4>
-                        {isSelected && (
-                          <div className="absolute top-2 right-2 flex items-center justify-center w-5 h-5 bg-blue-600 rounded-full text-white">
-                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
-                            </svg>
+                        {BUSINESS_TYPE_IMAGES[type] && (
+                          <div className="relative w-full flex-1 min-h-0 rounded-t-[14px] overflow-hidden">
+                            <Image
+                              src={BUSINESS_TYPE_IMAGES[type]!}
+                              alt={type}
+                              fill
+                              className="object-cover object-center"
+                              sizes="120px"
+                            />
                           </div>
                         )}
+                        <div className="flex-shrink-0 flex items-center justify-center h-8 px-1.5 py-0.5">
+                          <h4 className={`font-bold text-[11px] text-center leading-tight truncate max-w-full ${isSelected ? "text-white" : "text-gray-900"}`}>{type}</h4>
+                        </div>
                       </div>
                     )
                   })}
                 </div>
-                {errors.business_type && <p className="text-red-500 text-sm font-bold mt-4 text-center">{errors.business_type}</p>}
+                {errors.business_type && <p className="text-red-500 text-sm font-bold mt-4 text-left">{errors.business_type}</p>}
               </div>
+              )
             )}
 
             {currentStep === 2 && renderStep2Fields()}
 
             {currentStep === 3 && (
+              /* Step 3 Preference - same design as Who Are You (image cards), no Add button */
               <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
-                <h3 className="text-xl font-bold text-gray-900 mb-4 text-center">Business You Are Looking For. Select business you want to collaborate with</h3>
-                <div className="grid grid-cols-2 gap-3 mt-6">
+                <div className="mb-6">
+                  <h3 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">Business You Are Looking For</h3>
+                  <p className="text-gray-600 text-sm mt-1">Select Business you want to collaborate with</p>
+                </div>
+                <div className="grid grid-cols-2 lg:grid-cols-[repeat(4,120px)] gap-3 sm:gap-4 lg:justify-between w-full min-w-0">
                   {BUSINESS_TYPES.map(type => {
                     const isSelected = formData.preferred_collaborations.includes(type);
                     return (
-                      <div 
+                      <div
                         key={type}
                         onClick={() => togglePreference(type)}
-                        className={`p-4 rounded-xl border-2 transition-all cursor-pointer flex items-center justify-between ${
+                        className="w-full max-w-[160px] sm:max-w-none justify-self-center sm:justify-self-auto h-[100px] sm:h-[120px] rounded-2xl border-2 transition-all cursor-pointer flex flex-col overflow-hidden"
+                        style={
                           isSelected
-                            ? "border-blue-600 bg-blue-50/50" 
-                            : "border-gray-100 bg-white hover:border-blue-200"
-                        }`}
+                            ? {
+                                borderColor: PURPLE,
+                                background: "linear-gradient(114.72deg, #612178 16.64%, #801E7C 50.66%, #801E7C 94.01%)",
+                                boxShadow: "2px 5px 13px 0px #E1C0EC",
+                              }
+                            : {
+                                borderColor: "#E8D5F0",
+                                backgroundColor: "#FFFFFF",
+                                boxShadow: "2px 5px 13px 0px #E1C0EC",
+                              }
+                        }
                       >
-                        <span className={`text-sm font-semibold ${isSelected ? 'text-blue-900' : 'text-gray-700'}`}>{type}</span>
-                        {isSelected && (
-                          <svg className="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                          </svg>
+                        {BUSINESS_TYPE_IMAGES[type] && (
+                          <div className="relative w-full flex-1 min-h-0 rounded-t-[14px] overflow-hidden">
+                            <Image
+                              src={BUSINESS_TYPE_IMAGES[type]!}
+                              alt={type}
+                              fill
+                              className="object-cover object-center"
+                              sizes="120px"
+                            />
+                          </div>
                         )}
+                        <div className="flex-shrink-0 flex items-center justify-center h-8 px-1.5 py-0.5">
+                          <h4 className={`font-bold text-[11px] text-center leading-tight truncate max-w-full ${isSelected ? "text-white" : "text-gray-900"}`}>{type}</h4>
+                        </div>
                       </div>
                     );
                   })}
                 </div>
-                {errors.preferred_collaborations && <p className="text-red-500 text-sm font-bold mt-4 text-center">{errors.preferred_collaborations}</p>}
+                {errors.preferred_collaborations && <p className="text-red-500 text-sm font-bold mt-4 text-left">{errors.preferred_collaborations}</p>}
               </div>
             )}
 
             {currentStep === 4 && (
               <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
-                <h3 className="text-xl font-bold text-gray-900 mb-6 text-center">We Are Ready For You. Check The Details You Have Filled Till Now</h3>
-                
-                {/* Profile Card Summary */}
-                <div className="p-6 md:p-8 bg-gradient-to-br from-purple-50 to-indigo-50 border border-purple-100 rounded-3xl shadow-sm relative overflow-hidden">
-                  <div className="flex justify-between items-start mb-6 pt-2">
-                    <div className="flex flex-col gap-2">
-                      <h4 className="text-2xl md:text-3xl font-black text-[#612178] leading-tight break-words pr-20">{formData.company_name || "Company Name"}</h4>
-                      <span className="text-xs md:text-sm font-medium text-gray-500 bg-white/60 self-start px-2 py-1 rounded-md">{formData.email || user?.email}</span>
+                <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">We Are Ready For You</h3>
+                <p className="text-gray-600 text-sm mb-6">Check The Details You Have Filled Till Now</p>
+
+                {/* Profile visuals - cover banner + profile pic */}
+                <div className="mb-6">
+                  <div className="relative h-32 sm:h-40 w-full rounded-t-2xl" style={{ backgroundColor: '#E3BFDD' }}>
+                    <button type="button" className="absolute top-3 right-3 w-10 h-10 rounded-full flex items-center justify-center overflow-hidden" style={{ backgroundColor: PURPLE }} aria-label="Edit cover">
+                      <Image src="/cover_cameralogo.png" alt="" width={20} height={20} className="object-contain" />
+                    </button>
+                  </div>
+                  <div className="flex justify-start relative -mt-12 pl-4 sm:pl-6">
+                    <div className="w-24 h-24 rounded-full bg-white border-4 border-white shadow-lg flex items-center justify-center overflow-hidden z-10">
+                      <Image src="/profilecamera.png" alt="" width={24} height={24} className="object-contain" />
                     </div>
-                    <span className="shrink-0 bg-white text-[#612178] text-[10px] md:text-xs font-bold px-3 py-1.5 rounded-full shadow-sm border border-purple-100">
-                      Setup {calculateCompletionPercentage()}%
+                  </div>
+                </div>
+
+                {/* Business info - company name with Edit */}
+                <div className="pt-14 sm:pt-12 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-2 mb-4">
+                  <div className="min-w-0 flex-1">
+                    <h4
+                      className="break-words text-2xl sm:text-[32px] leading-tight sm:leading-[40px]"
+                      style={{
+                        fontFamily: '"Inter", "Inter Display", sans-serif',
+                        fontWeight: 600,
+                        fontStyle: 'normal',
+                        letterSpacing: 0,
+                        color: '#1F1E25',
+                      }}
+                    >
+                      {String(formData.company_name || "Company Name")}
+                    </h4>
+                    <span
+                      className="break-words"
+                      style={{
+                        fontFamily: '"Inter", "Inter Display", sans-serif',
+                        fontWeight: 400,
+                        fontStyle: 'normal',
+                        fontSize: 16,
+                        lineHeight: 1.5,
+                        letterSpacing: 0,
+                        color: '#612178',
+                      }}
+                    >
+                      {String(formData.email || (user?.email != null ? user.email : ""))}
                     </span>
                   </div>
+                  <button
+                    type="button"
+                    onClick={() => setCurrentStep(2)}
+                    className="inline-flex items-center justify-center gap-1.5 font-semibold text-sm shrink-0 rounded-[16px] w-full sm:w-[87.45px] h-[45px] sm:h-[44.77px]"
+                    style={{
+                      backgroundColor: '#F7E0FF',
+                      color: PURPLE,
+                    }}
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                    </svg>
+                    Edit
+                  </button>
+                </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-1 col-span-1 md:col-span-2">
-                      <p className="text-[10px] font-black text-purple-400 uppercase tracking-widest">Category</p>
-                      <div className="flex flex-wrap gap-2 mt-1">
-                        {formData.business_type.map(type => (
-                           <span key={type} className="text-xs font-bold text-gray-800 bg-white px-3 py-1.5 rounded-lg border border-purple-100 shadow-sm">{type}</span>
-                        ))}
-                      </div>
+                {/* Business stats - Hotel/DMC/Restaurant details */}
+                {(formData.business_type.length > 0 || !!(formData.business_details?.hotel_type || formData.business_details?.areas_serviced)) && (
+                  <div
+                    className="flex flex-wrap items-center gap-2 mb-6"
+                    style={{
+                      fontFamily: '"Inter", "Inter Display", sans-serif',
+                      fontWeight: 400,
+                      fontSize: 16,
+                      lineHeight: 1.5,
+                      letterSpacing: 0,
+                      color: '#545454',
+                    }}
+                  >
+                    {formData.business_type.includes("Hotel") && (
+                      <>
+                        <span>{String(formData.business_details?.hotel_type ?? "-")}</span>
+                        <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: '#545454' }} />
+                        <span>{String(formData.business_details?.number_of_rooms ?? "-")} Rooms</span>
+                      </>
+                    )}
+                    {DMC_STYLE_TYPES.some((t) => formData.business_type.includes(t)) && (
+                      <span>{((formData.business_details?.areas_serviced as string[] | undefined) ?? []).join(", ") || "-"}</span>
+                    )}
+                    {(formData.business_type.includes("Restaurant") || formData.business_type.includes("Ayurveda Centre")) && (
+                      <>
+                        <span>{String(formData.business_details?.location ?? "-")}</span>
+                        <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: '#545454' }} />
+                        <span>Capacity: {String(formData.business_details?.capacity ?? "-")}</span>
+                      </>
+                    )}
+                  </div>
+                )}
+
+                {/* Business You Are Finding For - tags with x and + */}
+                <div className="mb-8">
+                  <p
+                    className="mb-3"
+                    style={{
+                      fontFamily: '"Inter", "Inter Display", sans-serif',
+                      fontWeight: 700,
+                      fontSize: 20,
+                      lineHeight: 1.5,
+                      letterSpacing: 0,
+                      color: '#000000',
+                    }}
+                  >
+                    Business You Are Finding For
+                  </p>
+                  <div className="flex flex-wrap items-center gap-2">
+                    {formData.preferred_collaborations.map((type) => (
+                      <span
+                        key={type}
+                        className="inline-flex items-center gap-2 px-3 py-2 rounded-lg"
+                        style={{
+                          fontFamily: '"Inter", "Inter Display", sans-serif',
+                          fontWeight: 400,
+                          fontSize: 16,
+                          lineHeight: 1.5,
+                          letterSpacing: 0,
+                          color: '#1F1E25',
+                          backgroundColor: '#FDF5FF',
+                        }}
+                      >
+                        {type}
+                        <button
+                          type="button"
+                          onClick={() => setFormData((prev) => ({ ...prev, preferred_collaborations: prev.preferred_collaborations.filter((t) => t !== type) }))}
+                          className="hover:opacity-70 text-gray-600"
+                          aria-label={`Remove ${type}`}
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </span>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={() => setCurrentStep(3)}
+                      className="w-10 h-10 rounded-full flex items-center justify-center shrink-0"
+                      style={{ backgroundColor: PURPLE }}
+                      aria-label="Add business type"
+                    >
+                      <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Profile completion + buttons in one row */}
+                <div
+                  className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 py-6 mt-6 rounded-[24px] px-4 sm:px-6 min-w-0"
+                  style={{ backgroundColor: "#FCF5FF", minHeight: "91px" }}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="relative w-14 h-14 shrink-0">
+                      <svg className="w-14 h-14 -rotate-90" viewBox="0 0 36 36">
+                        <path fill="none" stroke="#E5E7EB" strokeWidth="3" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                        <path fill="none" strokeWidth="3" strokeDasharray={`${calculateCompletionPercentage()}, 100`} strokeLinecap="round" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" style={{ stroke: "#F22822" }} />
+                      </svg>
+                      <span className="absolute inset-0 flex items-center justify-center text-xs font-bold" style={{ color: "#F22822" }}>
+                        {calculateCompletionPercentage()}%
+                      </span>
                     </div>
-                    
-                    {formData.business_type.includes('Hotel') && (
-                       <div className="space-y-1">
-                         <p className="text-xs font-bold text-blue-400 uppercase tracking-wide">Hotel Stats</p>
-                         <p className="text-sm font-semibold text-gray-800">{formData.business_details?.hotel_type as string || '-'}, {formData.business_details?.number_of_rooms as string || '-'} Rooms</p>
-                       </div>
-                    )}
-                    {formData.business_type.includes('DMC') && (
-                       <div className="space-y-1">
-                         <p className="text-xs font-bold text-blue-400 uppercase tracking-wide">Areas Serviced</p>
-                         <p className="text-sm font-semibold text-gray-800">{(formData.business_details?.areas_serviced as string[] || []).join(', ') || '-'}</p>
-                       </div>
-                    )}
-                    {formData.business_type.includes('Restaurant') || formData.business_type.includes('Ayurveda Centre') && (
-                       <div className="space-y-1">
-                         <p className="text-[10px] font-black text-purple-400 uppercase tracking-widest">Details</p>
-                         <p className="text-sm font-bold text-gray-800">{formData.business_details?.location as string || '-'}, Capacity: {formData.business_details?.capacity as string || '-'}</p>
-                       </div>
-                    )}
-
-                    <div className="space-y-1 md:col-span-2 mt-2">
-                      <p className="text-[10px] font-black text-purple-400 uppercase tracking-widest">Collaborating With</p>
-                      <div className="flex flex-wrap gap-2 mt-1">
-                        {formData.preferred_collaborations.map(type => (
-                          <span key={type} className="px-3 py-1.5 bg-white text-[#612178] text-[10px] font-black rounded-lg shadow-sm border border-purple-50">
-                            {type}
-                          </span>
-                        ))}
-                      </div>
+                    <div className="min-w-0">
+                      <p className="font-bold text-gray-900">Profile Completed</p>
+                      <p className="text-sm text-gray-600">Complete profile now to get verified, or start finding businesses.</p>
                     </div>
                   </div>
-                  
-                  <div className="mt-8 pt-4 border-t border-purple-200/50">
-                     <p className="text-sm text-center text-purple-800 font-bold">Complete profile now to get verified, or start finding businesses.</p>
+                  <div className="flex flex-col sm:flex-row gap-3 shrink-0 w-full sm:w-auto">
+                    <button
+                      type="button"
+                      onClick={() => {
+                      try {
+                        sessionStorage.setItem('completeProfileFormData', JSON.stringify({ company_name: formData.company_name, business_details: formData.business_details, email: formData.email || user?.email }));
+                      } catch { /* ignore */ }
+                      router.push('/add-additional-details');
+                    }}
+                      disabled={isLoading}
+                      className="inline-flex items-center justify-center gap-2 font-semibold text-sm rounded-[16px] hover:bg-gray-50 transition-all disabled:opacity-50 shrink-0 w-full sm:w-[218.6px] h-[50px]"
+                      style={{
+                        backgroundColor: '#FFFFFF',
+                        border: '1px solid #612178',
+                        color: PURPLE,
+                      }}
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                      </svg>
+                      Add Additional Info
+                    </button>
+                    <button
+                      onClick={() => submitStep()}
+                      disabled={isLoading}
+                      className="text-white font-semibold text-sm rounded-[16px] transition-all disabled:opacity-50 shrink-0 w-full sm:w-[218.6px] h-[50px]"
+                      style={{
+                        backgroundColor: PURPLE,
+                        boxShadow: '0px 4px 10px -2px #00000040',
+                      }}
+                    >
+                      {isLoading ? "PROCESSING..." : "Lets Find Other Business"}
+                    </button>
                   </div>
                 </div>
               </div>
@@ -563,48 +1138,76 @@ export default function CompleteProfileContent() {
               </div>
             )}
 
-            <div className="pt-8">
-              <div className="flex flex-row items-stretch gap-3">
-                {currentStep > 1 && (
-                  <button
-                    onClick={() => setCurrentStep(currentStep - 1)}
-                    disabled={isLoading}
-                    className={`flex-1 py-4 px-2 bg-gray-50/50 border-2 border-gray-100 text-gray-500 font-bold text-[10px] md:text-xs rounded-2xl hover:bg-gray-100 transition-all disabled:opacity-50 uppercase tracking-widest ${currentStep === 4 ? '' : 'md:flex-none md:px-10'}`}
-                  >
-                    Go Back
-                  </button>
-                )}
-                
-                {currentStep < 4 ? (
-                  <button
-                    onClick={() => submitStep()}
-                    disabled={isLoading}
-                    className="flex-[2] py-4 bg-[#612178] text-white font-black text-sm rounded-2xl hover:bg-[#4d1a5f] transition-all shadow-lg hover:shadow-purple-100 disabled:opacity-50 uppercase tracking-widest"
-                  >
-                    {isLoading ? "PROCESSING..." : "NEXT →"}
-                  </button>
-                ) : (
-                  <>
-                    <button
-                      onClick={() => setCurrentStep(2)}
-                      disabled={isLoading}
-                      className="flex-1 py-4 px-2 bg-white border-2 border-[#612178] text-[#612178] font-black text-[9px] md:text-xs rounded-2xl hover:bg-purple-50 transition-all disabled:opacity-50 uppercase tracking-widest leading-tight"
-                    >
-                      Additional Info
-                    </button>
-                    <button
-                      onClick={() => submitStep()}
-                      disabled={isLoading}
-                      className="flex-1 py-4 px-2 bg-[#612178] text-white font-black text-[9px] md:text-xs rounded-2xl hover:bg-[#4d1a5f] transition-all shadow-lg hover:shadow-purple-100 disabled:opacity-50 uppercase tracking-widest"
-                    >
-                      {isLoading ? "PROCESSING..." : "Get Started"}
-                    </button>
-                  </>
-                )}
+            {/* Progress bar left, buttons right - steps 1-3 only (step 4 buttons are in Profile Completed row) */}
+            {!showAddBusinessModal && currentStep < 4 && (
+            <>
+            <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="w-full sm:w-48 h-1.5 bg-gray-200 rounded-full overflow-hidden shrink-0">
+                <div
+                  className="h-full rounded-full transition-all duration-500"
+                  style={{ width: String(calculateCompletionPercentage()) + "%", backgroundColor: PURPLE }}
+                />
+              </div>
+              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full sm:w-auto justify-end items-stretch sm:items-center">
+                <button
+                  onClick={handleSkip}
+                  disabled={isLoading}
+                  className="flex items-center justify-center w-full sm:w-[144.51px] h-12 sm:h-[50px] text-gray-700 font-semibold text-sm hover:opacity-90 transition-all disabled:opacity-50 rounded-2xl"
+                  style={{ backgroundColor: "#E6E6E6" }}
+                >
+                  Skip
+                </button>
+                <button
+                  onClick={() => (showPreferenceAfterAdd ? handlePreferenceAfterAddNext() : submitStep())}
+                  disabled={isLoading}
+                  className="flex items-center justify-center w-full sm:w-[144.51px] h-12 sm:h-[50px] text-white font-semibold text-sm transition-all disabled:opacity-50 rounded-2xl"
+                  style={{ backgroundColor: PURPLE, boxShadow: "0px 4px 10px -2px #00000040" }}
+                >
+                  {isLoading ? "PROCESSING..." : "Next"}
+                </button>
               </div>
             </div>
-          </div>
-        </>
+            </>
+            )}
+
+            {/* Business Added success modal */}
+            {showBusinessAddedModal && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" onClick={() => setShowBusinessAddedModal(false)}>
+                <div
+                  className="relative w-full max-w-md rounded-2xl bg-white p-6 sm:p-8 shadow-lg animate-in fade-in zoom-in-95 duration-200"
+                  style={{ boxShadow: "2px 5px 13px 0px #E1C0EC" }}
+                  onClick={e => e.stopPropagation()}
+                >
+                  <button
+                    type="button"
+                    onClick={handleBusinessAddedContinue}
+                    className="absolute top-4 right-4 p-1 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors"
+                    aria-label="Close"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                  <h3 className="text-xl sm:text-2xl font-bold text-gray-900 pr-8">Business Added</h3>
+                  <p className="mt-4 text-gray-700 text-sm sm:text-base leading-relaxed">
+                    Your business has been added!{" "}
+                    <span className="font-semibold" style={{ color: PURPLE }}>
+                      Our team will reach out to you soon.
+                    </span>{" "}
+                    In the meantime, feel free to continue with your onboarding.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={handleBusinessAddedContinue}
+                    className="mt-6 w-full py-3 rounded-xl font-semibold text-white transition-colors hover:opacity-90"
+                    style={{ backgroundColor: PURPLE, boxShadow: "0px 4px 10px -2px rgba(0,0,0,0.25)" }}
+                  >
+                    Continue
+                  </button>
+                </div>
+              </div>
+            )}
+        </div>
       )}
     </AuthLayout>
   );
