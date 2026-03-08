@@ -13,7 +13,7 @@ const SidebarLeft: React.FC<SidebarLeftProps> = ({ profile }) => {
   return (
     <aside className="w-full flex flex-col">
       <ProfileCard profile={profile} />
-      <ProgressCard profile={profile} />
+      {/* <ProgressCard profile={profile} />   */}
     </aside>
   );
 };
