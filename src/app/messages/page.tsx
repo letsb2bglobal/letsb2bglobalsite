@@ -4,14 +4,16 @@ import React, { useState, useEffect, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import ProtectedRoute, { useAuth } from '@/components/ProtectedRoute';
 import { 
-  fetchUserConversations, 
-  fetchChatMessages, 
-  sendChatMessage, 
-  uploadChatMedia,
-  fetchConversationById,
-  type Conversation, 
-  type Message 
-} from '@/lib/messages';
+  fetchEnquiryThreads, 
+  fetchEnquiryMessages, 
+  sendEnquiryMessage, 
+  uploadEnquiryMedia,
+  fetchEnquiryThreadById,
+  type EnquiryThread as Conversation, 
+  type EnquiryMessage as Message 
+} from '@/lib/enquiry';
+import { getProfileData, setProfileData } from '@/lib/auth';
+import { checkUserProfile } from '@/lib/profile';
 import { useToast } from '@/components/Toast';
 import Image from 'next/image';
 
@@ -37,6 +39,7 @@ function MessagesContent() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const pollingRef = useRef<NodeJS.Timeout | null>(null);
   const lastMsgRef = useRef<string | null>(null);
+  const [profileId, setProfileId] = useState<string | null>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -52,7 +55,24 @@ function MessagesContent() {
       if (!user?.id) return;
       setLoading(true);
       try {
-        const convList = await fetchUserConversations();
+        // Ensure we have the profile ID
+        let currentProfileId = profileId;
+        if (!currentProfileId) {
+          const cached = getProfileData();
+          if (cached?.documentId) {
+            currentProfileId = cached.documentId;
+            setProfileId(currentProfileId);
+          } else {
+            const p = await checkUserProfile(user.id);
+            if (p?.documentId) {
+              currentProfileId = p.documentId;
+              setProfileId(currentProfileId);
+              setProfileData(p); // update cookie
+            }
+          }
+        }
+
+        const convList = await fetchEnquiryThreads();
         setConversations(convList || []);
 
         const convIdParam = searchParams.get('convId');
@@ -60,7 +80,7 @@ function MessagesContent() {
            const found = convList.find(c => c.documentId === convIdParam);
            if (found) setActiveConversation(found);
            else {
-             const c = await fetchConversationById(convIdParam);
+             const c = await fetchEnquiryThreadById(convIdParam);
              if (c) {
                setActiveConversation(c);
                setConversations(prev => [c, ...prev]);
@@ -74,7 +94,7 @@ function MessagesContent() {
       }
     };
     sync();
-  }, [user?.id, searchParams]); // Added searchParams to deps
+  }, [user?.id, searchParams]);
 
   // Message Loading & Polling
   useEffect(() => {
@@ -87,7 +107,7 @@ function MessagesContent() {
     const loadHistory = async () => {
         setMessagesLoading(true);
         try {
-          const msgList = await fetchChatMessages(activeConversation.id);
+          const msgList = await fetchEnquiryMessages(activeConversation.documentId);
           setMessages(msgList);
           
           if (msgList.length > 0) {
@@ -96,18 +116,26 @@ function MessagesContent() {
             lastMsgRef.current = null;
           }
           
-          /* Polling removed per user request */
-
-          const otherUserId = Number(activeConversation.userAId) === Number(user?.id) ? activeConversation.userBId : activeConversation.userAId;
-          if (otherUserId && !profileNames[otherUserId]) {
-            const { checkUserProfile } = await import("@/lib/profile");
+          // Start Polling (Delta Fetching)
+          pollingRef.current = setInterval(async () => {
+            if (!activeConversation) return;
             try {
-              const prof = await checkUserProfile(otherUserId);
-              if (prof) {
-                setProfileNames(prev => ({ ...prev, [otherUserId]: prof.company_name || prof.full_name || `User ${otherUserId}` }));
+              const newMsgs = await fetchEnquiryMessages(activeConversation.documentId, lastMsgRef.current || undefined);
+              if (newMsgs && newMsgs.length > 0) {
+                setMessages(prev => {
+                   // Ensure no duplicates
+                   const existingIds = new Set(prev.map(m => m.documentId));
+                   const filteredNew = newMsgs.filter(m => !existingIds.has(m.documentId));
+                   if (filteredNew.length === 0) return prev;
+                   return [...prev, ...filteredNew];
+                });
+                lastMsgRef.current = newMsgs[newMsgs.length - 1].createdAt;
               }
-            } catch (e) {}
-          }
+            } catch (e) {
+              console.error("Polling error:", e);
+            }
+          }, 3000);
+
         } catch (error) {
           console.error("Error loading chat messages:", error);
         } finally {
@@ -119,7 +147,7 @@ function MessagesContent() {
     return () => {
       if (pollingRef.current) clearInterval(pollingRef.current);
     };
-  }, [activeConversation, user, profileNames]);
+  }, [activeConversation]);
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -129,17 +157,19 @@ function MessagesContent() {
     try {
       if (selectedFiles.length > 0) {
         setUploading(true);
-        const result = await uploadChatMedia(
-            activeConversation.id, 
+        const result = await uploadEnquiryMedia(
+            activeConversation.documentId, 
             newMessage.trim() || "Sent an attachment", 
             selectedFiles
         );
         setMessages(prev => [...prev, result.data]);
+        lastMsgRef.current = result.data.createdAt;
         setSelectedFiles([]);
         setFilePreviews([]);
       } else {
-        const result = await sendChatMessage(activeConversation.id, newMessage);
+        const result = await sendEnquiryMessage(activeConversation.documentId, newMessage);
         setMessages(prev => [...prev, result.data]);
+        lastMsgRef.current = result.data.createdAt;
       }
       setNewMessage('');
     } catch (error: any) {
@@ -210,23 +240,24 @@ function MessagesContent() {
                 ) : conversations.length > 0 ? (
                   conversations.map((conv) => {
                     const isActive = activeConversation?.documentId === conv.documentId;
-                    const otherUserId = Number(conv.userAId) === Number(user?.id) ? conv.userBId : conv.userAId;
+                    const otherProfile = conv.from_id === profileId ? conv.to_company : conv.from_company;
+                    
                     return (
                       <div key={conv.documentId} onClick={() => setActiveConversation(conv)} className={`p-6 border-b border-gray-100/50 cursor-pointer transition-all flex gap-4 ${isActive ? 'bg-white shadow-2xl z-10 border-l-4 border-l-green-600 scale-[1.02]' : 'hover:bg-white/80'}`}>
                         <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${isActive ? 'from-green-500 to-emerald-700' : 'from-slate-700 to-slate-900'} flex items-center justify-center text-white font-black shrink-0 shadow-xl text-xl`}>
-                           {profileNames[otherUserId]?.substring(0, 1) || 'C'}
+                           {otherProfile?.company_name?.substring(0, 1) || 'C'}
                         </div>
                         <div className="flex-1 min-w-0 flex flex-col justify-center">
                           <div className="flex justify-between items-baseline mb-1">
                             <h4 className={`text-[12px] font-black uppercase tracking-tight truncate ${isActive ? 'text-green-600' : 'text-slate-900'}`}>
-                              {profileNames[otherUserId] || `User ${otherUserId}`}
+                              {otherProfile?.company_name || 'Enquiry'}
                             </h4>
                             <span className="text-[9px] text-slate-400 font-bold tabular-nums">
-                               {new Date(conv.lastMessageAt || conv.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                               {new Date(conv.last_message_at || conv.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                             </span>
                           </div>
                           <p className={`text-[10px] mt-1 truncate uppercase tracking-widest font-bold ${isActive ? 'text-green-600' : 'text-slate-400'}`}>
-                             {isActive ? 'Active Now' : 'Tap to chat'}
+                             {conv.last_message_preview || 'No messages yet'}
                           </p>
                         </div>
                       </div>
@@ -249,16 +280,16 @@ function MessagesContent() {
                        >
                          <ChevronLeftIcon className="w-6 h-6" />
                        </button>
-                       <div className="w-10 h-10 md:w-12 md:h-12 rounded-2xl flex items-center justify-center text-white font-black shadow-lg bg-green-600 ring-4 ring-green-50 shrink-0">
-                          {profileNames[Number(activeConversation.userAId) === Number(user?.id) ? activeConversation.userBId : activeConversation.userAId]?.substring(0, 1) || 'C'}
-                       </div>
-                       <div className="truncate">
-                          <h3 className="font-black text-slate-900 text-xs md:text-sm tracking-tighter uppercase italic truncate">
-                             {profileNames[Number(activeConversation.userAId) === Number(user?.id) ? activeConversation.userBId : activeConversation.userAId] || 'Chat'}
-                          </h3>
+                        <div className="w-10 h-10 md:w-12 md:h-12 rounded-2xl flex items-center justify-center text-white font-black shadow-lg bg-green-600 ring-4 ring-green-50 shrink-0">
+                           {(activeConversation.from_id === profileId ? activeConversation.to_company : activeConversation.from_company)?.company_name?.substring(0, 1) || 'C'}
+                        </div>
+                        <div className="truncate">
+                           <h3 className="font-black text-slate-900 text-xs md:text-sm tracking-tighter uppercase italic truncate">
+                              {(activeConversation.from_id === profileId ? activeConversation.to_company : activeConversation.from_company)?.company_name || 'Enquiry'}
+                           </h3>
                           <div className="flex items-center gap-2">
                              <span className="flex h-2 w-2 rounded-full bg-green-500 animate-pulse"></span>
-                             <span className="text-[9px] text-green-600 font-black uppercase tracking-widest">Instant Messenger</span>
+                             <span className="text-[9px] text-green-600 font-black uppercase tracking-widest">{activeConversation.title}</span>
                           </div>
                        </div>
                     </div>
@@ -272,7 +303,7 @@ function MessagesContent() {
                       </div>
                     ) : messages.length > 0 ? (
                       messages.map((msg: any) => {
-                        const isMe = Number(msg.senderUserId) === Number(user?.id);
+                        const isMe = msg.sender_profile_id === profileId;
                         return (
                           <div key={msg.documentId} className={`flex ${isMe ? 'justify-end' : 'justify-start'} group mb-2`}>
                             <div className={`flex flex-col ${isMe ? 'items-end' : 'items-start'} max-w-[85%] md:max-w-[70%]`}>
@@ -281,7 +312,7 @@ function MessagesContent() {
                                 ? 'bg-gradient-to-br from-green-600 to-emerald-700 text-white rounded-tr-none' 
                                 : 'bg-white text-slate-800 border border-slate-100 rounded-tl-none'
                               }`}>
-                                <p className="whitespace-pre-wrap">{msg.message}</p>
+                                <p className="whitespace-pre-wrap">{msg.message_body}</p>
                                 {(() => {
                                   const attachments = msg.custom_attachments || msg.media;
                                   if (!attachments) return null;

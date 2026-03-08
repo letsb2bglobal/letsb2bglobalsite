@@ -14,7 +14,7 @@ import { clearAuthData, isAuthenticated } from "@/lib/auth";
 import Cookies from "js-cookie";
 import EnquiryModal from "@/components/EnquiryModal";
 import PostModal from "@/components/PostModal";
-import { getOrCreateConversation } from "@/lib/messages";
+import { getOrCreateDirectThread } from "@/lib/enquiry";
 import { getTradeWallFeed, searchTradeWall, deletePost, type Post } from "@/lib/posts";
 import WorkspaceSwitcher from "@/components/WorkspaceSwitcher";
 import { useTeam } from "@/context/TeamContext";
@@ -198,15 +198,14 @@ useEffect(() => {
     router.push("/signin");
   };
 
-  const handleConversationClick = async (targetUserId: number) => {
+  const handleConversationClick = async (targetProfileDocId: string) => {
     if (!user?.id) return;
     try {
       // Check if exists or create new
-      await getOrCreateConversation(user.id, targetUserId);
+      await getOrCreateDirectThread(targetProfileDocId);
       router.push("/messages");
     } catch (error) {
       console.error("Failed to start conversation:", error);
-      // Even if it fails (e.g. unique constraint if already exists), we navigateto messages
       router.push("/messages");
     }
   };
@@ -558,7 +557,7 @@ useEffect(() => {
                           Recommend
                         </button>
                         <button
-                          onClick={() => handleConversationClick(p.userId)}
+                          onClick={() => handleConversationClick(p.documentId)}
                           className="flex items-center gap-1.5 text-gray-500 hover:text-blue-600 transition-colors text-xs font-bold uppercase tracking-wider"
                         >
                           <svg

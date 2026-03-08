@@ -8,7 +8,6 @@ import EnquiryModal from "@/components/EnquiryModal";
 import ContactInfoModal from "@/components/ContactInfoModal";
 import { getPostsByUserId, getTradeWallFeed, deletePost, type Post } from "@/lib/posts";
 import { getOrCreateDirectThread } from "@/lib/enquiry";
-import { getOrCreateConversation } from "@/lib/messages";
 import FollowButton from "@/components/FollowButton";
 import { useMembership } from "@/context/MembershipContext";
 import ConnectionsModal from "@/components/ConnectionsModal";
@@ -151,7 +150,7 @@ export default function PublicProfilePage() {
     }
     try {
       const thread = await getOrCreateDirectThread(profile.documentId);
-      router.push(`/messages?threadId=${thread.documentId}&mode=enquiry`);
+      router.push(`/messages?convId=${thread.documentId}`); // Changed to convId for consistency in messages page
     } catch (error) {
       console.error("Failed to start conversation:", error);
       router.push("/messages");
@@ -159,17 +158,7 @@ export default function PublicProfilePage() {
   };
 
   const handleChatClick = async () => {
-    if (!user?.id || !profile?.userId) {
-      router.push("/messages");
-      return;
-    }
-    try {
-      const conv = await getOrCreateConversation(user.id, profile.userId);
-      router.push(`/messages?convId=${conv.documentId}&mode=chat`);
-    } catch (error) {
-      console.error("Failed to start chat:", error);
-      router.push("/messages");
-    }
+    handleMessageClick();
   };
 
   if (loading) {

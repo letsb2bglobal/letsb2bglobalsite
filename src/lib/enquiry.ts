@@ -6,6 +6,8 @@ export interface EnquiryThread {
   id: number;
   documentId: string;
   title: string;
+  from_id: string; // v2.1
+  to_id: string;   // v2.1
   thread_type: 'enquiry' | 'direct' | 'support' | 'broadcast' | 'internal';
   last_message_at: string;
   last_message_preview: string;
@@ -32,13 +34,15 @@ export interface EnquiryMessage {
   id: number;
   documentId: string;
   message_body: string;
-  sender_profile: {
+  sender_profile_id: string; // v2.1
+  sender_profile?: {
     full_name: string;
     profileImageUrl: string;
     documentId: string;
     userId: number;
   };
   custom_attachments?: any[];
+  media?: any;
   createdAt: string;
 }
 
@@ -50,7 +54,9 @@ export const fetchEnquiryThreads = async (): Promise<EnquiryThread[]> => {
   const token = getToken();
   if (!token) throw new Error("No auth token");
 
-  // Using the exact format from the technical guide
+  // Spec v2.1: Heavy population no longer needed for basic ID checks
+  // But we still might want company names for the UI. 
+  // We'll keep a minimal population for better UX unless strictly forbidden.
   const queryString = "populate[from_company][fields]=company_name,profileImageUrl,documentId&" +
                      "populate[to_company][fields]=company_name,profileImageUrl,documentId&" +
                      "sort=last_message_at:desc";
@@ -125,20 +131,27 @@ export const sendEnquiryMessage = async (threadId: string, body: string, attachm
 
 /**
  * Fetch conversation history (Step 4)
+ * Supports Delta Fetching (v2.1)
  */
-export const fetchEnquiryMessages = async (threadId: string, page = 1): Promise<EnquiryMessage[]> => {
+export const fetchEnquiryMessages = async (threadId: string, lastCreatedAt?: string, page = 1): Promise<EnquiryMessage[]> => {
   const token = getToken();
   if (!token) throw new Error("No auth token");
 
-  const queryParams = [
-    `filters[thread][documentId][$eq]=${threadId}`,
-    `populate[sender_profile][fields]=full_name,profileImageUrl,documentId,userId`,
-    `sort=createdAt:asc`,
-    `pagination[page]=${page}`,
-    `pagination[pageSize]=50`
-  ].join('&');
+  const params = new URLSearchParams({
+    'filters[thread][documentId][$eq]': threadId,
+    'sort': 'createdAt:asc',
+    'pagination[page]': page.toString(),
+    'pagination[pageSize]': '100' // Increased for better history loading
+  });
 
-  const response = await fetch(`${API_URL}/api/enquiry-messages?${queryParams}`, {
+  if (lastCreatedAt) {
+    params.append('filters[createdAt][$gt]', lastCreatedAt);
+  } else {
+    // If not delta fetching, we might want the sender profile for initial load
+    params.append('populate[sender_profile][fields]', 'full_name,profileImageUrl,documentId,userId');
+  }
+
+  const response = await fetch(`${API_URL}/api/enquiry-messages?${params.toString()}`, {
     headers: { Authorization: `Bearer ${token}` }
   });
 
@@ -170,6 +183,7 @@ export const uploadEnquiryMedia = async (threadId: string, body: string, files: 
   }
   return await response.json();
 };
+
 
 /**
  * Legacy support for old components while transitioning
