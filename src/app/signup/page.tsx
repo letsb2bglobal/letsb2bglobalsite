@@ -94,9 +94,7 @@ function SignupContent() {
           <div>
             <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-black leading-tight">
               <span style={{ color: '#612178' }}>Lets</span> grab some quick{' '}
-              <span style={{ color: '#612178' }}>info</span> to create
-              <br />
-              your account.
+              <span style={{ color: '#612178' }}>info</span> to create your account.
             </h2>
             <p className="text-sm text-black mt-3">Enter Your E-mail ID Below</p>
           </div>

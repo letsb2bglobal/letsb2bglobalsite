@@ -24,7 +24,7 @@ const verticals = [
 ];
 
 const features = [
-  { icon: Globe, title: "Global B2B Networking", desc: "Connect with verified tourism and hospitality professionals and businesses worldwide." },
+  { icon: Globe, title: "Global B2B Networking", desc: "Connect with verified tourism and hospitality businesses worldwide." },
   { icon: Handshake, title: "Trusted Partnerships", desc: "Identify reliable partners for collaboration, contracting, and long-term trade relationships." },
   { icon: Lock, title: "Secure One-to-One Messaging", desc: "Professional digital communication between verified members only." },
   { icon: MessageSquare, title: "Business Enquiries & Trading", desc: "Receive and manage genuine B2B enquiries and trading opportunities relevant to your services." },
@@ -118,10 +118,10 @@ export default function AboutUs() {
         <div className="relative z-10 flex flex-1 min-h-0 flex-col justify-center w-full max-w-[1440px] mx-auto px-4 sm:px-5 lg:px-10 pt-24 pb-12 sm:pb-16">
           <div className="py-4 sm:py-6 max-w-2xl">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-white/10 text-white/90 border border-white/20 rounded-full text-xs font-bold uppercase tracking-widest mb-6">
-              Less Noise, Pure Business B2B
+              Less Noise, Pure Business
             </div>
             <h1 className="text-3xl font-black text-white tracking-tight leading-tight sm:text-4xl md:text-5xl lg:text-6xl">
-              Global Tourism &; Hospitality<br />
+              Global Tourism & Hospitality<br />
               <span className="text-[#22c55e]">B2B Network</span>
             </h1>
             <p className="text-base text-white/80 mt-3 max-w-xl sm:text-lg sm:mt-4">
@@ -132,7 +132,7 @@ export default function AboutUs() {
               className="inline-flex items-center justify-center w-12 h-12 mt-8 rounded-full border border-white/30 text-white/90 hover:bg-white/10 hover:text-white transition-all"
               aria-label="Learn more"
             >
-              <ArrowRight className="w-5 h-5 rotate-[-45deg]" />
+              <ArrowRight strokeWidth={3} className="w-6 h-6 rotate-[-45deg] text-[#22c55e]" />
             </Link>
           </div>
         </div>
@@ -147,16 +147,16 @@ export default function AboutUs() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
             <div>
               <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-[#6B3FA0]/10 text-[#6B3FA0] rounded-full text-xs font-bold uppercase tracking-widest mb-6">
-                About Let&apos;s B2B
+                About Let&apos;sB2B
               </div>
               <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black text-gray-900 mb-6 leading-tight tracking-tight">
-                Built for the Tourism &; Hospitality Trade
+                Built for the Tourism & Hospitality Trade
               </h2>
               <p className="text-base text-gray-600 leading-relaxed mb-8 md:text-lg">
-                Let&apos;s B2B is a global B2B networking and trading platform <strong>exclusively for the tourism and hospitality industry</strong>. We help members find reliable, verified partners and connect digitally across India and international markets — with a focus on trust, verification, and long-term partnerships.
+                Let&apos;sB2B is a global B2B networking and trading platform <strong>exclusively for the tourism and hospitality industry</strong>. We help members find reliable, verified partners and connect digitally across India and international markets — with a focus on trust, verification, and long-term partnerships.
               </p>
               <ul className="space-y-3">
-                {["Verified tourism and hospitality professionals", "Secure B2B networking and messaging", "Pan-India and international reach", "Ethical, transparent partnerships"].map((item, i) => (
+                {["Verified tourism and hospitality businesses", "Secure B2B networking and messaging", "Pan-India and international reach", "Ethical, transparent partnerships"].map((item, i) => (
                   <li key={i} className="flex items-center gap-3 text-gray-700 font-medium text-base">
                     <CheckCircle2 className="w-5 h-5 text-[#22c55e] shrink-0" />
                     {item}
@@ -222,7 +222,7 @@ export default function AboutUs() {
             <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-[#6B3FA0]/10 text-[#6B3FA0] rounded-full text-xs font-bold uppercase tracking-widest mb-4">
               Industry Coverage
             </div>
-            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black text-gray-900 mb-4 tracking-tight">Tourism &; Hospitality Verticals</h2>
+            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black text-gray-900 mb-4 tracking-tight">Tourism & Hospitality Verticals</h2>
             <p className="text-base text-gray-500 max-w-2xl mx-auto md:text-lg">Let&apos;s B2B covers the full spectrum of the tourism and hospitality trade ecosystem.</p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -243,15 +243,15 @@ export default function AboutUs() {
             <div className="max-w-5xl mx-auto">
               <div className="text-center mb-12">
                 <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black text-gray-900 mb-4 tracking-tight">Who Can Join</h2>
-                <p className="text-base text-gray-500 max-w-xl mx-auto md:text-lg">Tourism professionals and businesses committed to ethical trade.</p>
+                <p className="text-base text-gray-500 max-w-xl mx-auto md:text-lg">Travel & Tourism businesses committed to ethical trade.</p>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className="bg-white rounded-2xl p-8 lg:p-10 border border-gray-200 hover:shadow-xl transition-shadow">
                   <div className="w-12 h-12 bg-[#6B3FA0]/10 rounded-2xl flex items-center justify-center mb-6">
                     <Users className="w-6 h-6 text-[#6B3FA0]" />
                   </div>
-                  <h3 className="font-black text-gray-900 text-xl md:text-2xl mb-3 tracking-tight">Individual Professionals</h3>
-                  <p className="text-gray-500 text-base mb-5 leading-relaxed md:text-lg">Tourism and hospitality professionals seeking:</p>
+                  <h3 className="font-black text-gray-900 text-xl md:text-2xl mb-3 tracking-tight">Individual Businesses</h3>
+                  <p className="text-gray-500 text-base mb-5 leading-relaxed md:text-lg">Tourism and hospitality individual business entities seeking:</p>
                   <ul className="space-y-2">
                     {["Industry networking", "Career and professional growth", "Business collaboration opportunities"].map((i, k) => (
                       <li key={k} className="flex items-center gap-2 text-base text-gray-700 md:text-lg">
@@ -313,7 +313,7 @@ export default function AboutUs() {
           </p>
           <div className="bg-white/10 rounded-2xl p-6 text-left max-w-2xl mx-auto border border-white/10">
             <ul className="space-y-3">
-              {["Business registration or professional credentials", "Contact and identity verification", "Platform review and approval"].map((v, i) => (
+              {["Business registration", "Contact and identity verification", "Platform review and approval"].map((v, i) => (
                 <li key={i} className="flex items-center gap-3 text-base text-white/90 md:text-lg">
                   <CheckCircle2 className="w-4 h-4 text-[#22c55e] shrink-0" /> {v}
                 </li>
@@ -356,7 +356,7 @@ export default function AboutUs() {
                   FAQ
                 </div>
                 <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black text-gray-900 mb-4 tracking-tight">Frequently Asked Questions</h2>
-                <p className="text-base text-gray-500 md:text-lg">Everything you need to know about Let&apos;s B2B.</p>
+                <p className="text-base text-gray-500 md:text-lg">Everything you need to know about Let&apos;sB2B.</p>
               </div>
               <div className="space-y-4">
                 {faqs.map((faq, i) => (
@@ -374,7 +374,7 @@ export default function AboutUs() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="bg-[#1a1625] rounded-2xl p-8 lg:p-10 text-white">
               <Mail className="w-10 h-10 text-[#22c55e] mb-6" />
-              <h3 className="text-xl md:text-2xl font-black mb-3 tracking-tight">Feedback &; Support</h3>
+              <h3 className="text-xl md:text-2xl font-black mb-3 tracking-tight">Feedback & Support</h3>
               <p className="text-white/80 text-base leading-relaxed mb-6 md:text-lg">
                 Share suggestions, report misuse, or request features. We use your feedback to improve the platform.
               </p>
@@ -405,7 +405,7 @@ export default function AboutUs() {
         <div className="max-w-3xl mx-auto px-5 lg:px-10 text-center">
           <p className="text-gray-500 text-sm font-bold uppercase tracking-widest mb-4 md:text-base">Our Commitment</p>
           <blockquote className="text-2xl font-black text-gray-900 leading-snug tracking-tight md:text-3xl">
-            &quot;Let&apos;s B2B is a <span className="text-[#6B3FA0]">professional trade platform</span> for tourism and hospitality — for businesses and professionals who value credibility, trust, and sustainable growth.&quot;
+            &quot;Let&apos;sB2B is a <span className="text-[#6B3FA0]">professional trade platform</span> for tourism and hospitality — for businesses who value credibility, trust, and sustainable growth.&quot;
           </blockquote>
         </div>
       </section>
@@ -414,7 +414,7 @@ export default function AboutUs() {
       <SectionWrapper>
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-3xl font-black text-gray-900 mb-4 tracking-tight sm:text-4xl md:text-5xl">Ready to Join?</h2>
-          <p className="text-base text-gray-500 mb-10 max-w-xl mx-auto md:text-lg">Join verified tourism and hospitality professionals trading and growing on Let&apos;s B2B.</p>
+          <p className="text-base text-gray-500 mb-10 max-w-xl mx-auto md:text-lg">Join verified tourism and hospitality trading and growing on Let&apos;sB2B.</p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/signup" className="px-8 py-4 bg-[#6B3FA0] text-white font-bold rounded-full hover:bg-[#5a3590] transition-all shadow-lg uppercase text-xs tracking-widest">
               Join the Network

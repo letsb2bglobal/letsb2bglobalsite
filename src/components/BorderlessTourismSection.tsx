@@ -12,32 +12,32 @@ const poppins = Poppins({
 
 const ASSETS = "/a-borderless-tourism-section";
 
-const items = [
-  {
-    id: "global-reach",
-    title: "Global Reach",
-    description: "Connect across India + international markets",
-    icon: `${ASSETS}/global-reach.png`,
-  },
-  {
-    id: "trusted-partnerships",
-    title: "Trusted Partnerships",
-    description: "Build relationships with verified tourism and hospitality partners worldwide.",
-    icon: `${ASSETS}/trusted-partnership.png`,
-  },
-  {
-    id: "business-enquiries",
-    title: "Business Enquiries",
-    description: "Send and receive qualified enquiries directly through the platform.",
-    icon: `${ASSETS}/business_enquiries.png`,
-  },
-  {
-    id: "secure-messaging",
-    title: "Secure Messaging",
-    description: "Communicate with partners in a secure, professional environment.",
-    icon: `${ASSETS}/secure-messaging.png`,
-  },
-];
+  const items = [
+    {
+      id: "global-reach",
+      title: "Global Reach",
+      description: "Connect across India + international markets",
+      icon: `${ASSETS}/global-reach.png`,
+    },
+    {
+      id: "trusted-partnerships",
+      title: "Trusted Partnerships",
+      description: "Build relationships with verified tourism and hospitality partners worldwide.",
+      icon: `${ASSETS}/trusted-partnership.png`,
+    },
+    {
+      id: "business-enquiries",
+      title: "Business Enquiries",
+      description: "Send and receive qualified enquiries directly through the platform.",
+      icon: `${ASSETS}/business_enquiries.png`,
+    },
+    {
+      id: "secure-messaging",
+      title: "Secure Messaging",
+      description: "Communicate with partners in a secure, professional environment.",
+      icon: `${ASSETS}/secure-messaging.png`,
+    },
+  ];
 
 export default function BorderlessTourismSection() {
   const [openId, setOpenId] = useState<string | null>(null);
@@ -181,7 +181,7 @@ export default function BorderlessTourismSection() {
                     </button>
                     {isOpen && (
                       <div className="px-5 pb-5 lg:px-6 lg:pb-6 pt-0">
-                        <p className="pl-16 lg:pl-20 text-gray-800 font-medium text-base lg:text-lg leading-relaxed">
+                        <p className="pl-16 text-gray-800 font-medium text-base lg:text-lg leading-relaxed">
                           {item.description}
                         </p>
                       </div>

@@ -30,9 +30,7 @@ export default function FaqSection() {
             className="mx-auto mt-4 max-w-[720px] text-base leading-relaxed md:text-lg"
             style={{ color: "#3d4f6b" }}
           >
-            Choose a plan that fits your business needs, from free listing to
-            premium trade access. Upgrade anytime as your visibility and
-            requirements grow.
+            Find answers to common questions about LetsB2B, how the platform works, and how tourism professionals and businesses can connect, collaborate, and grow through our global B2B network.
           </p>
         </header>
 
@@ -42,11 +40,10 @@ export default function FaqSection() {
             return (
               <div
                 key={faq.id}
-                className={`rounded-2xl border transition-colors duration-200 ${
-                  isOpen
-                    ? "border-[#F2C7C0] bg-white"
-                    : "border-gray-200/80 bg-[#EFE8E7] hover:border-gray-300 hover:shadow-sm"
-                }`}
+                className={`rounded-2xl border transition-colors duration-200 ${isOpen
+                  ? "border-[#F2C7C0] bg-white"
+                  : "border-gray-200/80 bg-[#EFE8E7] hover:border-gray-300 hover:shadow-sm"
+                  }`}
               >
                 <button
                   type="button"
@@ -81,9 +78,8 @@ export default function FaqSection() {
                 >
                   <div className="overflow-hidden">
                     <div
-                      className={`pb-5 pt-1 md:pb-6 md:pt-2 px-5 md:px-6 transition-opacity duration-300 ${
-                        isOpen ? "opacity-100" : "opacity-0"
-                      }`}
+                      className={`pb-5 pt-1 md:pb-6 md:pt-2 px-5 md:px-6 transition-opacity duration-300 ${isOpen ? "opacity-100" : "opacity-0"
+                        }`}
                       style={{ color: "#3d4f6b" }}
                     >
                       <p className="text-base leading-relaxed">{faq.answer}</p>

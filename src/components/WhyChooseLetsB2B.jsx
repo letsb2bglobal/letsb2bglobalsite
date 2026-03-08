@@ -17,7 +17,7 @@ const cards = [
   },
   {
     title: "Genuine Business Opportunities",
-    body: "LetsB2B enables direct B2B enquiries, partnership requests, and contracting opportunities between verified tourism businesses and professionals. No lead selling. No irrelevant promotions.",
+    body: "LetsB2B enables direct B2B enquiries, partnership requests, and contracting opportunities between verified tourism businesses. No lead selling. No irrelevant promotions.",
     iconSrc: "/genuine-business-opportunity.svg",
     colSpan: 1,
   },

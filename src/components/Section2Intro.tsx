@@ -3,57 +3,41 @@
 import React from "react";
 import Typewriter from "typewriter-effect";
 
-const SEGMENTS: { text: string; gray: boolean }[] = [
-  { text: "We are a global ", gray: true },
-  { text: "B2B networking", gray: false },
-  { text: "and", gray: true },
-  { text: "trading platform", gray: false },
-  { text: " built exclusively for tourism ", gray: true },
-  { text: "and hospitality.", gray: false },
-  { text: " Connect with ", gray: true },
-  { text: "verified professionals", gray: false },
-  { text: "and", gray: true },
-  { text: "businesses", gray: false },
-  { text: " across markets.", gray: true },
-];
-
-function segmentToHtml(segment: { text: string; gray: boolean }): string {
-  const style = segment.gray
-    ? "color:#969696"
-    : "font-weight:700;color:black";
-  // Only escape < and > so they aren't parsed as HTML. Do not escape & or
-  // the typewriter will show "&;" literally when it types character-by-character.
-  const escaped = segment.text
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
-  return `<span style="${style};margin-right:10px">${escaped}</span>`;
-}
-
 export default function Section2Intro() {
+  const segments = [
+    { text: "We are a global ", gray: true },
+    { text: "B2B networking and trading platform", gray: false },
+    { text: " built exclusively to connect ", gray: true },
+    { text: "verified businesses", gray: false },
+    { text: " across the tourism and hospitality industry.", gray: false },
+    { text: " Pure Business. Not a Social Network.", gray: false },
+  ];
+
   return (
     <section
       id="intro"
       data-section="intro"
-      className="relative bg-white border-t-[3px] border-[#22c55e] py-16 lg:py-20"
+      className="relative bg-white border-t-[3px] border-emerald-500 py-16 lg:py-24"
     >
-      <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-[#e91e8c]" aria-hidden="true" />
       <div className="w-full max-w-[1440px] mx-auto px-5 lg:px-10">
-        <div className="pl-6 lg:pl-8 min-h-[12rem] sm:min-h-[14rem] md:min-h-[16rem] lg:min-h-[18rem] xl:min-h-[20rem]">
+        <div className="min-h-[10rem] sm:min-h-[12rem] md:min-h-[14rem] lg:min-h-[16rem]">
           <div
-            className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl leading-snug"
+            className="text-2xl sm:text-3xl md:text-5xl lg:text-6xl font-medium leading-[1.2] tracking-tight text-gray-900 break-words"
             aria-live="polite"
           >
             <Typewriter
               options={{
-                cursor: "",
-                delay: 50,
-                skipAddStyles: true,
-                wrapperClassName: "Typewriter__wrapper inline",
-                cursorClassName: "hidden",
+                cursor: "|",
+                delay: 40,
+                autoStart: true,
+                loop: false,
               }}
               onInit={(tw) => {
-                SEGMENTS.forEach((seg) => {
-                  tw.typeString(segmentToHtml(seg));
+                segments.forEach((seg) => {
+                  const style = seg.gray
+                    ? "color:#9ca3af;font-weight:400"
+                    : "color:#111827;font-weight:800";
+                  tw.typeString(`<span style="${style}">${seg.text}</span> `);
                 });
                 tw.start();
               }}

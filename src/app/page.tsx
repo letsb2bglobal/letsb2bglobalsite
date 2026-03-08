@@ -279,6 +279,7 @@ useEffect(() => {
               muted
               loop
               playsInline
+              preload="auto"
               className="h-full w-full object-cover scale-x-[-1]"
               src="/our-features-section/landing.mp4"
             />
@@ -299,13 +300,13 @@ useEffect(() => {
           <div className="relative z-10 flex flex-1 min-h-0 flex-col justify-center w-full max-w-[1440px] mx-auto px-4 sm:px-5 lg:px-10 pt-20">
             <div className="py-4 sm:py-6">
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 text-white font-semibold border border-white/20 rounded-full text-xs uppercase tracking-widest mb-6 shadow-lg shadow-black/10">
-              Less Noise, Pure Business B2B
+              Less Noise, Pure Business 
             </div>
             <h1 className="text-3xl font-black text-white tracking-tight leading-tight sm:text-4xl md:text-5xl lg:text-6xl">
               Global Tourism and Hospitality
             </h1>
             <h2 className="text-3xl font-black text-white tracking-tight leading-tight mt-0.5 sm:mt-1 sm:text-4xl md:text-5xl lg:text-6xl">
-              B2B Trade Network
+              Trade Network
             </h2>
             <p className="text-base text-white/90 mt-3 max-w-xl sm:text-lg sm:mt-4">
               Finding reliable and trusted business partners for global growth and trading.
@@ -315,28 +316,28 @@ useEffect(() => {
               {partnerTypes.map((t) => (
                 <span
                   key={t}
-                  className="px-3 py-1.5 rounded-full bg-white/10 text-white/90 text-xs font-semibold border border-white/20"
+                  className="px-3 py-1.5 rounded-full bg-white/10 text-white/90 text-xs font-semibold border border-orange-500/30"
                 >
                   {t}
                 </span>
               ))}
             </div>
             <p className="hidden sm:block text-base text-white/80 mt-4 max-w-2xl">
-              Join our growing community and experience our industry-leading B2B matchmaking for tourism and hospitality.
+              Join our growing community and experience our industry-leading matchmaking for tourism and hospitality.
             </p>
             <div className="flex flex-col gap-2 mt-5 sm:flex-row sm:flex-wrap sm:gap-3 sm:mt-6">
               <Link
                 href="/signup"
                 className="inline-flex items-center justify-center w-full sm:w-auto px-6 py-3.5 bg-white text-[#1a1625] font-bold rounded-full hover:bg-white/95 transition-colors text-sm"
               >
-                Join the Network
+                Join the Network Today
               </Link>
-              <Link
+              {/* <Link
                 href="/signin"
                 className="inline-flex items-center justify-center w-full sm:w-auto px-6 py-3.5 bg-[#f97316] text-white font-bold rounded-full hover:bg-[#ea580c] transition-colors text-sm"
               >
                 Explore Platform
-              </Link>
+              </Link> */}
             </div>
             <div className="flex flex-wrap gap-4 mt-4 sm:gap-6 sm:mt-6">
               <div className="flex items-center gap-1.5 text-white/90 text-xs sm:text-sm sm:gap-2">
@@ -347,7 +348,7 @@ useEffect(() => {
               </div>
               <div className="flex items-center gap-1.5 text-white/90 text-xs sm:text-sm sm:gap-2">
                 <span className="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-amber-400 text-[#1a1625] flex items-center justify-center text-[10px] font-black shrink-0">0</span>
-                <span className="font-semibold">Less Noise</span>
+                <span className="font-semibold">Noise</span>
               </div>
               <div className="flex items-center gap-1.5 text-white/90 text-xs sm:text-sm sm:gap-2">
                 <Handshake className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-400 shrink-0" strokeWidth={2} />

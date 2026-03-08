@@ -14,14 +14,14 @@ export default function AuthLayout({ children, variant = "signin" }: AuthLayoutP
       {/* ── Content area ───────────────────────────────────────────────── */}
       <div
         className={`flex-1 px-3 py-4 sm:px-6 sm:py-6 md:px-8 md:py-8 ${hideLeftPanel ? "min-h-0" : ""}`}
-        style={{ background: hideLeftPanel ? "#fff" : "#FFE6FBA3" }}
+        style={{ background: hideLeftPanel ? "#fff" : "#FDF7FF" }}
       >
         <div
           className={`relative w-full flex items-center justify-center ${hideLeftPanel ? "min-h-full overflow-visible rounded-2xl" : "min-h-screen overflow-x-hidden"} ${
             hideLeftPanel ? "" : "grid lg:grid-cols-2 grid-cols-1"
           }`}
           style={{
-            background: hideLeftPanel ? "transparent" : "#FFE6FBA3",
+            background: hideLeftPanel ? "transparent" : "#FDF7FF",
             border: "none",
           }}
         >
@@ -42,7 +42,7 @@ export default function AuthLayout({ children, variant = "signin" }: AuthLayoutP
               aria-hidden
             />
           )}
-
+ 
           {/* ── Left Panel (signin only) ───────────────────────────────── */}
           {!hideLeftPanel && (
           <div className="hidden lg:flex flex-col justify-between p-10">
@@ -63,7 +63,7 @@ export default function AuthLayout({ children, variant = "signin" }: AuthLayoutP
                   alignItems: "center",
                 }}
               >Lets B2B</h2>
-
+ 
               {/* 2. Subtitle — Regular, Body Large, #000000 */}
               <p
                 style={{
@@ -76,9 +76,9 @@ export default function AuthLayout({ children, variant = "signin" }: AuthLayoutP
                   marginTop: "6px",
                 }}
               >
-                Where tourism &; hospitality professionals connect the right way.
+                Where tourism & hospitality professionals connect the right way.
               </p>
-
+ 
               {/* 3. List Your Business — Regular, Body Large, #000000 */}
               <Link
                 href="/pricing"
@@ -109,14 +109,14 @@ export default function AuthLayout({ children, variant = "signin" }: AuthLayoutP
             </div>
           </div>
           )}
-
+ 
           {/* ── Right Panel (Form Card) ────────────────────────────────── */}
           <div className={`relative z-10 flex items-center justify-center p-3 sm:p-6 md:p-8 min-w-0 w-full overflow-x-hidden ${hideLeftPanel ? "w-full" : ""}`}>
             <div
-              className={`w-full py-5 px-4 sm:py-8 sm:px-6 md:px-8 ${
+              className={`w-full py-5 px-4 sm:py-8 sm:px-6 md:px-10 ${
                 hideLeftPanel
                   ? "max-w-full sm:max-w-[540px] md:max-w-[680px] lg:max-w-[872px] min-h-0 sm:min-h-[393px] rounded-2xl sm:rounded-[24px] bg-[#FFFFFF]"
-                  : "max-w-[460px] rounded-xl sm:rounded-[20px] overflow-y-auto"
+                  : "max-w-[560px] rounded-xl sm:rounded-[20px] overflow-y-auto"
               }`}
               style={
                 hideLeftPanel
