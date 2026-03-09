@@ -14,7 +14,6 @@ import {
 import { getUser, clearAuthData, isAuthenticated } from "@/lib/auth";
 import { useTeam } from "@/context/TeamContext";
 import { fetchEnquiryThreads } from "@/lib/enquiry";
-import { fetchUserConversations } from "@/lib/messages";
 
 // Landing page menu: section anchors (scroll on /) or page links; primary = CTA button style
 const LANDING_MENU: {
@@ -137,7 +136,6 @@ const Header = () => {
   const checkNotifications = useCallback(async () => {
     try {
       const threads = await fetchEnquiryThreads();
-      const conversations = await fetchUserConversations();
 
       const now = new Date();
       const isNew = (dateStr?: string) => {
@@ -146,9 +144,7 @@ const Header = () => {
         return now.getTime() - date.getTime() < 5 * 60 * 1000;
       };
 
-      const hasRecentEnquiry = threads.some((t) => isNew(t.updatedAt));
-      const hasRecentChat = conversations.some((c) => isNew(c.updatedAt));
-
+      const hasRecentActivity = threads.some((t) => isNew(t.updatedAt));
       setHasNewNotifications(hasRecentActivity);
     } catch (err) {
       console.error("Notification check failed", err);
