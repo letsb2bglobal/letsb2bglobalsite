@@ -25,28 +25,36 @@ function ImageCard({
   title,
   imageSrc,
   href = "/signup",
+  className = "",
+  align = "items-end",
 }: {
   title: string;
   imageSrc: string;
   href?: string;
+  className?: string;
+  align?: "items-center" | "items-end";
 }) {
   return (
     <Link
       href={href}
       data-card
-      className="opacity-0 flex relative rounded-2xl overflow-hidden min-h-[180px] md:min-h-[220px] lg:min-h-[240px] shadow-lg hover:shadow-xl transition-shadow cursor-pointer"
+      className={`opacity-0 group relative rounded-2xl md:rounded-3xl overflow-hidden min-h-[140px] md:min-h-[180px] shadow-sm hover:shadow-md transition-all cursor-pointer ${className}`}
     >
       <Image
         src={imageSrc}
         alt=""
         fill
-        className="object-cover object-center"
-        sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+        className="object-cover object-center group-hover:scale-105 transition-transform duration-700"
+        sizes="(max-width: 768px) 100vw, 50vw"
       />
-      <div className="absolute inset-0 bg-black/50" aria-hidden />
-      <span className="absolute bottom-0 left-0 right-0 p-5 lg:p-6 text-white font-bold text-base lg:text-lg leading-snug text-left z-10">
-        {title}
-      </span>
+      <div className="absolute inset-0 bg-black/40 group-hover:bg-black/30 transition-colors" aria-hidden />
+      <div className={`absolute inset-0 p-5 md:p-6 flex ${align} justify-start z-10`}>
+        <span
+          className="text-white font-semibold text-base md:text-lg lg:text-[22px] lg:leading-[1.4] text-left max-w-full whitespace-pre-line"
+        >
+          {title}
+        </span>
+      </div>
     </Link>
   );
 }
@@ -54,19 +62,23 @@ function ImageCard({
 function SolidCard({
   title,
   href = "/signup",
-  color = "bg-neutral-900"
+  color = "bg-black",
+  className = "",
 }: {
   title: string;
   href?: string;
   color?: string;
+  className?: string;
 }) {
   return (
     <Link
       href={href}
       data-card
-      className={`opacity-0 flex rounded-2xl overflow-hidden min-h-[160px] md:min-h-[200px] lg:min-h-[220px] ${color} shadow-lg hover:shadow-xl transition-all cursor-pointer items-end justify-start p-6 group`}
+      className={`opacity-0 flex rounded-2xl md:rounded-3xl overflow-hidden min-h-[140px] md:min-h-[180px] ${color} shadow-sm hover:shadow-md transition-all cursor-pointer items-center justify-start p-5 md:p-6 group ${className}`}
     >
-      <span className="text-white font-black text-lg md:text-xl lg:text-2xl leading-none text-left group-hover:scale-105 transition-transform duration-500">
+      <span
+        className="text-white font-semibold text-base md:text-lg lg:text-[22px] lg:leading-[1.4] text-left group-hover:scale-105 transition-transform duration-500 max-w-full whitespace-pre-line"
+      >
         {title}
       </span>
     </Link>
@@ -320,94 +332,95 @@ export default function GlobalTourismTradeNetworkSection() {
         />
       </div>
 
-      <div className="w-full max-w-[1440px] mx-auto px-5 lg:px-10 relative z-10">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-start">
+      <div className={`w-full max-w-[1440px] mx-auto px-5 lg:px-10 relative z-10 ${poppins.className}`}>
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-10 lg:gap-16 items-start">
           {/* Left: Label + Heading + Body — pinned while right scrolls */}
-          <div className={`${poppins.className} lg:sticky lg:top-24 self-start`}>
+          <div className="lg:sticky lg:top-24 self-start lg:col-span-2">
             <p
               data-gt-label
-              className="opacity-0 text-left font-black tracking-[0.2em] text-[#612178] uppercase"
-              style={{ fontSize: "14px", lineHeight: "2" }}
+              className="opacity-0 text-left font-bold tracking-widest text-gray-900 uppercase mb-3"
+              style={{ fontSize: "11px" }}
             >
-              Professional Ecosystem
+              GLOBAL TOURISM TRADE NETWORK
             </p>
             <h2
               data-gt-heading
-              className="opacity-0 text-left font-black text-gray-900 mt-4 mb-8"
-              style={{ fontSize: "clamp(32px, 5vw, 56px)", lineHeight: "1.1", letterSpacing: "-0.02em" }}
+              className="opacity-0 text-left font-bold text-gray-900 mb-6"
+              style={{ fontSize: "clamp(28px, 3.5vw, 42px)", lineHeight: "1.2" }}
             >
-              Who can <span className="text-[#612178]">connect & trade</span> on LetsB2B?
+              Who can connect and trade on LetsB2B?
             </h2>
-            <div className="space-y-8">
+            <div className="space-y-5">
               <p
-                className="text-left font-medium text-gray-700 max-w-lg"
-                style={{ fontSize: "20px", lineHeight: "1.5" }}
+                data-gt-line
+                className="opacity-0 text-left font-medium text-gray-900 leading-relaxed"
+                style={{ fontSize: "18px" }}
               >
-                <span data-gt-line className="opacity-0 block">
-                  LetsB2B brings together industry players who are actively looking to collaborate, contract services, and build trusted trade partnerships.
-                </span>
+                LetsB2B brings together industry players who are actively looking to collaborate, contract services, and build trusted trade partnerships.
               </p>
-              <div className="space-y-4">
-                <p
-                  className="text-left font-normal text-gray-600 max-w-md border-l-4 border-emerald-500 pl-6"
-                  style={{ fontSize: "17px", lineHeight: "1.6" }}
-                >
-                  <span data-gt-line className="opacity-0 block">
-                    Whether you are an individual business seeking industry connections or a registered business looking for reliable partners,
-                  </span>
-                </p>
-                <p
-                  className="text-left font-normal text-gray-600 max-w-md pl-7"
-                  style={{ fontSize: "17px", lineHeight: "1.6" }}
-                >
-                  <span data-gt-line className="opacity-0 block">
-                    LetsB2B helps you connect with the right people across India and international markets.
-                  </span>
-                </p>
-              </div>
+              <p
+                data-gt-line
+                className="opacity-0 text-left font-medium text-gray-600 leading-relaxed"
+                style={{ fontSize: "16px" }}
+              >
+                Whether you are an individual professional seeking industry connections or a registered business looking for reliable trade partners, LetsB2B helps you connect with the right people and opportunities across India and international markets.
+              </p>
             </div>
           </div>
 
-          {/* Right: Hero card + cards grid — scrolls */}
-          <div className="flex flex-col gap-5 lg:gap-6">
-            {/* Hero: large purple rounded card */}
+          {/* Right: Hero card + cards grid */}
+          <div className="flex flex-col gap-3 md:gap-4 lg:col-span-3">
+            {/* Hero Card */}
             <div
               data-card
-              className="opacity-0 rounded-2xl lg:rounded-3xl bg-[#461E66] p-8 lg:p-10 text-white text-left shadow-lg"
+              className="opacity-0 rounded-[20px] bg-[#612A79] border border-[#E3E3E3] p-6 md:p-8 text-white text-left shadow-sm min-h-[130px] flex flex-col justify-center"
             >
-              <h2 className="text-2xl lg:text-3xl font-bold mb-4">
+              <h3 className="text-lg md:text-xl lg:text-[24px] lg:leading-[1.4] font-semibold mb-2">
                 Explore Verified Tourism Trade Partners
-              </h2>
-              <p className="text-white/90 text-base lg:text-lg leading-relaxed">
+              </h3>
+              <p className="text-white/90 text-[14px] md:text-[15px] leading-relaxed max-w-3xl">
                 Join a growing global network of tourism and hospitality professionals actively looking for business partnerships and trade opportunities.
               </p>
             </div>
 
-            {/* Row 1: two cards side-by-side */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            {/* Row 2 */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-5">
               <ImageCard
-                title="Travel Agents & Tour Operators"
+                title={"Travel Agents &\nTour Operators"}
                 imageSrc={`${BASE}/travel_block.png`}
+                className="md:col-span-2 min-h-[100px] lg:min-h-[120px]"
               />
-              <SolidCard title="DMCs" color="bg-indigo-600" />
+              <SolidCard
+                title="Destination Management Companies (DMCs)"
+                color="bg-black"
+                className="min-h-[100px] lg:min-h-[120px]"
+              />
             </div>
 
-            {/* Row 2: one full-width image card */}
+            {/* Row 3 */}
             <ImageCard
               title="Hotels, Resorts & Homestays"
               imageSrc={`${BASE}/hotels_stays.png`}
+              className="min-h-[80px] lg:min-h-[100px]"
+              align="items-center"
             />
 
-            {/* Row 3: three equal-width cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {/* Row 4 */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
               <ImageCard
-                title="Transport & Mobility"
+                title="Transport & Mobility Providers"
                 imageSrc={`${BASE}/transport-mobility-block.png`}
+                className="min-h-[110px] lg:min-h-[130px]"
               />
-              <SolidCard title="Experiential Providers" color="bg-[#612178]" />
+              <SolidCard
+                title="Experience & Adventure Providers"
+                color="bg-black"
+                className="min-h-[110px] lg:min-h-[130px]"
+              />
               <ImageCard
-                title="Technology Providers"
+                title="Tourism Technology & Service Providers"
                 imageSrc={`${BASE}/tourism-technology.png`}
+                className="min-h-[110px] lg:min-h-[130px]"
               />
             </div>
           </div>

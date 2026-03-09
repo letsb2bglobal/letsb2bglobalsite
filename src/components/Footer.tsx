@@ -12,14 +12,30 @@ import {
   ArrowRight,
   ShieldCheck,
 } from 'lucide-react';
+import { usePathname, useRouter } from 'next/navigation';
 
 const Footer = () => {
+  const pathname = usePathname();
+  const router = useRouter();
   const currentYear = new Date().getFullYear();
+
+  const handleLinkClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
+    if (href.startsWith('/#') && pathname === '/') {
+      e.preventDefault();
+      const id = href.replace('/#', '');
+      const el = document.getElementById(id);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        // Update URL hash without reload
+        window.history.pushState(null, '', href);
+      }
+    }
+  };
 
   const footerLinks = {
     company: [
       { name: 'About Us', href: '/aboutus' },
-      { name: 'Features', href: '/aboutus#features' },
+      { name: 'Features', href: '/#features' },
       { name: 'Membership Plans', href: '/pricing' },
       { name: 'Verification Policy', href: '/aboutus#verification' },
       { name: 'FAQ', href: '/#faqs' },
@@ -96,6 +112,7 @@ const Footer = () => {
                 <li key={link.name}>
                   <Link
                     href={link.href}
+                    onClick={(e) => handleLinkClick(e, link.href)}
                     className="text-slate-400 hover:text-blue-400 transition-colors text-sm flex items-center group"
                   >
                     <ArrowRight className="w-3 h-3 mr-2 opacity-0 -ml-5 group-hover:opacity-100 group-hover:ml-0 transition-all" />
@@ -171,7 +188,11 @@ const Footer = () => {
             <Link href="/conduct" className="text-slate-500 hover:text-slate-300 text-[10px] font-bold uppercase tracking-widest transition-colors">
               Code of Conduct
             </Link>
-            <Link href="/#faqs" className="text-slate-500 hover:text-slate-300 text-[10px] font-bold uppercase tracking-widest transition-colors">
+            <Link
+              href="/#faqs"
+              onClick={(e) => handleLinkClick(e, '/#faqs')}
+              className="text-slate-500 hover:text-slate-300 text-[10px] font-bold uppercase tracking-widest transition-colors"
+            >
               FAQ
             </Link>
           </div>
