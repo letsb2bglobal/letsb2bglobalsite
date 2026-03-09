@@ -55,6 +55,7 @@ const PostCreationModal: React.FC<PostCreationModalProps> = ({
     defaultValues: {
       type: "accommodation",
       title: "",
+      description: "", 
       details: {},
       budget: {
         amount: 0,
@@ -113,7 +114,8 @@ const PostCreationModal: React.FC<PostCreationModalProps> = ({
       const postData = {
         title: data.title,
         type: data.type,
-        description: data.title,
+    
+        description: data.description,
         destination:
           data.details.destination ||
           data.details.city ||

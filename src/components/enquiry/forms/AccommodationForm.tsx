@@ -106,7 +106,7 @@ const AccommodationForm = () => {
       {/* Description - full width */}
       <div>
         <textarea
-          {...register("details.description")}
+          {...register("description")}
           placeholder="Description"
           rows={4}
           className={`${inputBase} resize-y min-h-[100px] py-3`}
