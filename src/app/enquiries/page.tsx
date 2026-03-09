@@ -225,11 +225,12 @@ function EnquiriesContent() {
       } else {
         // Plain text → socket (saves to DB + broadcasts in one step)
         if (myProfile) {
-          const optimisticMsg = {
+          const optimisticMsg: EnquiryMessage = {
             id: Date.now(),
             documentId: `temp-${Date.now()}`,
             message_body: newMessage.trim(),
             sender_profile: myProfile,
+            sender_profile_id: String(myProfile?.documentId ?? myProfile?.userId ?? user?.id ?? 0),
             createdAt: new Date().toISOString()
           };
           setMessages((prev) => [...prev, optimisticMsg]);
