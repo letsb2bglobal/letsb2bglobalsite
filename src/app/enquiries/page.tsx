@@ -225,10 +225,11 @@ function EnquiriesContent() {
       } else {
         // Plain text → socket (saves to DB + broadcasts in one step)
         if (myProfile) {
-          const optimisticMsg = {
+          const optimisticMsg: EnquiryMessage = {
             id: Date.now(),
             documentId: `temp-${Date.now()}`,
             message_body: newMessage.trim(),
+            sender_profile_id: myProfile.documentId,
             sender_profile: myProfile,
             createdAt: new Date().toISOString()
           };
