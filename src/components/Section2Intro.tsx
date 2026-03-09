@@ -8,9 +8,8 @@ export default function Section2Intro() {
     { text: "We are a global ", gray: true },
     { text: "B2B networking and trading platform", gray: false },
     { text: " built exclusively to connect ", gray: true },
-    { text: "verified businesses", gray: false },
-    { text: " across the tourism and hospitality industry.", gray: false },
-    { text: " Pure Business. Not a Social Network.", gray: false },
+    { text: "verified businesses across the", gray: true },
+    { text: "tourism and hospitality industry.", gray: false },
   ];
 
   return (
