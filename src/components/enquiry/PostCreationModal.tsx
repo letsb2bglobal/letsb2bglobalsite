@@ -55,7 +55,7 @@ const PostCreationModal: React.FC<PostCreationModalProps> = ({
     defaultValues: {
       type: "accommodation",
       title: "",
-      description: "", 
+      description: "",
       details: {},
       budget: {
         amount: 0,
@@ -73,6 +73,7 @@ const PostCreationModal: React.FC<PostCreationModalProps> = ({
     reset,
     watch,
     setValue,
+    getValues,
     formState: { errors },
   } = methods;
 
@@ -86,6 +87,7 @@ const PostCreationModal: React.FC<PostCreationModalProps> = ({
   }, [activeType, setValue]);
 
   const onSubmit = async (data: MasterEnquiryForm) => {
+    console.log("FORM TAGS:", data.tags);
     setIsSubmitting(true);
     try {
       const apiUrl =
@@ -111,35 +113,52 @@ const PostCreationModal: React.FC<PostCreationModalProps> = ({
             }
           : data.details;
 
+      if (Array.isArray(details.timeline)) {
+        details.timeline = details.timeline[0];
+      }
+
       const postData = {
-        title: data.title,
-        type: data.type,
-    
-        description: data.description,
-        destination:
-          data.details.destination ||
-          data.details.city ||
-          data.details.venueLocation ||
-          "",
-        enquiry_details: [
-          {
-            __component: componentMap[data.type] || `enquiry.${data.type}`,
-            ...details,
+        data: {
+          title: data.title,
+          type: data.type,
+
+          description: data.description,
+          destination:
+            data.details.destination ||
+            data.details.city ||
+            data.details.venueLocation ||
+            "",
+          enquiry_details: [
+            {
+              __component: componentMap[data.type] || `enquiry.${data.type}`,
+              ...details,
+            },
+          ],
+          budget: {
+            amount: data.budget.amount,
+            currency: data.budget.currency,
+            budgetType: data.budget.budgetType,
           },
-        ],
-        budget: {
-          amount: data.budget.amount,
-          currency: data.budget.currency,
-          budgetType: data.budget.budgetType,
+          // tags: Array.isArray(getValues("tags")) ? getValues("tags") : [],
+          tags: data.tags ?? [],
+          user_profile: activeWorkspace?.data?.documentId,
+          status: "Open",
+          publishedAt: new Date().toISOString(),
         },
-        tags: data.tags,
-        user_profile: activeWorkspace?.data?.documentId,
-        status: "Open",
-        publishedAt: new Date().toISOString(),
       };
 
       const formData = new FormData();
-      formData.append("data", JSON.stringify(postData));
+      // formData.append("data", JSON.stringify(postData));
+      formData.append("data", JSON.stringify(postData.data));
+      //       formData.append("data", JSON.stringify({
+      //         ...postData.data,
+      //         tags: data.tags ?? []
+      //       }));
+
+      //       console.log("POST DATA:", postData.data);
+      // console.log("FORMDATA TAGS:", data.tags);
+
+      console.log("POST DATA:", postData.data);
 
       // Append binary files if any
       if (data.binaryFiles && data.binaryFiles.length > 0) {
