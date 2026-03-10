@@ -178,14 +178,16 @@ export default function CompleteProfileContent() {
               businessTypes = [rawTypes];
             }
           }
-          setFormData((prev) => ({
-            ...prev,
-            business_type: businessTypes,
-            company_name: String(profile.company_name ?? prev.company_name),
-            business_details: ((profile as Record<string, unknown>).business_details as Record<string, unknown>) ?? prev.business_details,
-            preferred_collaborations: ((profile as { preferred_collaborations?: string[] }).preferred_collaborations) ?? prev.preferred_collaborations,
-            email: String(profile.email ?? user?.email ?? prev.email),
-          }));
+            setFormData((prev) => ({
+              ...prev,
+              business_type: businessTypes,
+              company_name: String(profile.company_name ?? prev.company_name),
+              business_details:
+                ((profile as unknown as { business_details?: Record<string, unknown> }).business_details) ??
+                prev.business_details,
+              preferred_collaborations: ((profile as { preferred_collaborations?: string[] }).preferred_collaborations) ?? prev.preferred_collaborations,
+              email: String(profile.email ?? user?.email ?? prev.email),
+            }));
         }
       } catch (err) {
         console.warn("Error loading preview data:", err);

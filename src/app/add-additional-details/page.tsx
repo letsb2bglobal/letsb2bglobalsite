@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import ProtectedRoute, { useAuth } from '@/components/ProtectedRoute';
@@ -39,6 +39,14 @@ const DESIGNATION_OPTIONS = ['Manager', 'Director', 'Owner', 'CEO', 'Other'];
 const BUSINESS_CATEGORY_OPTIONS = ['Hotel', 'Restaurant', 'DMC', 'Taxi Service', 'Tour Guide', 'Other'];
 const LANGUAGE_OPTIONS = ['English', 'Hindi', 'Malayalam', 'Tamil', 'Telugu', 'Marathi', 'Bengali', 'Gujarati', 'Kannada', 'Other'];
 
+const formatFileSize = (bytes?: number) => {
+  if (!bytes && bytes !== 0) return '';
+  const kb = bytes / 1024;
+  if (kb < 1024) return `${kb.toFixed(1)} KB`;
+  const mb = kb / 1024;
+  return `${mb.toFixed(2)} MB`;
+};
+
 function AddAdditionalDetailsContent() {
   const router = useRouter();
   const user = useAuth();
@@ -71,6 +79,12 @@ function AddAdditionalDetailsContent() {
     panNumber: '',
   });
   const [kycFiles, setKycFiles] = useState<KYCDocumentFiles>({});
+  const [businessCardFile, setBusinessCardFile] = useState<File | null>(null);
+
+  const businessCardInputRef = useRef<HTMLInputElement | null>(null);
+  const companyLicenseInputRef = useRef<HTMLInputElement | null>(null);
+  const gstCertificateInputRef = useRef<HTMLInputElement | null>(null);
+  const panCopyInputRef = useRef<HTMLInputElement | null>(null);
 
   const completionPercent = 25;
 
@@ -186,19 +200,19 @@ function AddAdditionalDetailsContent() {
   };
 
   return (
-    <div className="flex flex-col min-h-0 flex-1 min-w-0 overflow-x-hidden px-6 pt-6 pb-6">
-      <div className="w-full max-w-7xl mx-auto min-w-0">
+    <div className="flex flex-col min-h-0 flex-1 min-w-0 overflow-x-hidden">
+      <div className="w-full max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-6 min-w-0">
         {/* Header - Title, subtitle, Cancel/Save buttons */}
         <div className="flex flex-col sm:flex-row items-start justify-between gap-4 mb-6">
           <div className="min-w-0 flex-1">
             <h1 className="text-[28px] font-semibold text-gray-900 leading-tight mt-0">Add Additional Details</h1>
             <p className="text-sm text-gray-500 mt-1">This Info will be shown on your public profile</p>
           </div>
-          <div className="flex items-center gap-3 shrink-0">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0 w-full sm:w-auto">
             <button
               type="button"
               onClick={handleCancel}
-              className="inline-flex items-center justify-center h-10 px-5 rounded-[16px] font-semibold text-sm text-gray-700 bg-gray-200 hover:bg-gray-300 transition-colors"
+              className="inline-flex items-center justify-center h-10 px-5 rounded-[16px] font-semibold text-sm text-gray-700 bg-gray-200 hover:bg-gray-300 transition-colors w-full sm:w-auto"
             >
               Cancel
             </button>
@@ -206,7 +220,7 @@ function AddAdditionalDetailsContent() {
               type="button"
               onClick={handleSave}
               disabled={saving}
-              className="inline-flex items-center justify-center h-10 px-5 rounded-[16px] font-semibold text-sm text-white transition-colors disabled:opacity-60"
+              className="inline-flex items-center justify-center h-10 px-5 rounded-[16px] font-semibold text-sm text-white transition-colors disabled:opacity-60 w-full sm:w-auto"
               style={{ backgroundColor: PURPLE }}
             >
               {saving ? 'Saving...' : 'Save'}
@@ -532,19 +546,58 @@ function AddAdditionalDetailsContent() {
                 {/* Card 1: Upload Business Card + fields */}
                 <div className="bg-white rounded-[16px] shadow-sm p-6 sm:p-8">
                   {/* Upload business card */}
-                  <div className="border-2 border-dashed rounded-[8px] border-[#696969] p-8 flex flex-col items-center justify-center text-center">
-                    <p className="text-sm font-medium text-gray-600 mb-3">Upload Business Card</p>
-                    <button
-                      type="button"
-                      className="w-[122px] h-[43px] rounded-[16px] bg-[#FEA40C] flex items-center justify-center"
-                    >
-                      <span
-                        className="text-[16px] leading-[24px] font-medium text-[#1F1E25]"
-                        style={{ fontFamily: 'var(--font-instrument-sans), sans-serif' }}
-                      >
-                        Upload
-                      </span>
-                    </button>
+                  <div className="border-2 border-dashed rounded-[8px] border-[#696969] p-6 sm:p-8 flex flex-col items-center justify-center text-center gap-4">
+                    <div>
+                      <p className="text-sm font-medium text-gray-600 mb-3">Upload Business Card</p>
+                      <label className="w-[122px] h-[43px] rounded-[16px] bg-[#FEA40C] flex items-center justify-center cursor-pointer">
+                        <span
+                          className="text-[16px] leading-[24px] font-medium text-[#1F1E25]"
+                          style={{ fontFamily: 'var(--font-instrument-sans), sans-serif' }}
+                        >
+                          Upload
+                        </span>
+                        <input
+                          ref={businessCardInputRef}
+                          type="file"
+                          accept="image/*,application/pdf"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0] || null;
+                            setBusinessCardFile(file);
+                          }}
+                        />
+                      </label>
+                    </div>
+                    {businessCardFile && (
+                      <div className="w-full max-w-md">
+                        <div className="flex items-center gap-3 px-4 py-3 bg-white border border-gray-200 rounded-lg shadow-sm">
+                          <div className="w-10 h-10 rounded-md bg-gray-100 flex items-center justify-center text-xl">
+                            📄
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-gray-900 truncate">
+                              {businessCardFile.name}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {formatFileSize(businessCardFile.size)}
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setBusinessCardFile(null);
+                              if (businessCardInputRef.current) {
+                                businessCardInputRef.current.value = '';
+                              }
+                            }}
+                            className="ml-2 w-8 h-8 rounded-full bg-red-100 text-red-600 flex items-center justify-center hover:bg-red-200"
+                            aria-label="Remove file"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   <div className="mt-6 space-y-4">
@@ -654,25 +707,58 @@ function AddAdditionalDetailsContent() {
                 {/* Card 1: Business Verification */}
                 <div className="bg-white rounded-[16px] shadow-sm p-6 sm:p-8 space-y-4">
                   <p className="text-base font-bold text-gray-900">Business Verification</p>
-                  <div className="border-2 border-dashed rounded-[8px] border-[#696969] p-8 flex flex-col items-center justify-center text-center">
-                    <p className="text-sm font-medium text-gray-600 mb-3">Upload Business Registration Certificate</p>
-                    <label className="w-[122px] h-[43px] rounded-[16px] bg-[#FEA40C] flex items-center justify-center cursor-pointer">
-                      <span
-                        className="text-[16px] leading-[24px] font-medium text-[#1F1E25]"
-                        style={{ fontFamily: 'var(--font-instrument-sans), sans-serif' }}
-                      >
-                        Upload
-                      </span>
-                      <input
-                        type="file"
-                        accept="image/*,application/pdf"
-                        className="hidden"
-                        onChange={(e) => {
-                          const file = e.target.files?.[0] || null;
-                          setKycFiles(prev => ({ ...prev, company_license: file }));
-                        }}
-                      />
-                    </label>
+                  <div className="border-2 border-dashed rounded-[8px] border-[#696969] p-6 sm:p-8 flex flex-col items-center justify-center text-center gap-4">
+                    <div>
+                      <p className="text-sm font-medium text-gray-600 mb-3">Upload Business Registration Certificate</p>
+                      <label className="w-[122px] h-[43px] rounded-[16px] bg-[#FEA40C] flex items-center justify-center cursor-pointer">
+                        <span
+                          className="text-[16px] leading-[24px] font-medium text-[#1F1E25]"
+                          style={{ fontFamily: 'var(--font-instrument-sans), sans-serif' }}
+                        >
+                          Upload
+                        </span>
+                        <input
+                          ref={companyLicenseInputRef}
+                          type="file"
+                          accept="image/*,application/pdf"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0] || null;
+                            setKycFiles(prev => ({ ...prev, company_license: file }));
+                          }}
+                        />
+                      </label>
+                    </div>
+                    {kycFiles.company_license && (
+                      <div className="w-full max-w-md">
+                        <div className="flex items-center gap-3 px-4 py-3 bg-white border border-gray-200 rounded-lg shadow-sm">
+                          <div className="w-10 h-10 rounded-md bg-gray-100 flex items-center justify-center text-xl">
+                            📄
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-gray-900 truncate">
+                              {kycFiles.company_license.name}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {formatFileSize(kycFiles.company_license.size)}
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setKycFiles(prev => ({ ...prev, company_license: null }));
+                              if (companyLicenseInputRef.current) {
+                                companyLicenseInputRef.current.value = '';
+                              }
+                            }}
+                            className="ml-2 w-8 h-8 rounded-full bg-red-100 text-red-600 flex items-center justify-center hover:bg-red-200"
+                            aria-label="Remove file"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                   <input
                     type="text"
@@ -686,25 +772,58 @@ function AddAdditionalDetailsContent() {
                 {/* Card 2: GST Information */}
                 <div className="bg-white rounded-[16px] shadow-sm p-6 sm:p-8 space-y-4">
                   <p className="text-base font-bold text-gray-900">GST Information</p>
-                  <div className="border-2 border-dashed rounded-[8px] border-[#696969] p-8 flex flex-col items-center justify-center text-center">
-                    <p className="text-sm font-medium text-gray-600 mb-3">Upload Business Registration Certificate</p>
-                    <label className="w-[122px] h-[43px] rounded-[16px] bg-[#FEA40C] flex items-center justify-center cursor-pointer">
-                      <span
-                        className="text-[16px] leading-[24px] font-medium text-[#1F1E25]"
-                        style={{ fontFamily: 'var(--font-instrument-sans), sans-serif' }}
-                      >
-                        Upload
-                      </span>
-                      <input
-                        type="file"
-                        accept="image/*,application/pdf"
-                        className="hidden"
-                        onChange={(e) => {
-                          const file = e.target.files?.[0] || null;
-                          setKycFiles(prev => ({ ...prev, gst_certificate: file }));
-                        }}
-                      />
-                    </label>
+                  <div className="border-2 border-dashed rounded-[8px] border-[#696969] p-6 sm:p-8 flex flex-col items-center justify-center text-center gap-4">
+                    <div>
+                      <p className="text-sm font-medium text-gray-600 mb-3">Upload Business Registration Certificate</p>
+                      <label className="w-[122px] h-[43px] rounded-[16px] bg-[#FEA40C] flex items-center justify-center cursor-pointer">
+                        <span
+                          className="text-[16px] leading-[24px] font-medium text-[#1F1E25]"
+                          style={{ fontFamily: 'var(--font-instrument-sans), sans-serif' }}
+                        >
+                          Upload
+                        </span>
+                        <input
+                          ref={gstCertificateInputRef}
+                          type="file"
+                          accept="image/*,application/pdf"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0] || null;
+                            setKycFiles(prev => ({ ...prev, gst_certificate: file }));
+                          }}
+                        />
+                      </label>
+                    </div>
+                    {kycFiles.gst_certificate && (
+                      <div className="w-full max-w-md">
+                        <div className="flex items-center gap-3 px-4 py-3 bg-white border border-gray-200 rounded-lg shadow-sm">
+                          <div className="w-10 h-10 rounded-md bg-gray-100 flex items-center justify-center text-xl">
+                            📄
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-gray-900 truncate">
+                              {kycFiles.gst_certificate.name}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {formatFileSize(kycFiles.gst_certificate.size)}
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setKycFiles(prev => ({ ...prev, gst_certificate: null }));
+                              if (gstCertificateInputRef.current) {
+                                gstCertificateInputRef.current.value = '';
+                              }
+                            }}
+                            className="ml-2 w-8 h-8 rounded-full bg-red-100 text-red-600 flex items-center justify-center hover:bg-red-200"
+                            aria-label="Remove file"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                   <input
                     type="text"
@@ -718,25 +837,58 @@ function AddAdditionalDetailsContent() {
                 {/* Card 3: PAN Information */}
                 <div className="bg-white rounded-[16px] shadow-sm p-6 sm:p-8 space-y-4">
                   <p className="text-base font-bold text-gray-900">PAN Information</p>
-                  <div className="border-2 border-dashed rounded-[8px] border-[#696969] p-8 flex flex-col items-center justify-center text-center">
-                    <p className="text-sm font-medium text-gray-600 mb-3">Upload PAN Copy</p>
-                    <label className="w-[122px] h-[43px] rounded-[16px] bg-[#FEA40C] flex items-center justify-center cursor-pointer">
-                      <span
-                        className="text-[16px] leading-[24px] font-medium text-[#1F1E25]"
-                        style={{ fontFamily: 'var(--font-instrument-sans), sans-serif' }}
-                      >
-                        Upload
-                      </span>
-                      <input
-                        type="file"
-                        accept="image/*,application/pdf"
-                        className="hidden"
-                        onChange={(e) => {
-                          const file = e.target.files?.[0] || null;
-                          setKycFiles(prev => ({ ...prev, pan_copy: file }));
-                        }}
-                      />
-                    </label>
+                  <div className="border-2 border-dashed rounded-[8px] border-[#696969] p-6 sm:p-8 flex flex-col items-center justify-center text-center gap-4">
+                    <div>
+                      <p className="text-sm font-medium text-gray-600 mb-3">Upload PAN Copy</p>
+                      <label className="w-[122px] h-[43px] rounded-[16px] bg-[#FEA40C] flex items-center justify-center cursor-pointer">
+                        <span
+                          className="text-[16px] leading-[24px] font-medium text-[#1F1E25]"
+                          style={{ fontFamily: 'var(--font-instrument-sans), sans-serif' }}
+                        >
+                          Upload
+                        </span>
+                        <input
+                          ref={panCopyInputRef}
+                          type="file"
+                          accept="image/*,application/pdf"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0] || null;
+                            setKycFiles(prev => ({ ...prev, pan_copy: file }));
+                          }}
+                        />
+                      </label>
+                    </div>
+                    {kycFiles.pan_copy && (
+                      <div className="w-full max-w-md">
+                        <div className="flex items-center gap-3 px-4 py-3 bg-white border border-gray-200 rounded-lg shadow-sm">
+                          <div className="w-10 h-10 rounded-md bg-gray-100 flex items-center justify-center text-xl">
+                            📄
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-gray-900 truncate">
+                              {kycFiles.pan_copy.name}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {formatFileSize(kycFiles.pan_copy.size)}
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setKycFiles(prev => ({ ...prev, pan_copy: null }));
+                              if (panCopyInputRef.current) {
+                                panCopyInputRef.current.value = '';
+                              }
+                            }}
+                            className="ml-2 w-8 h-8 rounded-full bg-red-100 text-red-600 flex items-center justify-center hover:bg-red-200"
+                            aria-label="Remove file"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                   <input
                     type="text"
