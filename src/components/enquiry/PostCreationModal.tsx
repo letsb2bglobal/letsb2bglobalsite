@@ -210,16 +210,16 @@ const PostCreationModal: React.FC<PostCreationModalProps> = ({
       <div className="w-full max-w-[768px] bg-white rounded-[24px] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 my-auto">
         {/* Header */}
         <header className="px-6 py-6 border-b border-gray-100 flex items-center justify-between bg-white sticky top-0 z-10">
-          <div className="flex gap-1.5 border border-[#D1D1D1] rounded-lg p-1.5 bg-[#F2F2F2] w-[241px]">
+          <div className="flex gap-1.5 border border-[#D1D1D1] rounded-lg p-1.5 bg-[#F2F2F2] md:w-[241px]">
             <div className="w-6 h-6 rounded-full bg-gradient-to-br from-[#6B3FA0] to-[#8E54D7] flex items-center justify-center text-white font-medium text-lg">
               {user?.username?.substring(0, 1).toUpperCase() || "L"}
             </div>
             <div className="flex flex-col">
-              <h2 className="text-[20px] font-medium text-[#000000]">
+              <h2 className="md:text-[20px] text-[16px] font-medium text-[#000000]">
                 {user?.username || "Le Tourister"}
               </h2>
               <div className="flex items-center gap-1">
-                <span className="text-[14px] text-[#676767]">
+                <span className="md:text-[14px] text-[12px] text-[#676767]">
                   Post To Anyone
                 </span>
                 <ChevronDown
@@ -230,9 +230,9 @@ const PostCreationModal: React.FC<PostCreationModalProps> = ({
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center md:gap-3 gap-0">
             <div className="">
-              <span className="text-[16px] font-medium text-[#000000]">
+              <span className="md:text-[16px] text-[14px] font-medium text-[#000000]">
                 {activeType
                   .replace(/_/g, " ")
                   .replace(/\b\w/g, (c) => c.toUpperCase())}
@@ -248,7 +248,7 @@ const PostCreationModal: React.FC<PostCreationModalProps> = ({
         </header>
 
         {/* Modal Body */}
-        <div className="p-6 max-h-[calc(100vh-200px)] overflow-y-auto no-scrollbar">
+        <div className="md:p-8 p-4">
           <FormProvider {...methods}>
             <form
               id="enquiry-form"
