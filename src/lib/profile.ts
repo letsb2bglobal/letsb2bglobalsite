@@ -615,6 +615,71 @@ export const getProfileByDocumentId = async (
   }
 };
 
+/**
+ * Update user profile by numeric id (triggered from Add Additional Info button)
+ * PUT /api/user-profiles/:id
+ */
+export interface UpdateUserProfilePayload {
+  company_name?: string;
+  business_type?: string[];
+  rooms_count?: number;
+  description?: string;
+  languages?: string[];
+  website_link?: string;
+  country?: string;
+  state?: string;
+  city?: string;
+  contact_person_name?: string;
+  designation?: string;
+  email?: string;
+  phone_numbers?: string[];
+  preferred_collaborations?: string[];
+  [key: string]: unknown;
+}
+
+export const updateUserProfileById = async (
+  profileId: number,
+  data: UpdateUserProfilePayload
+): Promise<UserProfile | null> => {
+  const token = getToken();
+  if (!token) throw new Error("No authentication token found");
+
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://api.letsb2b.com";
+
+  try {
+    const url = `${apiUrl}/api/user-profiles/${profileId}`;
+    const body = JSON.stringify({ data });
+
+    const response = await fetch(url, {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body,
+    });
+
+    if (!response.ok) {
+      const text = await response.text();
+      let message = `Failed to update profile (${response.status})`;
+      try {
+        const err = JSON.parse(text);
+        message = err?.error?.message || message;
+      } catch {
+        if (text) message = text;
+      }
+      throw new Error(message);
+    }
+
+    const result = await response.json();
+    const profile = result.data ?? result;
+    return profile as UserProfile;
+  } catch (error) {
+    console.error("Error updating user profile:", error);
+    throw error;
+  }
+};
+
 export const verifyUserProfile = async (userId: number): Promise<boolean> => {
   try {
     const profile = await checkUserProfile(userId);

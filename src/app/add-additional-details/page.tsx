@@ -5,11 +5,24 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import ProtectedRoute, { useAuth } from '@/components/ProtectedRoute';
 import { getMyProfile } from '@/lib/profile';
+import { uploadKYCWithData, KYCDocumentFiles } from '@/lib/kyc';
 import { getProfileData } from '@/lib/auth';
 
 const PURPLE = '#612178';
 const PURPLE_LIGHT = '#E0CCF0';
 const ORANGE = '#FEA40C';
+
+const ChevronDownIcon = () => (
+  <svg className="w-4 h-4 text-[#545454] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+  </svg>
+);
+
+const SELECT_WRAPPER = "relative flex items-center";
+const SELECT_CHEVRON = "absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none flex items-center justify-center z-10";
+const SELECT_BASE = "w-full pl-4 pr-12 py-3 bg-white border border-[#D9D9D9] rounded-xl text-[#545454] font-normal font-sans focus:outline-none focus:border-[#612178] appearance-none";
+const SELECT_BASE_SM = "w-full pl-4 pr-12 py-3 bg-white border border-[#D9D9D9] rounded-xl text-sm text-[#545454] font-normal font-sans focus:outline-none focus:border-[#612178] appearance-none";
+const SELECT_COUNTRY_CODE = "min-w-[70px] sm:w-20 pl-3 pr-10 py-3 bg-white border border-[#D9D9D9] rounded-xl text-[#545454] font-normal font-sans focus:outline-none focus:border-[#612178] shrink-0 appearance-none";
 
 const SIDEBAR_TABS = [
   { id: 'company', label: 'Company Information' },
@@ -57,48 +70,105 @@ function AddAdditionalDetailsContent() {
     gstNumber: '',
     panNumber: '',
   });
+  const [kycFiles, setKycFiles] = useState<KYCDocumentFiles>({});
 
   const completionPercent = 25;
 
   useEffect(() => {
     const applyProfile = (p: any) => {
+      const rooms = p.rooms_count ?? p.business_details?.number_of_rooms;
+      const phoneFirst = Array.isArray(p.phone_numbers) && p.phone_numbers[0] ? p.phone_numbers[0] : '';
       setFormData((prev) => ({
         ...prev,
         companyName: p.company_name || prev.companyName,
         businessType: p.business_type?.[0] || p.business_details?.hotel_type || prev.businessType,
-        roomCount: String(p.business_details?.number_of_rooms ?? prev.roomCount),
+        businessCategory: p.business_type?.[0] || prev.businessCategory,
+        hotelType: p.business_details?.hotel_type || prev.hotelType,
+        roomCount: String(rooms ?? prev.roomCount),
+        description: p.description || prev.description,
+        languages: Array.isArray(p.languages) ? p.languages : (prev.languages || []),
+        findingFor: Array.isArray(p.preferred_collaborations) && p.preferred_collaborations.length > 0
+          ? p.preferred_collaborations
+          : prev.findingFor,
+        findingBusiness: '',
+        website: p.website_link || p.website || prev.website,
+        country: p.country || prev.country,
+        state: p.state || prev.state,
+        city: p.city || prev.city,
+        contactPerson: p.contact_person_name || p.contact_person || prev.contactPerson,
+        designation: p.designation || prev.designation,
         email: p.email || user?.email || prev.email,
+        phone: p.phone || phoneFirst || prev.phone,
       }));
     };
     (async () => {
+      if (typeof window !== 'undefined') {
+        try {
+          const fromPut = sessionStorage.getItem('addAdditionalDetailsProfile');
+          if (fromPut) {
+            applyProfile(JSON.parse(fromPut));
+            sessionStorage.removeItem('addAdditionalDetailsProfile');
+            return;
+          }
+          const fromComplete = sessionStorage.getItem('completeProfileFormData');
+          if (fromComplete) {
+            applyProfile(JSON.parse(fromComplete));
+            sessionStorage.removeItem('completeProfileFormData');
+            return;
+          }
+        } catch { /* ignore */ }
+      }
       const cached = typeof window !== 'undefined' ? getProfileData() : null;
       if (cached?.company_name || cached?.business_details) applyProfile(cached);
       if (user?.id) {
         const { exists, profile } = await getMyProfile(user.id);
         if (exists && profile) applyProfile(profile as any);
       }
-      if (typeof window !== 'undefined') {
-        try {
-          const fromComplete = sessionStorage.getItem('completeProfileFormData');
-          if (fromComplete) {
-            applyProfile(JSON.parse(fromComplete));
-            sessionStorage.removeItem('completeProfileFormData');
-          }
-        } catch { /* ignore */ }
-      }
     })();
   }, [user]);
 
   const handleCancel = () => {
-    router.push('/complete-profile');
+    router.push('/home');
   };
 
   const handleSave = async () => {
     setSaving(true);
-    // TODO: wire to profile API
-    await new Promise((r) => setTimeout(r, 500));
-    setSaving(false);
-    router.push('/complete-profile');
+
+    try {
+      if (activeTab === 'kyc' && user?.id) {
+        const year =
+          formData.yearOfEstablishment && !Number.isNaN(Number(formData.yearOfEstablishment))
+            ? Number(formData.yearOfEstablishment)
+            : undefined;
+
+        const hasCoreData =
+          year !== undefined ||
+          !!formData.gstNumber ||
+          !!formData.panNumber ||
+          kycFiles.company_license instanceof File ||
+          kycFiles.gst_certificate instanceof File ||
+          kycFiles.pan_copy instanceof File;
+
+        if (hasCoreData) {
+          await uploadKYCWithData(
+            {
+              company_license: kycFiles.company_license ?? null,
+              gst_certificate: kycFiles.gst_certificate ?? null,
+              pan_copy: kycFiles.pan_copy ?? null,
+            },
+            {
+              year_of_establishment: year,
+              gst_number: formData.gstNumber || undefined,
+              pan_number: formData.panNumber || undefined,
+              user_profile: user.id,
+            }
+          );
+        }
+      }
+    } finally {
+      setSaving(false);
+      router.push('/home');
+    }
   };
 
   const removeLanguage = (idx: number) => {
@@ -232,15 +302,18 @@ function AddAdditionalDetailsContent() {
                     className="w-full px-4 py-3 bg-white border border-[#D9D9D9] rounded-xl text-[#545454] placeholder-[#545454] font-normal font-sans focus:outline-none focus:border-[#612178]"
                   />
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <select
-                      value={formData.businessType}
-                      onChange={(e) => setFormData((p) => ({ ...p, businessType: e.target.value }))}
-                      className="w-full px-4 py-3 bg-white border border-[#D9D9D9] rounded-xl text-[#545454] font-normal font-sans focus:outline-none focus:border-[#612178]"
-                    >
-                      {BUSINESS_TYPE_OPTIONS.map((o) => (
-                        <option key={o} value={o}>{o}</option>
-                      ))}
-                    </select>
+                    <div className={SELECT_WRAPPER}>
+                      <span className={SELECT_CHEVRON}><ChevronDownIcon /></span>
+                      <select
+                        value={formData.businessType}
+                        onChange={(e) => setFormData((p) => ({ ...p, businessType: e.target.value }))}
+                        className={SELECT_BASE}
+                      >
+                        {BUSINESS_TYPE_OPTIONS.map((o) => (
+                          <option key={o} value={o}>{o}</option>
+                        ))}
+                      </select>
+                    </div>
                     <input
                       type="text"
                       value={formData.roomCount}
@@ -257,25 +330,28 @@ function AddAdditionalDetailsContent() {
                     className="w-full px-4 py-3 bg-white border border-[#D9D9D9] rounded-xl text-[#545454] placeholder-[#545454] font-normal font-sans focus:outline-none focus:border-[#612178] resize-none"
                   />
                   <div>
-                    <select
-                      value={formData.languageInput}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        if (val && !formData.languages.includes(val)) {
-                          setFormData((prev) => ({
-                            ...prev,
-                            languages: [...prev.languages, val],
-                            languageInput: '',
-                          }));
-                        }
-                      }}
-                      className="w-full px-4 py-3 bg-white border border-[#D9D9D9] rounded-xl text-[#545454] font-normal font-sans focus:outline-none focus:border-[#612178]"
-                    >
-                      <option value="">Select Languages Preferred</option>
-                      {LANGUAGE_OPTIONS.map((lang) => (
-                        <option key={lang} value={lang}>{lang}</option>
-                      ))}
-                    </select>
+                    <div className={SELECT_WRAPPER}>
+                      <span className={SELECT_CHEVRON}><ChevronDownIcon /></span>
+                      <select
+                        value={formData.languageInput}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (val && !formData.languages.includes(val)) {
+                            setFormData((prev) => ({
+                              ...prev,
+                              languages: [...prev.languages, val],
+                              languageInput: '',
+                            }));
+                          }
+                        }}
+                        className={SELECT_BASE}
+                      >
+                        <option value="">Select Languages Preferred</option>
+                        {LANGUAGE_OPTIONS.map((lang) => (
+                          <option key={lang} value={lang}>{lang}</option>
+                        ))}
+                      </select>
+                    </div>
                     {formData.languages.length > 0 && (
                       <div className="flex flex-wrap gap-2 mt-2">
                         {formData.languages.map((lang, i) => (
@@ -326,41 +402,50 @@ function AddAdditionalDetailsContent() {
                       />
                     </div>
                     <div>
-                      <select
-                        value={formData.country}
-                        onChange={(e) => setFormData((p) => ({ ...p, country: e.target.value }))}
-                        className="w-full px-4 py-3 bg-white border border-[#D9D9D9] rounded-xl text-[#545454] font-normal font-sans focus:outline-none focus:border-[#612178]"
-                      >
-                        <option value="">Country</option>
-                        {COUNTRY_OPTIONS.map((c) => (
-                          <option key={c} value={c}>{c}</option>
-                        ))}
-                      </select>
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div>
+                      <div className={SELECT_WRAPPER}>
+                        <span className={SELECT_CHEVRON}><ChevronDownIcon /></span>
                         <select
-                          value={formData.state}
-                          onChange={(e) => setFormData((p) => ({ ...p, state: e.target.value }))}
-                          className="w-full px-4 py-3 bg-white border border-[#D9D9D9] rounded-xl text-[#545454] font-normal font-sans focus:outline-none focus:border-[#612178]"
+                          value={formData.country}
+                          onChange={(e) => setFormData((p) => ({ ...p, country: e.target.value }))}
+                          className={SELECT_BASE}
                         >
-                          <option value="">State</option>
-                          {STATE_OPTIONS.map((s) => (
-                            <option key={s} value={s}>{s}</option>
-                          ))}
-                        </select>
-                      </div>
-                      <div>
-                        <select
-                          value={formData.city}
-                          onChange={(e) => setFormData((p) => ({ ...p, city: e.target.value }))}
-                          className="w-full px-4 py-3 bg-white border border-[#D9D9D9] rounded-xl text-[#545454] font-normal font-sans focus:outline-none focus:border-[#612178]"
-                        >
-                          <option value="">City</option>
-                          {CITY_OPTIONS.map((c) => (
+                          <option value="">Country</option>
+                          {COUNTRY_OPTIONS.map((c) => (
                             <option key={c} value={c}>{c}</option>
                           ))}
                         </select>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <div className={SELECT_WRAPPER}>
+                          <span className={SELECT_CHEVRON}><ChevronDownIcon /></span>
+                          <select
+                            value={formData.state}
+                            onChange={(e) => setFormData((p) => ({ ...p, state: e.target.value }))}
+                            className={SELECT_BASE}
+                          >
+                            <option value="">State</option>
+                            {STATE_OPTIONS.map((s) => (
+                              <option key={s} value={s}>{s}</option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                      <div>
+                        <div className={SELECT_WRAPPER}>
+                          <span className={SELECT_CHEVRON}><ChevronDownIcon /></span>
+                          <select
+                            value={formData.city}
+                            onChange={(e) => setFormData((p) => ({ ...p, city: e.target.value }))}
+                            className={SELECT_BASE}
+                          >
+                            <option value="">City</option>
+                            {CITY_OPTIONS.map((c) => (
+                              <option key={c} value={c}>{c}</option>
+                            ))}
+                          </select>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -378,16 +463,19 @@ function AddAdditionalDetailsContent() {
                         placeholder="Enter The Contact Person"
                         className="w-full px-4 py-3 bg-white border border-[#D9D9D9] rounded-xl text-[#545454] placeholder-[#545454] font-normal font-sans focus:outline-none focus:border-[#612178]"
                       />
-                      <select
-                        value={formData.designation}
-                        onChange={(e) => setFormData((p) => ({ ...p, designation: e.target.value }))}
-                        className="w-full px-4 py-3 bg-white border border-[#D9D9D9] rounded-xl text-[#545454] font-normal font-sans focus:outline-none focus:border-[#612178]"
-                      >
-                        <option value="">Select Designation</option>
-                        {DESIGNATION_OPTIONS.map((d) => (
-                          <option key={d} value={d}>{d}</option>
-                        ))}
-                      </select>
+                      <div className={SELECT_WRAPPER}>
+                        <span className={SELECT_CHEVRON}><ChevronDownIcon /></span>
+                        <select
+                          value={formData.designation}
+                          onChange={(e) => setFormData((p) => ({ ...p, designation: e.target.value }))}
+                          className={SELECT_BASE}
+                        >
+                          <option value="">Select Designation</option>
+                          {DESIGNATION_OPTIONS.map((d) => (
+                            <option key={d} value={d}>{d}</option>
+                          ))}
+                        </select>
+                      </div>
                     </div>
                     <div>
                       <input
@@ -399,17 +487,20 @@ function AddAdditionalDetailsContent() {
                       />
                     </div>
                     <div className="flex gap-2 flex-wrap sm:flex-nowrap">
-                      <select
-                        value={formData.countryCode}
-                        onChange={(e) => setFormData((p) => ({ ...p, countryCode: e.target.value }))}
-                        className="min-w-[70px] sm:w-20 px-3 py-3 bg-white border border-[#D9D9D9] rounded-xl text-[#545454] font-normal font-sans focus:outline-none focus:border-[#612178] shrink-0"
-                        aria-label="Country code"
-                      >
-                        <option value="+91">+91</option>
-                        <option value="+1">+1</option>
-                        <option value="+971">+971</option>
-                        <option value="+44">+44</option>
-                      </select>
+                      <div className={`${SELECT_WRAPPER} min-w-[70px] sm:w-20 shrink-0`}>
+                        <span className={SELECT_CHEVRON}><ChevronDownIcon /></span>
+                        <select
+                          value={formData.countryCode}
+                          onChange={(e) => setFormData((p) => ({ ...p, countryCode: e.target.value }))}
+                          className={SELECT_COUNTRY_CODE}
+                          aria-label="Country code"
+                        >
+                          <option value="+91">+91</option>
+                          <option value="+1">+1</option>
+                          <option value="+971">+971</option>
+                          <option value="+44">+44</option>
+                        </select>
+                      </div>
                       <input
                         type="tel"
                         value={formData.phone}
@@ -458,30 +549,36 @@ function AddAdditionalDetailsContent() {
 
                   <div className="mt-6 space-y-4">
                     <div>
-                      <select
-                        value={formData.businessCategory}
-                        onChange={(e) => setFormData((p) => ({ ...p, businessCategory: e.target.value }))}
-                        className="w-full px-4 py-3 bg-white border border-[#D9D9D9] rounded-xl text-sm text-[#545454] font-normal font-sans focus:outline-none focus:border-[#612178]"
-                      >
-                        <option value="">Business Category</option>
-                        {BUSINESS_CATEGORY_OPTIONS.map((o) => (
-                          <option key={o} value={o}>{o}</option>
-                        ))}
-                      </select>
+                      <div className={SELECT_WRAPPER}>
+                        <span className={SELECT_CHEVRON}><ChevronDownIcon /></span>
+                        <select
+                          value={formData.businessCategory}
+                          onChange={(e) => setFormData((p) => ({ ...p, businessCategory: e.target.value }))}
+                          className={SELECT_BASE_SM}
+                        >
+                          <option value="">Business Category</option>
+                          {BUSINESS_CATEGORY_OPTIONS.map((o) => (
+                            <option key={o} value={o}>{o}</option>
+                          ))}
+                        </select>
+                      </div>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
-                        <select
-                          value={formData.hotelType}
-                          onChange={(e) => setFormData((p) => ({ ...p, hotelType: e.target.value }))}
-                          className="w-full px-4 py-3 bg-white border border-[#D9D9D9] rounded-xl text-sm text-[#545454] font-normal font-sans focus:outline-none focus:border-[#612178]"
-                        >
-                          <option value="">Hotel Type</option>
-                          {HOTEL_OPTIONS.map((o) => (
-                            <option key={o} value={o}>{o}</option>
-                          ))}
-                        </select>
+                        <div className={SELECT_WRAPPER}>
+                          <span className={SELECT_CHEVRON}><ChevronDownIcon /></span>
+                          <select
+                            value={formData.hotelType}
+                            onChange={(e) => setFormData((p) => ({ ...p, hotelType: e.target.value }))}
+                            className={SELECT_BASE_SM}
+                          >
+                            <option value="">Hotel Type</option>
+                            {HOTEL_OPTIONS.map((o) => (
+                              <option key={o} value={o}>{o}</option>
+                            ))}
+                          </select>
+                        </div>
                       </div>
                       <div>
                         <input
@@ -511,25 +608,28 @@ function AddAdditionalDetailsContent() {
                   <p className="text-sm font-bold text-gray-900 mb-4">Business You Are Finding For</p>
 
                   <div className="mb-4">
-                    <select
-                      value={formData.findingBusiness}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        if (val && !formData.findingFor.includes(val)) {
-                          setFormData((prev) => ({
-                            ...prev,
-                            findingFor: [...prev.findingFor, val],
-                            findingBusiness: '',
-                          }));
-                        }
-                      }}
-                      className="w-full px-4 py-3 bg-white border border-[#D9D9D9] rounded-xl text-sm text-[#545454] font-normal font-sans focus:outline-none focus:border-[#612178]"
-                    >
-                      <option value="">Select Business</option>
-                      {BUSINESS_CATEGORY_OPTIONS.map((o) => (
-                        <option key={o} value={o}>{o}</option>
-                      ))}
-                    </select>
+                    <div className={SELECT_WRAPPER}>
+                      <span className={SELECT_CHEVRON}><ChevronDownIcon /></span>
+                      <select
+                        value={formData.findingBusiness}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (val && !formData.findingFor.includes(val)) {
+                            setFormData((prev) => ({
+                              ...prev,
+                              findingFor: [...prev.findingFor, val],
+                              findingBusiness: '',
+                            }));
+                          }
+                        }}
+                        className={SELECT_BASE_SM}
+                      >
+                        <option value="">Select Business</option>
+                        {BUSINESS_CATEGORY_OPTIONS.map((o) => (
+                          <option key={o} value={o}>{o}</option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
 
                   <div className="flex flex-wrap gap-3">
@@ -556,17 +656,23 @@ function AddAdditionalDetailsContent() {
                   <p className="text-base font-bold text-gray-900">Business Verification</p>
                   <div className="border-2 border-dashed rounded-[8px] border-[#696969] p-8 flex flex-col items-center justify-center text-center">
                     <p className="text-sm font-medium text-gray-600 mb-3">Upload Business Registration Certificate</p>
-                    <button
-                      type="button"
-                      className="w-[122px] h-[43px] rounded-[16px] bg-[#FEA40C] flex items-center justify-center"
-                    >
+                    <label className="w-[122px] h-[43px] rounded-[16px] bg-[#FEA40C] flex items-center justify-center cursor-pointer">
                       <span
                         className="text-[16px] leading-[24px] font-medium text-[#1F1E25]"
                         style={{ fontFamily: 'var(--font-instrument-sans), sans-serif' }}
                       >
                         Upload
                       </span>
-                    </button>
+                      <input
+                        type="file"
+                        accept="image/*,application/pdf"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0] || null;
+                          setKycFiles(prev => ({ ...prev, company_license: file }));
+                        }}
+                      />
+                    </label>
                   </div>
                   <input
                     type="text"
@@ -582,17 +688,23 @@ function AddAdditionalDetailsContent() {
                   <p className="text-base font-bold text-gray-900">GST Information</p>
                   <div className="border-2 border-dashed rounded-[8px] border-[#696969] p-8 flex flex-col items-center justify-center text-center">
                     <p className="text-sm font-medium text-gray-600 mb-3">Upload Business Registration Certificate</p>
-                    <button
-                      type="button"
-                      className="w-[122px] h-[43px] rounded-[16px] bg-[#FEA40C] flex items-center justify-center"
-                    >
+                    <label className="w-[122px] h-[43px] rounded-[16px] bg-[#FEA40C] flex items-center justify-center cursor-pointer">
                       <span
                         className="text-[16px] leading-[24px] font-medium text-[#1F1E25]"
                         style={{ fontFamily: 'var(--font-instrument-sans), sans-serif' }}
                       >
                         Upload
                       </span>
-                    </button>
+                      <input
+                        type="file"
+                        accept="image/*,application/pdf"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0] || null;
+                          setKycFiles(prev => ({ ...prev, gst_certificate: file }));
+                        }}
+                      />
+                    </label>
                   </div>
                   <input
                     type="text"
@@ -608,17 +720,23 @@ function AddAdditionalDetailsContent() {
                   <p className="text-base font-bold text-gray-900">PAN Information</p>
                   <div className="border-2 border-dashed rounded-[8px] border-[#696969] p-8 flex flex-col items-center justify-center text-center">
                     <p className="text-sm font-medium text-gray-600 mb-3">Upload PAN Copy</p>
-                    <button
-                      type="button"
-                      className="w-[122px] h-[43px] rounded-[16px] bg-[#FEA40C] flex items-center justify-center"
-                    >
+                    <label className="w-[122px] h-[43px] rounded-[16px] bg-[#FEA40C] flex items-center justify-center cursor-pointer">
                       <span
                         className="text-[16px] leading-[24px] font-medium text-[#1F1E25]"
                         style={{ fontFamily: 'var(--font-instrument-sans), sans-serif' }}
                       >
                         Upload
                       </span>
-                    </button>
+                      <input
+                        type="file"
+                        accept="image/*,application/pdf"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0] || null;
+                          setKycFiles(prev => ({ ...prev, pan_copy: file }));
+                        }}
+                      />
+                    </label>
                   </div>
                   <input
                     type="text"
