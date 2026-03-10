@@ -14,7 +14,6 @@ export default function FaqSection() {
 
   return (
     <section
-      id="faqs"
       className="w-full py-20 md:py-24 px-4 md:px-8"
       style={{ backgroundColor: "#F7EFEF" }}
     >

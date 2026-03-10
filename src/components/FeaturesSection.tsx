@@ -23,7 +23,7 @@ const FEATURES = [
   {
     title: "Global B2B Networking",
     description:
-      "Connect with verified travel & tourism businesses across India and International markets",
+      "Connect with verified travel & tourism businesses across India and International markets.",
     Icon: IconGlobe,
   },
   {
@@ -119,8 +119,6 @@ export default function FeaturesSection() {
 
           gsap.set(strip, { x: 0 });
           gsap.set(section, { opacity: 1, y: 0 });
-          const featureCards = strip.querySelectorAll(".feature-card");
-          gsap.set(featureCards, { opacity: 1, scale: 1 });
 
           tl = gsap.timeline({
             scrollTrigger: {
@@ -136,25 +134,8 @@ export default function FeaturesSection() {
           tl.to(strip, {
             x: -maxX,
             ease: "none",
+            duration: 1,
           });
-          
-          // Ensure cards stay fully visible throughout
-          tl.to(featureCards, {
-            opacity: 1,
-            scale: 1,
-            duration: 0.1
-          }, 0);
-
-          tl.to(
-            section,
-            {
-              opacity: 0,
-              y: 80,
-              ease: "power2.in",
-              duration: 0.18,
-            },
-            0.82
-          );
         }
 
         build();
@@ -185,21 +166,19 @@ export default function FeaturesSection() {
     >
       <section
         ref={sectionRef}
-        id="features"
         data-section="features"
         className="sticky top-0 left-0 right-0 z-0 h-screen w-full overflow-hidden"
       >
-        {/* Video background with strong dark overlay for maximum contrast */}
-        <div className="absolute inset-0 z-0 bg-neutral-950">
+        {/* Video background - no overlay */}
+        <div className="absolute inset-0 z-0">
           <video
             autoPlay
             muted
             loop
             playsInline
-            className="h-full w-full object-cover opacity-40"
+            className="h-full w-full object-cover"
             src="/our-features-section/our-featuers-v2.mp4"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-neutral-950 via-transparent to-neutral-950/80" />
         </div>
 
         {/* Content */}
@@ -224,9 +203,7 @@ export default function FeaturesSection() {
               className="mx-auto mt-4 sm:mt-5 max-w-2xl text-center font-normal text-white text-lg leading-snug sm:text-xl lg:text-2xl"
               style={{ lineHeight: "1.5" }}
             >
-              Features that help tourism partners connect, collaborate, and trade
-              with confidence. Built to support trusted partnerships and real business growth across
-              global markets.
+              Enabling tourism partners to connect, collaborate, and trade with confidence. Built to support trusted partnerships and real business growth across global markets.
             </p>
           </div>
 
@@ -241,27 +218,18 @@ export default function FeaturesSection() {
                 {FEATURES.map((f) => (
                   <div
                     key={f.title}
-                    className="feature-card flex w-[85vw] min-w-[280px] shrink-0 flex-col items-start p-2 text-left lg:w-[25vw] lg:min-w-0"
-                    style={{ opacity: 1 }}
+                    className="flex w-[82vw] min-w-[280px] max-w-[400px] shrink-0 flex-col items-start rounded-xl sm:rounded-2xl p-5 sm:p-6 lg:p-6 text-left lg:w-[calc(33.333vw-2rem)] lg:min-w-0 lg:max-w-[360px]"
                   >
-                    <div className="flex h-12 w-12 items-center justify-start text-white mb-6">
+                    <div className="flex h-10 w-10 sm:h-11 sm:w-11 lg:h-12 lg:w-12 items-center justify-start text-white">
                       <f.Icon />
                     </div>
-                    <h3 className="text-xl font-bold leading-tight text-white sm:text-2xl tracking-tight">
+                    <h3 className="mt-4 sm:mt-5 text-xl font-bold leading-tight text-white sm:text-2xl lg:text-[28px]">
                       {f.title}
                     </h3>
-                    <p className="mt-4 text-base leading-relaxed text-white/80 sm:text-lg font-normal">
+                    <p className="mt-2 sm:mt-3 text-base leading-relaxed text-white/75 sm:text-lg lg:text-[22px]">
                       {f.description}
                     </p>
                   </div>
-                ))}
-                {/* Blank cards so Industry Collaboration can scroll off before next section */}
-                {[0, 1, 2, 3, 4].map((i) => (
-                  <div
-                    key={`blank-${i}`}
-                    className="flex w-[82vw] min-w-[280px] max-w-[400px] shrink-0 lg:w-[calc(33.333vw-2rem)] lg:min-w-0 lg:max-w-[360px]"
-                    aria-hidden
-                  />
                 ))}
               </div>
             </div>
