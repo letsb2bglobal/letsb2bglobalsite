@@ -207,6 +207,51 @@ export const uploadProfileMedia = async (files: File[]): Promise<any> => {
 };
 
 /**
+ * Get onboarding profile for Preview page (step 4)
+ * URL: /api/user-profiles?filters[userId][$eq]=ID&populate=*&status=draft
+ * Returns the draft profile with all steps 1–3 data populated.
+ */
+export const getOnboardingProfileDraft = async (
+  userId: number
+): Promise<UserProfile | null> => {
+  const token = getToken();
+  if (!token) return null;
+
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://api.letsb2b.com";
+
+  try {
+    const params = new URLSearchParams({
+      "filters[userId][$eq]": String(userId),
+      populate: "*",
+      status: "draft",
+    });
+    const url = `${apiUrl}/api/user-profiles?${params.toString()}`;
+
+    const response = await fetch(url, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (!response.ok) {
+      if (response.status === 404) return null;
+      return null;
+    }
+
+    const result = await response.json();
+    const data = result.data ?? result;
+    const list = Array.isArray(data) ? data : data?.data ?? [data];
+    const profile = list[0] ?? null;
+    return profile as UserProfile | null;
+  } catch (error) {
+    console.warn("Error fetching onboarding profile draft:", error);
+    return null;
+  }
+};
+
+/**
  * Check if user profile exists for the given userId
  * URL: /api/user-profiles?filters[userId][$eq]=ID&populate=*
  */

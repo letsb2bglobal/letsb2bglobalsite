@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/components/ProtectedRoute";
-import { getMyProfile } from "@/lib/profile";
+import { getMyProfile, completeOnboardingStep, getOnboardingProfileDraft } from "@/lib/profile";
 import Image from "next/image";
 import AuthLayout from "@/components/AuthLayout";
 import SignupHeader from "@/components/SignupHeader";
@@ -146,6 +146,41 @@ export default function CompleteProfileContent() {
     initProfile();
   }, [user, router]);
 
+  // Fetch latest onboarding data when landing on Preview (step 4)
+  useEffect(() => {
+    async function loadPreviewData() {
+      if (currentStep !== 4 || !user?.id) return;
+      try {
+        const profile = await getOnboardingProfileDraft(user.id);
+        if (profile) {
+          const rawTypes = profile.business_type;
+          let businessTypes: string[] = [];
+          if (Array.isArray(rawTypes)) {
+            businessTypes = rawTypes as string[];
+          } else if (typeof rawTypes === "string" && rawTypes) {
+            try {
+              const parsed = JSON.parse(rawTypes);
+              businessTypes = Array.isArray(parsed) ? parsed : [rawTypes];
+            } catch {
+              businessTypes = [rawTypes];
+            }
+          }
+          setFormData((prev) => ({
+            ...prev,
+            business_type: businessTypes,
+            company_name: String(profile.company_name ?? prev.company_name),
+            business_details: ((profile as Record<string, unknown>).business_details as Record<string, unknown>) ?? prev.business_details,
+            preferred_collaborations: ((profile as { preferred_collaborations?: string[] }).preferred_collaborations) ?? prev.preferred_collaborations,
+            email: String(profile.email ?? user?.email ?? prev.email),
+          }));
+        }
+      } catch (err) {
+        console.warn("Error loading preview data:", err);
+      }
+    }
+    loadPreviewData();
+  }, [currentStep, user?.id, user?.email]);
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -251,7 +286,31 @@ export default function CompleteProfileContent() {
     setSubmitError("");
 
     try {
-      // API disabled for now - advance steps locally
+      // Step 1 (Business Type): call onboarding-step API
+      if (step === 1 && !showPreferenceAfterAdd && formData.business_type.length > 0) {
+        await completeOnboardingStep({
+          step: 1,
+          business_type: formData.business_type,
+        });
+      }
+
+      // Step 2 (Business Information): call onboarding-step API
+      if (step === 2 && formData.company_name) {
+        await completeOnboardingStep({
+          step: 2,
+          company_name: formData.company_name,
+          business_details: formData.business_details,
+        });
+      }
+
+      // Step 3 (Preference): call onboarding-step API
+      if (step === 3 && formData.preferred_collaborations.length > 0) {
+        await completeOnboardingStep({
+          step: 3,
+          preferred_collaborations: formData.preferred_collaborations,
+        });
+      }
+
       // Add flow: Step 2 -> Step 4 (skip 3); Who Are You flow: Step 2 -> Step 3
       let nextStep = step < 4 ? step + 1 : 4;
       if (step === 2 && cameFromAddFlow) {
@@ -662,15 +721,28 @@ export default function CompleteProfileContent() {
     setShowPreferenceAfterAdd(true);
   };
 
-  const handlePreferenceAfterAddNext = () => {
+  const handlePreferenceAfterAddNext = async () => {
     if (formData.preferred_collaborations.length === 0) {
       setErrors({ preferred_collaborations: "Please select at least one preferred collaboration" });
       return;
     }
     setErrors({});
-    setShowPreferenceAfterAdd(false);
-    setCameFromAddFlow(true);
-    setCurrentStep(4); // Go to Preview with filled details
+    setIsLoading(true);
+    setSubmitError("");
+    try {
+      await completeOnboardingStep({
+        step: 3,
+        preferred_collaborations: formData.preferred_collaborations,
+      });
+      setShowPreferenceAfterAdd(false);
+      setCameFromAddFlow(true);
+      setCurrentStep(4); // Go to Preview with filled details
+    } catch (error) {
+      console.error("Preference step error:", error);
+      setSubmitError(error instanceof Error ? error.message : "Failed to save preferences");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handlePreferenceAfterAddSkip = () => {
