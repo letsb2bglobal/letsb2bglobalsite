@@ -76,38 +76,38 @@ export default function Home() {
     setMounted(true);
   }, []);
 
-useEffect(() => {
-  if (!mounted) return;
+  useEffect(() => {
+    if (!mounted) return;
 
-  // If not authenticated, we show the landing page (no redirect)
-  if (!isAuthenticated()) return;
+    // If not authenticated, we show the landing page (no redirect)
+    if (!isAuthenticated()) return;
 
-  const fetchData = async () => {
-    if (!user?.id) return;
+    const fetchData = async () => {
+      if (!user?.id) return;
 
-    try {
-      const userProfile = await checkUserProfile(user.id);
-      setProfile(userProfile);
-      setLoading(false);
+      try {
+        const userProfile = await checkUserProfile(user.id);
+        setProfile(userProfile);
+        setLoading(false);
 
-      const response = await getAllUserProfiles();
-      if (response?.data) {
-        setAllProfilesList(response.data);
-        setAllProfiles(response.data.filter(p => p.userId !== user.id));
+        const response = await getAllUserProfiles();
+        if (response?.data) {
+          setAllProfilesList(response.data);
+          setAllProfiles(response.data.filter(p => p.userId !== user.id));
+        }
+      } catch (err) {
+        console.error("Error fetching data:", err);
+      } finally {
+        setAllLoading(false);
       }
-    } catch (err) {
-      console.error("Error fetching data:", err);
-    } finally {
-      setAllLoading(false);
-    }
-  };
+    };
 
-  fetchData();
-}, [mounted, user, router]);
+    fetchData();
+  }, [mounted, user, router]);
 
 
   const fetchPosts = async () => {
-    if (searchText || locationText) return; 
+    if (searchText || locationText) return;
     setPostsLoading(true);
     try {
       const response = await getTradeWallFeed();
@@ -125,7 +125,7 @@ useEffect(() => {
     if (activeTab === "tradewall" && !searchText && !locationText) {
       fetchPosts();
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
 
   const handleDeletePost = async (documentId: string) => {
@@ -298,62 +298,62 @@ useEffect(() => {
           {/* Hero content — same horizontal container as header, pt for clearance under sticky header */}
           <div className="relative z-10 flex flex-1 min-h-0 flex-col justify-center w-full max-w-[1440px] mx-auto px-4 sm:px-5 lg:px-10 pt-20">
             <div className="py-4 sm:py-6">
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 text-white font-semibold border border-white/20 rounded-full text-xs uppercase tracking-widest mb-6 shadow-lg shadow-black/10">
-              Less Noise, Pure Business 
-            </div>
-            <h1 className="text-3xl font-black text-white tracking-tight leading-tight sm:text-4xl md:text-5xl lg:text-6xl">
-              Global Tourism and Hospitality
-            </h1>
-            <h2 className="text-3xl font-black text-white tracking-tight leading-tight mt-0.5 sm:mt-1 sm:text-4xl md:text-5xl lg:text-6xl">
-              Trade Network
-            </h2>
-            <p className="text-base text-white/90 mt-3 max-w-xl sm:text-lg sm:mt-4">
-              Finding reliable and trusted business partners for global growth and trading.
-            </p>
-            {/* Tags: hidden on mobile to reduce clutter */}
-            <div className="hidden sm:flex flex-wrap gap-2 mt-4">
-              {partnerTypes.map((t) => (
-                <span
-                  key={t}
-                  className="px-3 py-1.5 rounded-full bg-white/10 text-white/90 text-xs font-semibold border border-orange-500/30"
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 text-white font-semibold border border-white/20 rounded-full text-xs uppercase tracking-widest mb-6 shadow-lg shadow-black/10">
+                Less Noise, Pure Business
+              </div>
+              <h1 className="text-3xl font-black text-white tracking-tight leading-tight sm:text-4xl md:text-5xl lg:text-6xl">
+                Global Tourism and Hospitality
+              </h1>
+              <h2 className="text-3xl font-black text-white tracking-tight leading-tight mt-0.5 sm:mt-1 sm:text-4xl md:text-5xl lg:text-6xl">
+                Trade Network
+              </h2>
+              <p className="text-base text-white/90 mt-3 max-w-xl sm:text-lg sm:mt-4">
+                Finding reliable and trusted business partners for global growth and trading.
+              </p>
+              {/* Tags: hidden on mobile to reduce clutter */}
+              <div className="hidden sm:flex flex-wrap gap-2 mt-4">
+                {partnerTypes.map((t) => (
+                  <span
+                    key={t}
+                    className="px-3 py-1.5 rounded-full bg-white/10 text-white/90 text-xs font-semibold border border-orange-500/30"
+                  >
+                    {t}
+                  </span>
+                ))}
+              </div>
+              <p className="hidden sm:block text-base text-white/80 mt-4 max-w-2xl">
+                Join our growing community and experience our industry-leading matchmaking for tourism and hospitality.
+              </p>
+              <div className="flex flex-col gap-2 mt-5 sm:flex-row sm:flex-wrap sm:gap-3 sm:mt-6">
+                <Link
+                  href="/signup"
+                  className="inline-flex items-center justify-center w-full sm:w-auto px-6 py-3.5 bg-white text-[#1a1625] font-bold rounded-full hover:bg-white/95 transition-colors text-sm"
                 >
-                  {t}
-                </span>
-              ))}
-            </div>
-            <p className="hidden sm:block text-base text-white/80 mt-4 max-w-2xl">
-              Join our growing community and experience our industry-leading matchmaking for tourism and hospitality.
-            </p>
-            <div className="flex flex-col gap-2 mt-5 sm:flex-row sm:flex-wrap sm:gap-3 sm:mt-6">
-              <Link
-                href="/signup"
-                className="inline-flex items-center justify-center w-full sm:w-auto px-6 py-3.5 bg-white text-[#1a1625] font-bold rounded-full hover:bg-white/95 transition-colors text-sm"
-              >
-                Join the Network Today
-              </Link>
-              {/* <Link
+                  Join the Network Today
+                </Link>
+                {/* <Link
                 href="/signin"
                 className="inline-flex items-center justify-center w-full sm:w-auto px-6 py-3.5 bg-[#f97316] text-white font-bold rounded-full hover:bg-[#ea580c] transition-colors text-sm"
               >
                 Explore Platform
               </Link> */}
-            </div>
-            <div className="flex flex-wrap gap-4 mt-4 sm:gap-6 sm:mt-6">
-              <div className="flex items-center gap-1.5 text-white/90 text-xs sm:text-sm sm:gap-2">
-                <svg className="w-4 h-4 sm:w-5 sm:h-5 text-blue-400 shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                </svg>
-                <span className="font-semibold">Verified Members</span>
               </div>
-              <div className="flex items-center gap-1.5 text-white/90 text-xs sm:text-sm sm:gap-2">
-                <span className="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-amber-400 text-[#1a1625] flex items-center justify-center text-[10px] font-black shrink-0">0</span>
-                <span className="font-semibold">Noise</span>
+              <div className="flex flex-wrap gap-4 mt-4 sm:gap-6 sm:mt-6">
+                <div className="flex items-center gap-1.5 text-white/90 text-xs sm:text-sm sm:gap-2">
+                  <svg className="w-4 h-4 sm:w-5 sm:h-5 text-blue-400 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                  <span className="font-semibold">Verified Members</span>
+                </div>
+                <div className="flex items-center gap-1.5 text-white/90 text-xs sm:text-sm sm:gap-2">
+                  <span className="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-amber-400 text-[#1a1625] flex items-center justify-center text-[10px] font-black shrink-0">0</span>
+                  <span className="font-semibold">Noise</span>
+                </div>
+                <div className="flex items-center gap-1.5 text-white/90 text-xs sm:text-sm sm:gap-2">
+                  <Handshake className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-400 shrink-0" strokeWidth={2} />
+                  <span className="font-semibold">Pure Business</span>
+                </div>
               </div>
-              <div className="flex items-center gap-1.5 text-white/90 text-xs sm:text-sm sm:gap-2">
-                <Handshake className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-400 shrink-0" strokeWidth={2} />
-                <span className="font-semibold">Pure Business</span>
-              </div>
-            </div>
             </div>
           </div>
 
@@ -370,15 +370,23 @@ useEffect(() => {
 
         <GlobalTourismTradeNetworkSection />
 
-        <FeaturesSection />
+        <div id="features" className="scroll-mt-24">
+          <FeaturesSection />
+        </div>
 
-        <HowItWorksFlow />
+        <div id="how-it-works" className="scroll-mt-24">
+          <HowItWorksFlow />
+        </div>
 
-        <WhyChooseLetsB2B />
+        <div id="why-choose-us" className="scroll-mt-24">
+          <WhyChooseLetsB2B />
+        </div>
 
         <MembershipTiersSection />
 
-        <FaqSection />
+        <div id="faqs" className="scroll-mt-24">
+          <FaqSection />
+        </div>
 
         <ZeroSpamBannerSection />
 
@@ -413,7 +421,7 @@ useEffect(() => {
                   <p className="text-xs text-indigo-100">Complete your profile location and category for intelligent ranking.</p>
                 </div>
               </div>
-              <button 
+              <button
                 onClick={() => router.push("/profile")}
                 className="bg-white text-indigo-600 px-4 py-1.5 rounded-lg text-xs font-black uppercase hover:bg-indigo-50 transition-colors"
               >
@@ -426,21 +434,19 @@ useEffect(() => {
           <div className="flex border-b border-gray-200 mb-4 bg-white rounded-t-lg overflow-hidden">
             <button
               onClick={() => setActiveTab("profiles")}
-              className={`flex-1 py-3 text-sm font-bold transition-all ${
-                activeTab === "profiles"
-                  ? "text-blue-600 border-b-2 border-blue-600 bg-blue-50/30"
-                  : "text-gray-500 hover:bg-gray-50"
-              }`}
+              className={`flex-1 py-3 text-sm font-bold transition-all ${activeTab === "profiles"
+                ? "text-blue-600 border-b-2 border-blue-600 bg-blue-50/30"
+                : "text-gray-500 hover:bg-gray-50"
+                }`}
             >
               Partner Profiles
             </button>
             <button
               onClick={() => setActiveTab("tradewall")}
-              className={`flex-1 py-3 text-sm font-bold transition-all ${
-                activeTab === "tradewall"
-                  ? "text-indigo-600 border-b-2 border-indigo-600 bg-indigo-50/30"
-                  : "text-gray-500 hover:bg-gray-50"
-              }`}
+              className={`flex-1 py-3 text-sm font-bold transition-all ${activeTab === "tradewall"
+                ? "text-indigo-600 border-b-2 border-indigo-600 bg-indigo-50/30"
+                : "text-gray-500 hover:bg-gray-50"
+                }`}
             >
               Tradewall Feed
             </button>
@@ -515,7 +521,7 @@ useEffect(() => {
                             )}
                           </div>
                           <p className="text-gray-600 font-medium text-sm">
-                              {p.category_items?.[0]?.category || ""}
+                            {p.category_items?.[0]?.category || ""}
                           </p>
                           <p className="text-gray-500 text-xs mt-1 flex items-center gap-1 font-medium">
                             <svg
@@ -608,256 +614,256 @@ useEffect(() => {
               </div>
             )
           ) : /* Tradewall Feed */
-          postsLoading ? (
-            <div className="space-y-4">
-              {[1, 2, 3].map((i) => (
-                <div
-                  key={i}
-                  className="bg-white rounded-xl border border-gray-200 p-6 animate-pulse"
-                >
-                  <div className="h-4 bg-gray-100 rounded w-3/4 mb-4"></div>
-                  <div className="h-20 bg-gray-50 rounded-lg mb-4"></div>
-                  <div className="h-4 bg-gray-100 rounded w-1/4"></div>
-                </div>
-              ))}
-            </div>
-          ) : posts.length > 0 ? (
-            posts.map((post) => (
-              <div
-                key={post.id}
-                className="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all overflow-hidden p-6 space-y-4"
-              >
-                <div className="flex gap-3 items-start">
-                  {/* Avatar */}
+            postsLoading ? (
+              <div className="space-y-4">
+                {[1, 2, 3].map((i) => (
                   <div
-                    onClick={() => {
-                      const docId = getProfileDocId(post.userId);
-                      if (docId) router.push(`/profile/${docId}`);
-                      else if (post.userId === user?.id) router.push("/profile");
-                    }}
-                    className="h-10 w-10 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-bold text-sm cursor-pointer hover:scale-105 transition-transform shrink-0"
+                    key={i}
+                    className="bg-white rounded-xl border border-gray-200 p-6 animate-pulse"
                   >
-                    {(post.user_profile?.company_name || "?").substring(0, 1).toUpperCase()}
+                    <div className="h-4 bg-gray-100 rounded w-3/4 mb-4"></div>
+                    <div className="h-20 bg-gray-50 rounded-lg mb-4"></div>
+                    <div className="h-4 bg-gray-100 rounded w-1/4"></div>
                   </div>
-
-                  {/* Header info */}
-                  <div className="flex-1 min-w-0">
-                    <p
+                ))}
+              </div>
+            ) : posts.length > 0 ? (
+              posts.map((post) => (
+                <div
+                  key={post.id}
+                  className="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all overflow-hidden p-6 space-y-4"
+                >
+                  <div className="flex gap-3 items-start">
+                    {/* Avatar */}
+                    <div
                       onClick={() => {
                         const docId = getProfileDocId(post.userId);
                         if (docId) router.push(`/profile/${docId}`);
                         else if (post.userId === user?.id) router.push("/profile");
                       }}
-                      className="font-bold text-gray-900 hover:text-blue-600 cursor-pointer transition-colors truncate text-sm"
+                      className="h-10 w-10 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-bold text-sm cursor-pointer hover:scale-105 transition-transform shrink-0"
                     >
-                      {post.user_profile?.company_name || post.title || "B2B Partner"}
-                    </p>
-                    <div className="flex flex-wrap items-center gap-1.5 mt-1">
-                      {(post.destination || post.destinationCity) && (
-                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-indigo-50 text-indigo-600 flex items-center gap-1">
-                          <svg className="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd"/>
-                          </svg>
-                          {post.destination || post.destinationCity}
-                        </span>
-                      )}
-                      {(() => {
-                        const cat = post.category;
-                        const catStr = Array.isArray(cat)
-                          ? cat.join(', ')
-                          : typeof cat === 'string' ? cat : null;
-                        return catStr ? (
-                          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-600">
-                            {catStr}
+                      {(post.user_profile?.company_name || "?").substring(0, 1).toUpperCase()}
+                    </div>
+
+                    {/* Header info */}
+                    <div className="flex-1 min-w-0">
+                      <p
+                        onClick={() => {
+                          const docId = getProfileDocId(post.userId);
+                          if (docId) router.push(`/profile/${docId}`);
+                          else if (post.userId === user?.id) router.push("/profile");
+                        }}
+                        className="font-bold text-gray-900 hover:text-blue-600 cursor-pointer transition-colors truncate text-sm"
+                      >
+                        {post.user_profile?.company_name || post.title || "B2B Partner"}
+                      </p>
+                      <div className="flex flex-wrap items-center gap-1.5 mt-1">
+                        {(post.destination || post.destinationCity) && (
+                          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-indigo-50 text-indigo-600 flex items-center gap-1">
+                            <svg className="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+                            </svg>
+                            {post.destination || post.destinationCity}
                           </span>
-                        ) : null;
-                      })()}
-                      <span className="text-[10px] text-gray-400 font-medium">{formatTime(post.createdAt)}</span>
-                      {(post._score !== undefined && post._score >= 0.7) && (
-                        <span className="bg-amber-50 text-amber-600 text-[9px] font-black px-1.5 py-0.5 rounded-full border border-amber-100 flex items-center gap-1">
-                          <svg className="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-                          Best Match
-                        </span>
-                      )}
-                      {post.status === "Closed" && (
-                        <span className="text-[9px] font-black px-1.5 py-0.5 rounded-full bg-red-50 text-red-500 border border-red-100">Closed</span>
+                        )}
+                        {(() => {
+                          const cat = post.category;
+                          const catStr = Array.isArray(cat)
+                            ? cat.join(', ')
+                            : typeof cat === 'string' ? cat : null;
+                          return catStr ? (
+                            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-600">
+                              {catStr}
+                            </span>
+                          ) : null;
+                        })()}
+                        <span className="text-[10px] text-gray-400 font-medium">{formatTime(post.createdAt)}</span>
+                        {(post._score !== undefined && post._score >= 0.7) && (
+                          <span className="bg-amber-50 text-amber-600 text-[9px] font-black px-1.5 py-0.5 rounded-full border border-amber-100 flex items-center gap-1">
+                            <svg className="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
+                            Best Match
+                          </span>
+                        )}
+                        {post.status === "Closed" && (
+                          <span className="text-[9px] font-black px-1.5 py-0.5 rounded-full bg-red-50 text-red-500 border border-red-100">Closed</span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* 3-dot menu — all posts */}
+                    <div className="relative shrink-0">
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setOpenMenuPostId(openMenuPostId === post.documentId ? null : post.documentId); }}
+                        className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
+                      >
+                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                          <path d="M10 6a2 2 0 110-4 2 2 0 010 4zm0 6a2 2 0 110-4 2 2 0 010 4zm0 6a2 2 0 110-4 2 2 0 010 4z" />
+                        </svg>
+                      </button>
+                      {openMenuPostId === post.documentId && (
+                        <div className="absolute right-0 top-8 z-50 w-36 bg-white border border-gray-100 rounded-xl shadow-lg overflow-hidden" onClick={(e) => e.stopPropagation()}>
+                          <button
+                            onClick={() => {
+                              setEditingPost(post);
+                              setIsPostModalOpen(true);
+                              setOpenMenuPostId(null);
+                            }}
+                            className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                          >
+                            <svg className="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            </svg>
+                            Edit
+                          </button>
+                          <div className="h-px bg-gray-100" />
+                          <button
+                            onClick={() => {
+                              setOpenMenuPostId(null);
+                              handleDeletePost(post.documentId);
+                            }}
+                            disabled={deletingPostId === post.documentId}
+                            className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                            {deletingPostId === post.documentId ? "Deleting..." : "Delete"}
+                          </button>
+                        </div>
                       )}
                     </div>
                   </div>
 
-                  {/* 3-dot menu — all posts */}
-                  <div className="relative shrink-0">
-                    <button
-                      onClick={(e) => { e.stopPropagation(); setOpenMenuPostId(openMenuPostId === post.documentId ? null : post.documentId); }}
-                      className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
-                    >
-                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M10 6a2 2 0 110-4 2 2 0 010 4zm0 6a2 2 0 110-4 2 2 0 010 4zm0 6a2 2 0 110-4 2 2 0 010 4z"/>
-                      </svg>
-                    </button>
-                    {openMenuPostId === post.documentId && (
-                      <div className="absolute right-0 top-8 z-50 w-36 bg-white border border-gray-100 rounded-xl shadow-lg overflow-hidden" onClick={(e) => e.stopPropagation()}>
-                        <button
-                          onClick={() => {
-                            setEditingPost(post);
-                            setIsPostModalOpen(true);
-                            setOpenMenuPostId(null);
-                          }}
-                          className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                        >
-                          <svg className="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-                          </svg>
-                          Edit
-                        </button>
-                        <div className="h-px bg-gray-100" />
-                        <button
-                          onClick={() => {
-                            setOpenMenuPostId(null);
-                            handleDeletePost(post.documentId);
-                          }}
-                          disabled={deletingPostId === post.documentId}
-                          className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50"
-                        >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                          </svg>
-                          {deletingPostId === post.documentId ? "Deleting..." : "Delete"}
-                        </button>
-                      </div>
-                    )}
+                  <div className="text-sm text-gray-700 leading-relaxed line-clamp-3">
+                    {post.description
+                      || (Array.isArray(post.content)
+                        ? post.content.map((b: any) => b.children?.map((c: any) => c.text).join(" ")).join(" ")
+                        : typeof post.content === "string" ? post.content : "No description available.")}
                   </div>
-                </div>
 
-                <div className="text-sm text-gray-700 leading-relaxed line-clamp-3">
-                  {post.description
-                    || (Array.isArray(post.content)
-                      ? post.content.map((b: any) => b.children?.map((c: any) => c.text).join(" ")).join(" ")
-                      : typeof post.content === "string" ? post.content : "No description available.")}
-                </div>
+                  {/* Media Scrolling Container / Grid */}
+                  {(() => {
+                    const media = post.custom_attachments || post.media;
+                    if (!media || media.length === 0) return null;
 
-                {/* Media Scrolling Container / Grid */}
-                {(() => {
-                  const media = post.custom_attachments || post.media;
-                  if (!media || media.length === 0) return null;
-                  
-                  const mLen = media.length;
-                  
-                  // If only one item, show a nice hero image/video
-                  if (mLen === 1) {
-                    const m = media[0];
-                    const isVideo = m.url?.toLowerCase().match(/\.(mp4|webm|ogg|mov|m4v)$/) || m.url?.includes('youtube.com') || m.url?.includes('youtu.be') || m.url?.includes('vimeo.com');
+                    const mLen = media.length;
+
+                    // If only one item, show a nice hero image/video
+                    if (mLen === 1) {
+                      const m = media[0];
+                      const isVideo = m.url?.toLowerCase().match(/\.(mp4|webm|ogg|mov|m4v)$/) || m.url?.includes('youtube.com') || m.url?.includes('youtu.be') || m.url?.includes('vimeo.com');
+                      return (
+                        <div className="relative rounded-2xl overflow-hidden bg-gray-100 border border-gray-100 aspect-[21/9] mt-4 group/media">
+                          {isVideo ? (
+                            <div className="w-full h-full bg-slate-900 flex flex-col items-center justify-center">
+                              <svg className="w-12 h-12 text-white/50" fill="currentColor" viewBox="0 0 20 20"><path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" /></svg>
+                            </div>
+                          ) : (
+                            <img src={m.url} alt="Media" className="w-full h-full object-cover transition-transform duration-700 group-hover/media:scale-105" />
+                          )}
+                          <div className="absolute inset-0 bg-black/0 group-hover/media:bg-black/10 transition-all cursor-pointer" onClick={() => window.open(m.url, '_blank')} />
+                        </div>
+                      );
+                    }
+
+                    // If multiple items, use the horizontal scroll (1 full + 1/2 next)
                     return (
-                      <div className="relative rounded-2xl overflow-hidden bg-gray-100 border border-gray-100 aspect-[21/9] mt-4 group/media">
-                        {isVideo ? (
-                          <div className="w-full h-full bg-slate-900 flex flex-col items-center justify-center">
-                            <svg className="w-12 h-12 text-white/50" fill="currentColor" viewBox="0 0 20 20"><path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" /></svg>
-                          </div>
-                        ) : (
-                          <img src={m.url} alt="Media" className="w-full h-full object-cover transition-transform duration-700 group-hover/media:scale-105" />
-                        )}
-                        <div className="absolute inset-0 bg-black/0 group-hover/media:bg-black/10 transition-all cursor-pointer" onClick={() => window.open(m.url, '_blank')} />
-                      </div>
-                    );
-                  }
+                      <div className="relative mt-4 -mx-1">
+                        <div className="flex gap-2 overflow-x-auto pb-4 px-1 scrollbar-hide snap-x snap-mandatory">
+                          {media.map((m: any, idx: number) => {
+                            const isVideo = m.type === 'videos' || m.url?.toLowerCase().match(/\.(mp4|webm|ogg|mov|m4v)$/) || m.url?.includes('youtube.com') || m.url?.includes('youtu.be') || m.url?.includes('vimeo.com');
+                            const isFile = m.type === 'files' || m.url?.toLowerCase().match(/\.(pdf|doc|docx|xls|xlsx|ppt|pptx|txt|csv)$/);
+                            const isPlaying = playingVideoUrl === m.url;
 
-                  // If multiple items, use the horizontal scroll (1 full + 1/2 next)
-                  return (
-                    <div className="relative mt-4 -mx-1">
-                      <div className="flex gap-2 overflow-x-auto pb-4 px-1 scrollbar-hide snap-x snap-mandatory">
-                        {media.map((m: any, idx: number) => {
-                          const isVideo = m.type === 'videos' || m.url?.toLowerCase().match(/\.(mp4|webm|ogg|mov|m4v)$/) || m.url?.includes('youtube.com') || m.url?.includes('youtu.be') || m.url?.includes('vimeo.com');
-                          const isFile = m.type === 'files' || m.url?.toLowerCase().match(/\.(pdf|doc|docx|xls|xlsx|ppt|pptx|txt|csv)$/);
-                          const isPlaying = playingVideoUrl === m.url;
-
-                          return (
-                            <div 
-                              key={idx} 
-                              className="relative flex-none w-[52%] aspect-square rounded-2xl overflow-hidden bg-white border border-slate-200 snap-center group/media shadow-[0_2px_10px_-4px_rgba(0,0,0,0.1)]"
-                            >
-                              {isVideo ? (
-                                isPlaying ? (
-                                    <video 
-                                        src={m.url} 
-                                        controls 
-                                        autoPlay 
-                                        className="w-full h-full object-cover bg-black"
-                                        onEnded={() => setPlayingVideoUrl(null)}
+                            return (
+                              <div
+                                key={idx}
+                                className="relative flex-none w-[52%] aspect-square rounded-2xl overflow-hidden bg-white border border-slate-200 snap-center group/media shadow-[0_2px_10px_-4px_rgba(0,0,0,0.1)]"
+                              >
+                                {isVideo ? (
+                                  isPlaying ? (
+                                    <video
+                                      src={m.url}
+                                      controls
+                                      autoPlay
+                                      className="w-full h-full object-cover bg-black"
+                                      onEnded={() => setPlayingVideoUrl(null)}
                                     />
-                                ) : (
+                                  ) : (
                                     <div className="w-full h-full bg-slate-900 flex flex-col items-center justify-center relative">
-                                        <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center backdrop-blur-md border border-white/30 group-hover/media:scale-110 transition-transform">
-                                            <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20"><path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" /></svg>
-                                        </div>
-                                        <span className="text-[9px] text-white/40 font-black uppercase mt-3 tracking-widest">Tap to Play</span>
-                                        <div className="absolute inset-0 cursor-pointer" onClick={() => setPlayingVideoUrl(m.url)} />
+                                      <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center backdrop-blur-md border border-white/30 group-hover/media:scale-110 transition-transform">
+                                        <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20"><path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" /></svg>
+                                      </div>
+                                      <span className="text-[9px] text-white/40 font-black uppercase mt-3 tracking-widest">Tap to Play</span>
+                                      <div className="absolute inset-0 cursor-pointer" onClick={() => setPlayingVideoUrl(m.url)} />
                                     </div>
-                                )
-                              ) : isFile ? (
-                                <a 
-                                    href={m.url} 
-                                    download 
-                                    target="_blank" 
+                                  )
+                                ) : isFile ? (
+                                  <a
+                                    href={m.url}
+                                    download
+                                    target="_blank"
                                     className="w-full h-full flex flex-col items-center justify-center p-4 bg-slate-50 hover:bg-slate-100 transition-colors group/file"
-                                >
+                                  >
                                     <div className="w-14 h-14 rounded-2xl bg-indigo-600 flex items-center justify-center text-white mb-3 shadow-lg group-hover/file:scale-110 transition-transform">
-                                        <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                        </svg>
+                                      <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                      </svg>
                                     </div>
                                     <span className="text-[10px] font-black text-slate-800 uppercase text-center line-clamp-2 px-2">{m.name || 'View Document'}</span>
                                     <span className="text-[9px] text-slate-400 font-bold uppercase mt-1">Download File</span>
-                                </a>
-                              ) : (
-                                <>
+                                  </a>
+                                ) : (
+                                  <>
                                     <img src={m.url} alt={`Media ${idx}`} className="w-full h-full object-cover transition-transform duration-700 group-hover/media:scale-105" />
                                     <div className="absolute inset-0 bg-black/0 group-hover/media:bg-black/10 transition-all cursor-pointer" onClick={() => window.open(m.url, '_blank')} />
-                                </>
-                              )}
-                            </div>
-                          );
-                        })}
+                                  </>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
                       </div>
-                    </div>
-                  );
-                })()}
+                    );
+                  })()}
 
-                <div className="pt-2 border-t border-gray-50 flex items-center gap-4">
-                  <button
-                    className="text-xs font-bold text-gray-500 hover:text-indigo-600 uppercase tracking-wider flex items-center gap-1"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 10h4.757m-9.488 9.21a.75.75 0 01-1.114 0l-3.23-3.23a.75.75 0 010-1.114l3.23-3.23a.75.75 0 011.114 0l3.23 3.23a.75.75 0 010 1.114l-3.23 3.23z" />
-                    </svg>
-                    Connect
-                  </button>
-                  <button
-                    className="text-xs font-bold text-gray-500 hover:text-indigo-600 uppercase tracking-wider flex items-center gap-1"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                    </svg>
-                    Reply
-                  </button>
+                  <div className="pt-2 border-t border-gray-50 flex items-center gap-4">
+                    <button
+                      className="text-xs font-bold text-gray-500 hover:text-indigo-600 uppercase tracking-wider flex items-center gap-1"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 10h4.757m-9.488 9.21a.75.75 0 01-1.114 0l-3.23-3.23a.75.75 0 010-1.114l3.23-3.23a.75.75 0 011.114 0l3.23 3.23a.75.75 0 010 1.114l-3.23 3.23z" />
+                      </svg>
+                      Connect
+                    </button>
+                    <button
+                      className="text-xs font-bold text-gray-500 hover:text-indigo-600 uppercase tracking-wider flex items-center gap-1"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                      </svg>
+                      Reply
+                    </button>
+                  </div>
                 </div>
+              ))
+            ) : (
+              <div className="bg-white rounded-xl border border-gray-200 p-12 text-center shadow-sm">
+                <h3 className="text-lg font-bold text-gray-900">
+                  No posts available
+                </h3>
+                <p className="text-gray-500">
+                  Be the first one to post a B2B opportunity!
+                </p>
+                <button
+                  onClick={() => setIsPostModalOpen(true)}
+                  className="mt-4 px-6 py-2 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700 transition-all text-sm"
+                >
+                  Create Post
+                </button>
               </div>
-            ))
-          ) : (
-            <div className="bg-white rounded-xl border border-gray-200 p-12 text-center shadow-sm">
-              <h3 className="text-lg font-bold text-gray-900">
-                No posts available
-              </h3>
-              <p className="text-gray-500">
-                Be the first one to post a B2B opportunity!
-              </p>
-              <button
-                onClick={() => setIsPostModalOpen(true)}
-                className="mt-4 px-6 py-2 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700 transition-all text-sm"
-              >
-                Create Post
-              </button>
-            </div>
-          )}
+            )}
         </div>
 
         {/* Right Sidebar - User Profile Card */}
@@ -885,7 +891,7 @@ useEffect(() => {
                     {(activeWorkspace?.data.company_name || profile?.company_name || user?.username || "User").toUpperCase()}
                   </h4>
                   <p className="text-gray-500 text-xs mt-0.5 font-medium">
-                     {activeWorkspace?.data.category_items?.[0]?.category || profile?.category_items?.[0]?.category || "Professional at LetsB2B"}
+                    {activeWorkspace?.data.category_items?.[0]?.category || profile?.category_items?.[0]?.category || "Professional at LetsB2B"}
                   </p>
                 </div>
 

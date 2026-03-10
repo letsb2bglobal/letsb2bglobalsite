@@ -16,7 +16,7 @@ export default function Section2Intro() {
     <section
       id="intro"
       data-section="intro"
-      className="relative bg-white border-t-[3px] border-emerald-500 py-16 lg:py-24"
+      className="relative bg-white border-t-[3px] border-emerald-500 py-10 lg:py-24"
     >
       <div className="w-full max-w-[1440px] mx-auto px-5 lg:px-10">
         <div className="min-h-[10rem] sm:min-h-[12rem] md:min-h-[14rem] lg:min-h-[16rem]">
@@ -37,6 +37,12 @@ export default function Section2Intro() {
                     ? "color:#9ca3af;font-weight:400"
                     : "color:#111827;font-weight:800";
                   tw.typeString(`<span style="${style}">${seg.text}</span> `);
+                });
+                tw.callFunction(() => {
+                  // After typing finishes, refresh GSAP triggers because height might have changed
+                  import("gsap/ScrollTrigger").then((mod) => {
+                    mod.default.refresh();
+                  });
                 });
                 tw.start();
               }}

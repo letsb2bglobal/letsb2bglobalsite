@@ -99,22 +99,22 @@ export default function WhyChooseLetsB2B() {
             reduce
               ? { opacity: 0 }
               : {
-                  opacity: 0,
-                  y: 30,
-                  scale: 0.98,
-                  rotateX: 6,
-                },
+                opacity: 0,
+                y: 30,
+                scale: 0.98,
+                rotateX: 6,
+              },
             reduce
               ? { opacity: 1, duration: 0.5, ease: "power2.out", stagger: { each: 0.08, from: "start" } }
               : {
-                  opacity: 1,
-                  y: 0,
-                  scale: 1,
-                  rotateX: 0,
-                  duration: 0.9,
-                  ease: "power3.out",
-                  stagger: { each: 0.12, from: "start" },
-                },
+                opacity: 1,
+                y: 0,
+                scale: 1,
+                rotateX: 0,
+                duration: 0.9,
+                ease: "power3.out",
+                stagger: { each: 0.12, from: "start" },
+              },
             "-=0.25"
           )
           .add(() => {
@@ -203,7 +203,6 @@ export default function WhyChooseLetsB2B() {
 
   return (
     <section
-      id="why-choose-us"
       ref={sectionRef}
       className="relative w-full overflow-hidden bg-white py-20 md:py-24 bg-cover bg-center bg-no-repeat"
       style={{
