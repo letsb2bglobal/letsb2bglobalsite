@@ -288,7 +288,8 @@ export const getMyContexts = async (): Promise<{
     });
     if (!response.ok) {
       if (response.status === 404) return { exists: false, ownProfile: null, memberships: [] };
-      throw new Error("Failed to fetch user contexts");
+      console.warn("Failed to fetch user contexts:", response.status);
+      return { exists: false, ownProfile: null, memberships: [] };
     }
 
     const result = await response.json();

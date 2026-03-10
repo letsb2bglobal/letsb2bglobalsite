@@ -116,19 +116,19 @@ function AddAdditionalDetailsContent() {
   };
 
   return (
-    <div className="flex flex-col min-h-0 flex-1 min-w-0 overflow-x-hidden">
-      {/* Title bar - above Profile Completed per Figma */}
-      <div className="px-4 sm:px-6 lg:px-8 pt-4 pb-6 max-w-7xl mx-auto w-full">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Add Additional Details</h1>
-            <p className="text-sm text-gray-600 mt-0.5">This Info will be shown on your public profile</p>
+    <div className="flex flex-col min-h-0 flex-1 min-w-0 overflow-x-hidden px-6 pt-6 pb-6">
+      <div className="w-full max-w-7xl mx-auto min-w-0">
+        {/* Header - Title, subtitle, Cancel/Save buttons */}
+        <div className="flex flex-col sm:flex-row items-start justify-between gap-4 mb-6">
+          <div className="min-w-0 flex-1">
+            <h1 className="text-[28px] font-semibold text-gray-900 leading-tight mt-0">Add Additional Details</h1>
+            <p className="text-sm text-gray-500 mt-1">This Info will be shown on your public profile</p>
           </div>
           <div className="flex items-center gap-3 shrink-0">
             <button
               type="button"
               onClick={handleCancel}
-              className="px-5 py-2.5 rounded-xl font-semibold text-sm text-gray-700 bg-gray-200 hover:bg-gray-300 transition-colors"
+              className="inline-flex items-center justify-center h-10 px-5 rounded-[16px] font-semibold text-sm text-gray-700 bg-gray-200 hover:bg-gray-300 transition-colors"
             >
               Cancel
             </button>
@@ -136,21 +136,20 @@ function AddAdditionalDetailsContent() {
               type="button"
               onClick={handleSave}
               disabled={saving}
-              className="px-5 py-2.5 rounded-xl font-semibold text-sm text-white transition-colors disabled:opacity-60"
+              className="inline-flex items-center justify-center h-10 px-5 rounded-[16px] font-semibold text-sm text-white transition-colors disabled:opacity-60"
               style={{ backgroundColor: PURPLE }}
             >
               {saving ? 'Saving...' : 'Save'}
             </button>
           </div>
         </div>
-      </div>
 
       <div className="flex flex-1 flex-col lg:flex-row min-h-0 min-w-0 overflow-hidden">
-        <div className="flex flex-1 flex-col lg:flex-row gap-0 lg:gap-8 p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full min-w-0 overflow-y-auto overflow-x-hidden">
-          {/* Left sidebar */}
-        <aside className="w-full lg:w-[309px] shrink-0 mb-6 lg:mb-0 min-w-0 max-w-full">
+        <div className="flex flex-1 flex-col lg:flex-row gap-6 w-full min-w-0 overflow-y-auto overflow-x-hidden">
+          {/* Left: Profile Completed card */}
+        <aside className="w-full lg:w-[260px] shrink-0 mb-6 lg:mb-0 min-w-0 max-w-full">
           <div
-            className="rounded-[16px] p-5 w-full max-w-full lg:max-w-[308.59px]"
+            className="rounded-[16px] p-5 w-full max-w-full lg:w-[260px]"
             style={{
               minHeight: 242.14,
               backgroundColor: '#FFFFFF',
@@ -192,13 +191,13 @@ function AddAdditionalDetailsContent() {
           </div>
         </aside>
 
-        {/* Main content */}
+        {/* Right: Main content - Company / Business / KYC */}
         <div className="flex-1 min-w-0 w-full overflow-hidden">
           <div
-            className={`rounded-2xl p-4 sm:p-6 lg:p-8 space-y-4 sm:space-y-6 overflow-x-hidden ${
+            className={`rounded-[16px] p-6 sm:p-8 space-y-4 sm:space-y-6 overflow-x-hidden ${
               activeTab === 'company' || activeTab === 'business' || activeTab === 'kyc'
                 ? ''
-                : 'bg-white border border-gray-200'
+                : 'bg-white shadow-sm'
             }`}
             style={
               activeTab === 'company' || activeTab === 'business' || activeTab === 'kyc'
@@ -213,7 +212,7 @@ function AddAdditionalDetailsContent() {
             {activeTab === 'company' && (
               <>
                 {/* Combined: Profile + Company Details */}
-                <div className="rounded-2xl overflow-hidden bg-white border border-gray-200 shadow-sm">
+                <div className="rounded-[16px] overflow-hidden bg-white shadow-sm">
                   <div className="relative h-32 sm:h-40 w-full" style={{ backgroundColor: '#E3BFDD' }}>
                     <button type="button" className="absolute top-3 right-3 w-10 h-10 rounded-full flex items-center justify-center overflow-hidden" style={{ backgroundColor: PURPLE }} aria-label="Edit cover">
                       <Image src="/cover_cameralogo.png" alt="" width={20} height={20} className="object-contain" />
@@ -224,19 +223,19 @@ function AddAdditionalDetailsContent() {
                       <Image src="/profilecamera.png" alt="" width={24} height={24} className="object-contain" />
                     </div>
                   </div>
-                  <div className="px-4 sm:px-6 lg:px-8 pt-4 pb-6 sm:pb-8 space-y-4">
+                  <div className="px-6 sm:px-8 pt-4 pb-6 sm:pb-8 space-y-4">
                   <input
                     type="text"
                     value={formData.companyName}
                     onChange={(e) => setFormData((p) => ({ ...p, companyName: e.target.value }))}
                     placeholder="Company Name"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:border-[#612178]"
+                    className="w-full px-4 py-3 bg-white border border-[#D9D9D9] rounded-xl text-[#545454] placeholder-[#545454] font-normal font-sans focus:outline-none focus:border-[#612178]"
                   />
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <select
                       value={formData.businessType}
                       onChange={(e) => setFormData((p) => ({ ...p, businessType: e.target.value }))}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl text-gray-800 bg-white focus:outline-none focus:border-[#612178]"
+                      className="w-full px-4 py-3 bg-white border border-[#D9D9D9] rounded-xl text-[#545454] font-normal font-sans focus:outline-none focus:border-[#612178]"
                     >
                       {BUSINESS_TYPE_OPTIONS.map((o) => (
                         <option key={o} value={o}>{o}</option>
@@ -247,7 +246,7 @@ function AddAdditionalDetailsContent() {
                       value={formData.roomCount}
                       onChange={(e) => setFormData((p) => ({ ...p, roomCount: e.target.value }))}
                       placeholder="24 Rooms"
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:border-[#612178]"
+                      className="w-full px-4 py-3 bg-white border border-[#D9D9D9] rounded-xl text-[#545454] placeholder-[#545454] font-normal font-sans focus:outline-none focus:border-[#612178]"
                     />
                   </div>
                   <textarea
@@ -255,7 +254,7 @@ function AddAdditionalDetailsContent() {
                     onChange={(e) => setFormData((p) => ({ ...p, description: e.target.value }))}
                     rows={4}
                     placeholder="Provide A Description Of Your Company"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:border-[#612178] resize-none"
+                    className="w-full px-4 py-3 bg-white border border-[#D9D9D9] rounded-xl text-[#545454] placeholder-[#545454] font-normal font-sans focus:outline-none focus:border-[#612178] resize-none"
                   />
                   <div>
                     <select
@@ -270,7 +269,7 @@ function AddAdditionalDetailsContent() {
                           }));
                         }
                       }}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl text-gray-800 bg-white focus:outline-none focus:border-[#612178]"
+                      className="w-full px-4 py-3 bg-white border border-[#D9D9D9] rounded-xl text-[#545454] font-normal font-sans focus:outline-none focus:border-[#612178]"
                     >
                       <option value="">Select Languages Preferred</option>
                       {LANGUAGE_OPTIONS.map((lang) => (
@@ -296,7 +295,7 @@ function AddAdditionalDetailsContent() {
                     value={formData.website}
                     onChange={(e) => setFormData((p) => ({ ...p, website: e.target.value }))}
                     placeholder="Enter Website Link (Optional)"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:border-[#612178]"
+                    className="w-full px-4 py-3 bg-white border border-[#D9D9D9] rounded-xl text-[#545454] placeholder-[#545454] font-normal font-sans focus:outline-none focus:border-[#612178]"
                   />
                   <button
                     type="button"
@@ -314,7 +313,7 @@ function AddAdditionalDetailsContent() {
                 </div>
 
                 {/* Card 2: Location */}
-                <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 sm:p-6 lg:p-8">
+                <div className="bg-white rounded-[16px] shadow-sm p-6 sm:p-8">
                   <h2 className="text-base font-bold text-gray-900 mb-4">Location</h2>
                   <div className="space-y-4">
                     <div>
@@ -323,14 +322,14 @@ function AddAdditionalDetailsContent() {
                         value={formData.location}
                         onChange={(e) => setFormData((p) => ({ ...p, location: e.target.value }))}
                         placeholder="Location"
-                        className="w-full px-4 py-3 border border-gray-300 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:border-[#612178]"
+                        className="w-full px-4 py-3 bg-white border border-[#D9D9D9] rounded-xl text-[#545454] placeholder-[#545454] font-normal font-sans focus:outline-none focus:border-[#612178]"
                       />
                     </div>
                     <div>
                       <select
                         value={formData.country}
                         onChange={(e) => setFormData((p) => ({ ...p, country: e.target.value }))}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-xl text-gray-800 bg-white focus:outline-none focus:border-[#612178]"
+                        className="w-full px-4 py-3 bg-white border border-[#D9D9D9] rounded-xl text-[#545454] font-normal font-sans focus:outline-none focus:border-[#612178]"
                       >
                         <option value="">Country</option>
                         {COUNTRY_OPTIONS.map((c) => (
@@ -343,7 +342,7 @@ function AddAdditionalDetailsContent() {
                         <select
                           value={formData.state}
                           onChange={(e) => setFormData((p) => ({ ...p, state: e.target.value }))}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-xl text-gray-800 bg-white focus:outline-none focus:border-[#612178]"
+                          className="w-full px-4 py-3 bg-white border border-[#D9D9D9] rounded-xl text-[#545454] font-normal font-sans focus:outline-none focus:border-[#612178]"
                         >
                           <option value="">State</option>
                           {STATE_OPTIONS.map((s) => (
@@ -355,7 +354,7 @@ function AddAdditionalDetailsContent() {
                         <select
                           value={formData.city}
                           onChange={(e) => setFormData((p) => ({ ...p, city: e.target.value }))}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-xl text-gray-800 bg-white focus:outline-none focus:border-[#612178]"
+                          className="w-full px-4 py-3 bg-white border border-[#D9D9D9] rounded-xl text-[#545454] font-normal font-sans focus:outline-none focus:border-[#612178]"
                         >
                           <option value="">City</option>
                           {CITY_OPTIONS.map((c) => (
@@ -368,7 +367,7 @@ function AddAdditionalDetailsContent() {
                 </div>
 
                 {/* Card 3: Contact Information */}
-                <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 sm:p-6 lg:p-8">
+                <div className="bg-white rounded-[16px] shadow-sm p-6 sm:p-8">
                   <h2 className="text-base font-bold text-gray-900 mb-4">Contact Information</h2>
                   <div className="space-y-4">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -377,12 +376,12 @@ function AddAdditionalDetailsContent() {
                         value={formData.contactPerson}
                         onChange={(e) => setFormData((p) => ({ ...p, contactPerson: e.target.value }))}
                         placeholder="Enter The Contact Person"
-                        className="w-full px-4 py-3 border border-gray-300 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:border-[#612178]"
+                        className="w-full px-4 py-3 bg-white border border-[#D9D9D9] rounded-xl text-[#545454] placeholder-[#545454] font-normal font-sans focus:outline-none focus:border-[#612178]"
                       />
                       <select
                         value={formData.designation}
                         onChange={(e) => setFormData((p) => ({ ...p, designation: e.target.value }))}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-xl text-gray-800 bg-white focus:outline-none focus:border-[#612178]"
+                        className="w-full px-4 py-3 bg-white border border-[#D9D9D9] rounded-xl text-[#545454] font-normal font-sans focus:outline-none focus:border-[#612178]"
                       >
                         <option value="">Select Designation</option>
                         {DESIGNATION_OPTIONS.map((d) => (
@@ -396,14 +395,14 @@ function AddAdditionalDetailsContent() {
                         value={formData.email}
                         onChange={(e) => setFormData((p) => ({ ...p, email: e.target.value }))}
                         placeholder="Abc@gmail.com"
-                        className="w-full px-4 py-3 border border-gray-300 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:border-[#612178]"
+                        className="w-full px-4 py-3 bg-white border border-[#D9D9D9] rounded-xl text-[#545454] placeholder-[#545454] font-normal font-sans focus:outline-none focus:border-[#612178]"
                       />
                     </div>
                     <div className="flex gap-2 flex-wrap sm:flex-nowrap">
                       <select
                         value={formData.countryCode}
                         onChange={(e) => setFormData((p) => ({ ...p, countryCode: e.target.value }))}
-                        className="min-w-[70px] sm:w-20 px-3 py-3 border border-gray-300 rounded-xl text-gray-800 bg-white focus:outline-none focus:border-[#612178] shrink-0"
+                        className="min-w-[70px] sm:w-20 px-3 py-3 bg-white border border-[#D9D9D9] rounded-xl text-[#545454] font-normal font-sans focus:outline-none focus:border-[#612178] shrink-0"
                         aria-label="Country code"
                       >
                         <option value="+91">+91</option>
@@ -417,7 +416,7 @@ function AddAdditionalDetailsContent() {
                         onChange={(e) => setFormData((p) => ({ ...p, phone: e.target.value }))}
                         placeholder="Enter Phone No."
                         aria-label="Phone number"
-                        className="flex-1 px-4 py-3 border border-gray-300 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:border-[#612178]"
+                        className="flex-1 px-4 py-3 bg-white border border-[#D9D9D9] rounded-xl text-[#545454] placeholder-[#545454] font-normal font-sans focus:outline-none focus:border-[#612178]"
                       />
                     </div>
                     <button
@@ -440,16 +439,20 @@ function AddAdditionalDetailsContent() {
             {activeTab === 'business' && (
               <div className="space-y-6">
                 {/* Card 1: Upload Business Card + fields */}
-                <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 sm:p-6 lg:p-8">
+                <div className="bg-white rounded-[16px] shadow-sm p-6 sm:p-8">
                   {/* Upload business card */}
-                  <div className="border border-dashed border-gray-300 rounded-2xl px-6 py-10 flex flex-col items-center justify-center text-center">
+                  <div className="border-2 border-dashed rounded-[8px] border-[#696969] p-8 flex flex-col items-center justify-center text-center">
                     <p className="text-sm font-medium text-gray-600 mb-3">Upload Business Card</p>
                     <button
                       type="button"
-                      className="px-8 py-2.5 rounded-full font-semibold text-sm text-white"
-                      style={{ backgroundColor: ORANGE }}
+                      className="w-[122px] h-[43px] rounded-[16px] bg-[#FEA40C] flex items-center justify-center"
                     >
-                      Upload
+                      <span
+                        className="text-[16px] leading-[24px] font-medium text-[#1F1E25]"
+                        style={{ fontFamily: 'var(--font-instrument-sans), sans-serif' }}
+                      >
+                        Upload
+                      </span>
                     </button>
                   </div>
 
@@ -458,7 +461,7 @@ function AddAdditionalDetailsContent() {
                       <select
                         value={formData.businessCategory}
                         onChange={(e) => setFormData((p) => ({ ...p, businessCategory: e.target.value }))}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-xl text-sm text-gray-800 bg-white focus:outline-none focus:border-[#612178]"
+                        className="w-full px-4 py-3 bg-white border border-[#D9D9D9] rounded-xl text-sm text-[#545454] font-normal font-sans focus:outline-none focus:border-[#612178]"
                       >
                         <option value="">Business Category</option>
                         {BUSINESS_CATEGORY_OPTIONS.map((o) => (
@@ -472,7 +475,7 @@ function AddAdditionalDetailsContent() {
                         <select
                           value={formData.hotelType}
                           onChange={(e) => setFormData((p) => ({ ...p, hotelType: e.target.value }))}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-xl text-sm text-gray-800 bg-white focus:outline-none focus:border-[#612178]"
+                          className="w-full px-4 py-3 bg-white border border-[#D9D9D9] rounded-xl text-sm text-[#545454] font-normal font-sans focus:outline-none focus:border-[#612178]"
                         >
                           <option value="">Hotel Type</option>
                           {HOTEL_OPTIONS.map((o) => (
@@ -486,7 +489,7 @@ function AddAdditionalDetailsContent() {
                           value={formData.roomCount}
                           onChange={(e) => setFormData((p) => ({ ...p, roomCount: e.target.value }))}
                           placeholder="No. Of Rooms"
-                          className="w-full px-4 py-3 border border-gray-300 rounded-xl text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:border-[#612178]"
+                          className="w-full px-4 py-3 bg-white border border-[#D9D9D9] rounded-xl text-sm text-[#545454] placeholder-[#545454] font-normal font-sans focus:outline-none focus:border-[#612178]"
                         />
                       </div>
                     </div>
@@ -497,14 +500,14 @@ function AddAdditionalDetailsContent() {
                         value={formData.yearsOfExperience}
                         onChange={(e) => setFormData((p) => ({ ...p, yearsOfExperience: e.target.value }))}
                         placeholder="Years Of Experience (Optional)"
-                        className="w-full px-4 py-3 border border-gray-300 rounded-xl text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:border-[#612178]"
+                        className="w-full px-4 py-3 bg-white border border-[#D9D9D9] rounded-xl text-sm text-[#545454] placeholder-[#545454] font-normal font-sans focus:outline-none focus:border-[#612178]"
                       />
                     </div>
                   </div>
                 </div>
 
                 {/* Card 2: Business you are finding for */}
-                <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 sm:p-6 lg:p-8">
+                <div className="bg-white rounded-[16px] shadow-sm p-6 sm:p-8">
                   <p className="text-sm font-bold text-gray-900 mb-4">Business You Are Finding For</p>
 
                   <div className="mb-4">
@@ -520,7 +523,7 @@ function AddAdditionalDetailsContent() {
                           }));
                         }
                       }}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl text-sm text-gray-800 bg-white focus:outline-none focus:border-[#612178]"
+                      className="w-full px-4 py-3 bg-white border border-[#D9D9D9] rounded-xl text-sm text-[#545454] font-normal font-sans focus:outline-none focus:border-[#612178]"
                     >
                       <option value="">Select Business</option>
                       {BUSINESS_CATEGORY_OPTIONS.map((o) => (
@@ -549,16 +552,20 @@ function AddAdditionalDetailsContent() {
             {activeTab === 'kyc' && (
               <div className="space-y-6">
                 {/* Card 1: Business Verification */}
-                <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 sm:p-6 lg:p-8 space-y-4">
+                <div className="bg-white rounded-[16px] shadow-sm p-6 sm:p-8 space-y-4">
                   <p className="text-base font-bold text-gray-900">Business Verification</p>
-                  <div className="border border-dashed border-gray-300 rounded-2xl px-6 py-10 flex flex-col items-center justify-center text-center">
+                  <div className="border-2 border-dashed rounded-[8px] border-[#696969] p-8 flex flex-col items-center justify-center text-center">
                     <p className="text-sm font-medium text-gray-600 mb-3">Upload Business Registration Certificate</p>
                     <button
                       type="button"
-                      className="px-8 py-2.5 rounded-full font-semibold text-sm text-white"
-                      style={{ backgroundColor: ORANGE }}
+                      className="w-[122px] h-[43px] rounded-[16px] bg-[#FEA40C] flex items-center justify-center"
                     >
-                      Upload
+                      <span
+                        className="text-[16px] leading-[24px] font-medium text-[#1F1E25]"
+                        style={{ fontFamily: 'var(--font-instrument-sans), sans-serif' }}
+                      >
+                        Upload
+                      </span>
                     </button>
                   </div>
                   <input
@@ -566,21 +573,25 @@ function AddAdditionalDetailsContent() {
                     value={formData.yearOfEstablishment}
                     onChange={(e) => setFormData((p) => ({ ...p, yearOfEstablishment: e.target.value }))}
                     placeholder="Year Of Establishment"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:border-[#612178]"
+                    className="w-full px-4 py-3 bg-white border border-[#D9D9D9] rounded-xl text-sm text-[#545454] placeholder-[#545454] font-normal font-sans focus:outline-none focus:border-[#612178]"
                   />
                 </div>
 
                 {/* Card 2: GST Information */}
-                <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 sm:p-6 lg:p-8 space-y-4">
+                <div className="bg-white rounded-[16px] shadow-sm p-6 sm:p-8 space-y-4">
                   <p className="text-base font-bold text-gray-900">GST Information</p>
-                  <div className="border border-dashed border-gray-300 rounded-2xl px-6 py-10 flex flex-col items-center justify-center text-center">
+                  <div className="border-2 border-dashed rounded-[8px] border-[#696969] p-8 flex flex-col items-center justify-center text-center">
                     <p className="text-sm font-medium text-gray-600 mb-3">Upload Business Registration Certificate</p>
                     <button
                       type="button"
-                      className="px-8 py-2.5 rounded-full font-semibold text-sm text-white"
-                      style={{ backgroundColor: ORANGE }}
+                      className="w-[122px] h-[43px] rounded-[16px] bg-[#FEA40C] flex items-center justify-center"
                     >
-                      Upload
+                      <span
+                        className="text-[16px] leading-[24px] font-medium text-[#1F1E25]"
+                        style={{ fontFamily: 'var(--font-instrument-sans), sans-serif' }}
+                      >
+                        Upload
+                      </span>
                     </button>
                   </div>
                   <input
@@ -588,21 +599,25 @@ function AddAdditionalDetailsContent() {
                     value={formData.gstNumber}
                     onChange={(e) => setFormData((p) => ({ ...p, gstNumber: e.target.value }))}
                     placeholder="GST Number"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:border-[#612178]"
+                    className="w-full px-4 py-3 bg-white border border-[#D9D9D9] rounded-xl text-sm text-[#545454] placeholder-[#545454] font-normal font-sans focus:outline-none focus:border-[#612178]"
                   />
                 </div>
 
                 {/* Card 3: PAN Information */}
-                <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 sm:p-6 lg:p-8 space-y-4">
+                <div className="bg-white rounded-[16px] shadow-sm p-6 sm:p-8 space-y-4">
                   <p className="text-base font-bold text-gray-900">PAN Information</p>
-                  <div className="border border-dashed border-gray-300 rounded-2xl px-6 py-10 flex flex-col items-center justify-center text-center">
+                  <div className="border-2 border-dashed rounded-[8px] border-[#696969] p-8 flex flex-col items-center justify-center text-center">
                     <p className="text-sm font-medium text-gray-600 mb-3">Upload PAN Copy</p>
                     <button
                       type="button"
-                      className="px-8 py-2.5 rounded-full font-semibold text-sm text-white"
-                      style={{ backgroundColor: ORANGE }}
+                      className="w-[122px] h-[43px] rounded-[16px] bg-[#FEA40C] flex items-center justify-center"
                     >
-                      Upload
+                      <span
+                        className="text-[16px] leading-[24px] font-medium text-[#1F1E25]"
+                        style={{ fontFamily: 'var(--font-instrument-sans), sans-serif' }}
+                      >
+                        Upload
+                      </span>
                     </button>
                   </div>
                   <input
@@ -610,7 +625,7 @@ function AddAdditionalDetailsContent() {
                     value={formData.panNumber}
                     onChange={(e) => setFormData((p) => ({ ...p, panNumber: e.target.value }))}
                     placeholder="PAN Number"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:border-[#612178]"
+                    className="w-full px-4 py-3 bg-white border border-[#D9D9D9] rounded-xl text-sm text-[#545454] placeholder-[#545454] font-normal font-sans focus:outline-none focus:border-[#612178]"
                   />
                 </div>
 
@@ -631,7 +646,8 @@ function AddAdditionalDetailsContent() {
             )}
           </div>
         </div>
-        </div>
+      </div>
+      </div>
       </div>
     </div>
   );

@@ -670,7 +670,7 @@ export default function CompleteProfileContent() {
     setErrors({});
     setShowPreferenceAfterAdd(false);
     setCameFromAddFlow(true);
-    setCurrentStep(2);
+    setCurrentStep(4); // Go to Preview with filled details
   };
 
   const handlePreferenceAfterAddSkip = () => {
@@ -708,7 +708,7 @@ export default function CompleteProfileContent() {
               showAddBusinessModal ? (
               /* Add Your Unique Business - uses same AuthLayout card as Who Are You (no extra wrapper) */
               <div key="add-business" className="animate-in fade-in slide-in-from-bottom-2 duration-300 space-y-5">
-                    <div>
+                  <div>
                       <h3 className="text-xl sm:text-2xl font-bold text-gray-900">Add Your Unique Business</h3>
                       <p className="text-sm text-gray-600 mt-1">Enter Your Business Detail Below</p>
                     </div>
@@ -879,7 +879,7 @@ export default function CompleteProfileContent() {
                   {BUSINESS_TYPES.map(type => {
                     const isSelected = formData.preferred_collaborations.includes(type);
                     return (
-                      <div
+                      <div 
                         key={type}
                         onClick={() => togglePreference(type)}
                         className="w-full max-w-[160px] sm:max-w-none justify-self-center sm:justify-self-auto h-[100px] sm:h-[120px] rounded-2xl border-2 transition-all cursor-pointer flex flex-col overflow-hidden"
@@ -934,12 +934,12 @@ export default function CompleteProfileContent() {
                   <div className="flex justify-start relative -mt-12 pl-4 sm:pl-6">
                     <div className="w-24 h-24 rounded-full bg-white border-4 border-white shadow-lg flex items-center justify-center overflow-hidden z-10">
                       <Image src="/profilecamera.png" alt="" width={24} height={24} className="object-contain" />
-                    </div>
                   </div>
-                </div>
-
+                      </div>
+                    </div>
+                    
                 {/* Business info - company name with Edit */}
-                <div className="pt-14 sm:pt-12 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-2 mb-4">
+                <div className="pt-5               sm:pt-12 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-2 mb-4">
                   <div className="min-w-0 flex-1">
                     <h4
                       className="break-words text-2xl sm:text-[32px] leading-tight sm:leading-[40px]"
@@ -967,7 +967,7 @@ export default function CompleteProfileContent() {
                     >
                       {String(formData.email || (user?.email != null ? user.email : ""))}
                     </span>
-                  </div>
+                       </div>
                   <button
                     type="button"
                     onClick={() => setCurrentStep(2)}
@@ -982,7 +982,7 @@ export default function CompleteProfileContent() {
                     </svg>
                     Edit
                   </button>
-                </div>
+                       </div>
 
                 {/* Business stats - Hotel/DMC/Restaurant details */}
                 {(formData.business_type.length > 0 || !!(formData.business_details?.hotel_type || formData.business_details?.areas_serviced)) && (
@@ -1014,24 +1014,40 @@ export default function CompleteProfileContent() {
                         <span>Capacity: {String(formData.business_details?.capacity ?? "-")}</span>
                       </>
                     )}
-                  </div>
-                )}
+                       </div>
+                    )}
 
-                {/* Business You Are Finding For - tags with x and + */}
+                {/* Business You Are Finding For - tags with Edit and + */}
                 <div className="mb-8">
-                  <p
-                    className="mb-3"
-                    style={{
-                      fontFamily: '"Inter", "Inter Display", sans-serif',
-                      fontWeight: 700,
-                      fontSize: 20,
-                      lineHeight: 1.5,
-                      letterSpacing: 0,
-                      color: '#000000',
-                    }}
-                  >
-                    Business You Are Finding For
-                  </p>
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
+                    <p
+                      className="min-w-0"
+                      style={{
+                        fontFamily: '"Inter", "Inter Display", sans-serif',
+                        fontWeight: 700,
+                        fontSize: 20,
+                        lineHeight: 1.5,
+                        letterSpacing: 0,
+                        color: '#000000',
+                      }}
+                    >
+                      Business You Are Finding For
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setCurrentStep(3)}
+                      className="inline-flex items-center justify-center gap-1.5 font-semibold text-sm shrink-0 rounded-[16px] w-full sm:w-[87.45px] h-[45px] sm:h-[44.77px]"
+                      style={{
+                        backgroundColor: '#F7E0FF',
+                        color: PURPLE,
+                      }}
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                      </svg>
+                      Edit
+                    </button>
+                  </div>
                   <div className="flex flex-wrap items-center gap-2">
                     {formData.preferred_collaborations.map((type) => (
                       <span
@@ -1047,7 +1063,7 @@ export default function CompleteProfileContent() {
                           backgroundColor: '#FDF5FF',
                         }}
                       >
-                        {type}
+                            {type}
                         <button
                           type="button"
                           onClick={() => setFormData((prev) => ({ ...prev, preferred_collaborations: prev.preferred_collaborations.filter((t) => t !== type) }))}
@@ -1058,8 +1074,8 @@ export default function CompleteProfileContent() {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                           </svg>
                         </button>
-                      </span>
-                    ))}
+                          </span>
+                        ))}
                     <button
                       type="button"
                       onClick={() => setCurrentStep(3)}
@@ -1071,9 +1087,9 @@ export default function CompleteProfileContent() {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                       </svg>
                     </button>
+                    </div>
                   </div>
-                </div>
-
+                  
                 {/* Profile completion + buttons in one row */}
                 <div
                   className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 py-6 mt-6 rounded-[24px] px-4 sm:px-6 min-w-0"
@@ -1149,23 +1165,23 @@ export default function CompleteProfileContent() {
                 />
               </div>
               <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full sm:w-auto justify-end items-stretch sm:items-center">
-                <button
+                  <button
                   onClick={handleSkip}
-                  disabled={isLoading}
+                    disabled={isLoading}
                   className="flex items-center justify-center w-full sm:w-[144.51px] h-12 sm:h-[50px] text-gray-700 font-semibold text-sm hover:opacity-90 transition-all disabled:opacity-50 rounded-2xl"
                   style={{ backgroundColor: "#E6E6E6" }}
-                >
-                  Skip
-                </button>
-                <button
+                  >
+                    Skip
+                  </button>
+                  <button
                   onClick={() => (showPreferenceAfterAdd ? handlePreferenceAfterAddNext() : submitStep())}
-                  disabled={isLoading}
+                    disabled={isLoading}
                   className="flex items-center justify-center w-full sm:w-[144.51px] h-12 sm:h-[50px] text-white font-semibold text-sm transition-all disabled:opacity-50 rounded-2xl"
                   style={{ backgroundColor: PURPLE, boxShadow: "0px 4px 10px -2px #00000040" }}
-                >
-                  {isLoading ? "PROCESSING..." : "Next"}
-                </button>
-              </div>
+                  >
+                    {isLoading ? "PROCESSING..." : "Next"}
+                  </button>
+                </div>
             </div>
             </>
             )}
@@ -1205,8 +1221,8 @@ export default function CompleteProfileContent() {
                     Continue
                   </button>
                 </div>
-              </div>
-            )}
+                </div>
+              )}
         </div>
       )}
     </AuthLayout>

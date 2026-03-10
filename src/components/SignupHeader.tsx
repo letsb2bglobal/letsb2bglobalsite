@@ -24,10 +24,15 @@ export default function SignupHeader({ sticky = true }: { sticky?: boolean }) {
   const user = useAuth();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const [mounted, setMounted] = useState(false);
 
-  const loggedIn = typeof window !== 'undefined' ? isAuthenticated() : !!user;
-  const currentUser = user ?? (typeof window !== 'undefined' ? getUser() : null);
-  const profileData = typeof window !== 'undefined' ? getProfileData() : null;
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const loggedIn = mounted ? isAuthenticated() : false;
+  const currentUser = mounted ? (user ?? getUser()) : null;
+  const profileData = mounted ? getProfileData() : null;
 
   const displayName = profileData?.company_name || currentUser?.username || currentUser?.email?.split('@')[0] || 'User';
   const displayEmail = currentUser?.email || profileData?.email || '';
