@@ -331,13 +331,13 @@ const PostCard: React.FC<PostCardProps> = ({
       </div>
       {/* Footer Actions */}
       <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-        <div className="flex items-center gap-6">
+        <div className="flex items-center gap-4 sm:gap-6">
           <button className="flex items-center gap-2 text-gray-500 hover:text-[#6B3FA0] transition-colors font-black text-[10px] uppercase tracking-[0.1em]">
             <Share2 size={16} />
             <span>Share</span>
           </button>
           {budget && budget.amount > 0 && (
-            <div className="flex flex-col border-l border-gray-100 pl-6">
+            <div className="flex flex-col border-l border-gray-100 sm:pl-6">
               <span className="text-[10px] font-black text-gray-400 uppercase leading-none mb-1">Budget</span>
               <span className="text-sm font-black text-[#6B3FA0]">
                 {budget.currency} {budget.amount.toLocaleString()} 
@@ -349,10 +349,11 @@ const PostCard: React.FC<PostCardProps> = ({
         <button 
           onClick={handleRespond}
           disabled={responding}
-          className="bg-[#6B3FA0] text-white px-10 py-3.5 rounded-2xl font-black text-xs uppercase tracking-[0.2em] hover:bg-black transition-all flex items-center gap-2 shadow-xl shadow-purple-100 transform hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-70 disabled:cursor-not-allowed"
+          className="bg-[#6B3FA0] text-white sm:px-10 px-4 py-3.5 rounded-2xl font-black text-xs uppercase tracking-[0.2em] hover:bg-black transition-all flex items-center gap-1 shadow-xl shadow-purple-100 transform hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-70 disabled:cursor-not-allowed"
         >
           {responding ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-          <span>{responding ? 'Connecting...' : 'Respond'}</span>
+          {/* <span>{responding ? 'Connecting...' : 'Respond'}</span> */}
+          <span>{responding ? 'Sending..' : 'Respond'}</span>
         </button>
       </div>
     </div>

@@ -23,7 +23,7 @@ export default function HomeRoute() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
-  const [postsLoading, setPostsLoading] = useState(false);
+  const [postsLoading, setPostsLoading] = useState(true);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -70,21 +70,25 @@ export default function HomeRoute() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f6f2f8]">
-      
+    <div className="min-h-screen bg-[#f6f2f8] pt-[72px]">
       <main className="max-w-[1350px] mx-auto px-4 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          {/* Left Sidebar - 25% (lg:col-span-3) */}
-          <div className="hidden lg:block lg:col-span-3 sticky top-[80px] self-start max-h-[calc(100vh-100px)] overflow-y-auto no-scrollbar">
+        {/* Mobile: sidebar left above feed */}
+        <div className="md:hidden mb-4">
+          <SidebarLeft profile={profile} expandable />
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+          {/* Left Sidebar - visible from md and up */}
+          <div className="hidden md:block md:col-span-4 lg:col-span-3 sticky top-[80px] self-start max-h-[calc(100vh-100px)] overflow-y-auto no-scrollbar">
             <SidebarLeft profile={profile} />
           </div>
 
-          {/* Feed - 50% (lg:col-span-6) */}
-          <div className="col-span-1 lg:col-span-6 flex flex-col gap-6">
+          {/* Feed - full width on mobile, center column on md+ */}
+          <div className="col-span-1 md:col-span-8 lg:col-span-6 flex flex-col gap-6">
             <Feed posts={posts} isLoading={postsLoading} />
           </div>
 
-          {/* Right Sidebar - 25% (lg:col-span-3) */}
+          {/* Right Sidebar - only on lg and above */}
           <div className="hidden lg:block lg:col-span-3 sticky top-[80px] self-start max-h-[calc(100vh-100px)] overflow-y-auto no-scrollbar">
             <SidebarRight />
           </div>

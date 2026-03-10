@@ -46,14 +46,8 @@ const LANDING_HEADER_PAGES = [
 const Header = () => {
   const router = useRouter();
   const pathname = usePathname();
-  const [user] = useState<any>(() => {
-    if (typeof window !== "undefined") return getUser();
-    return null;
-  });
-  const [isLoggedIn] = useState(() => {
-    if (typeof window !== "undefined") return isAuthenticated();
-    return false;
-  });
+  const [user, setUser] = useState<any>(null);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const { activeWorkspace } = useTeam();
   const [hasNewNotifications, setHasNewNotifications] = useState(false);
   const [searchText, setSearchText] = useState("");
@@ -63,6 +57,12 @@ const Header = () => {
   const [activeSectionId, setActiveSectionId] = useState<string | null>(null);
   const [openDropdown, setOpenDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement | null>(null);
+
+  // Load auth state on client after first render to avoid SSR/client mismatch
+  useEffect(() => {
+    setUser(getUser());
+    setIsLoggedIn(isAuthenticated());
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -180,7 +180,7 @@ const Header = () => {
       ].includes(pathname);
       return (
         <header
-          className={`sticky top-0 left-0 right-0 z-[100] transition-all duration-300 ${
+          className={`sticky top-0 left-0 right-0 z-100 transition-all duration-300 ${
             scrolledPastLanding ||
             pathname === "/pricing" ||
             pathname === "/aboutus" ||
@@ -404,7 +404,7 @@ const Header = () => {
   if (noHeaderPages.includes(pathname)) return null;
 
   return (
-    <header className="sticky top-0 z-[100] border-b border-gray-200/80 bg-[#FFFFFF] backdrop-blur-xl shadow-lg shadow-black/5">
+    <header className="fixed top-0 inset-x-0 z-[100] border-b border-gray-200/80 bg-[#FFFFFF] backdrop-blur-xl shadow-lg shadow-black/5">
       <div className="max-w-[1440px] mx-auto flex items-center justify-between h-18 px-5">
         {/* Left Section: Logo + Quick Actions */}
         <div className="flex items-center gap-6 shrink-0">
