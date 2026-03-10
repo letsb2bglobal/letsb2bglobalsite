@@ -234,7 +234,7 @@ function EnquiriesContent() {
             sender_profile_id: String(myProfile?.documentId ?? myProfile?.userId ?? user?.id ?? 0),
             createdAt: new Date().toISOString()
           };
-          setMessages((prev) => [...prev, optimisticMsg]);
+          setMessages((prev) => [...prev, optimisticMsg as EnquiryMessage]);
           
           // Move the thread preview to the top optimistically as well
           setThreads((prev) => {

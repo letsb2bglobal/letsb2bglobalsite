@@ -7,98 +7,55 @@ const VIEWBOX_WIDTH = 1240;
 const VIEWBOX_HEIGHT = 860;
 
 const cardPositions = {
-  tl: { left: 60, top: 40 },
-  mr: { right: 60, left: "auto", top: 240 },
-  bl: { left: 60, top: 500 },
-  br: { right: 60, left: "auto", top: 680 },
+  tl: { left: 40, top: 40 },
+  mr: { right: 40, left: "auto", top: 240 },
+  bl: { left: 40, top: 520 },
+  br: { right: 40, left: "auto", top: 720 },
 };
 
 const CARD_W = 520;
 const CARD_H = 160;
 
-function IconRegister() {
+// function IconDoc() {
+//   return (
+//     <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+//       <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z" />
+//     </svg>
+//   );
+// }
+
+// function IconCheck() {
+//   return (
+//     <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+//       <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
+//     </svg>
+//   );
+// }
+
+const stepIcons = [
+  "/howitworks/page.svg",
+  "/howitworks/verify.svg",
+  "/howitworks/connect.svg",
+  "/howitworks/collaborate.svg"
+];
+
+function PillBadge({ number, title, isPurple }) {
+  const badgeBg = isPurple ? "bg-white" : "bg-[#1A1A1A]";
+  const circleBg = isPurple ? "bg-[#F3E8FF]" : "bg-[#333333]";
+  const textColor = isPurple ? "text-[#6B2A7A]" : "text-white";
+  const numColor = isPurple ? "text-[#6B2A7A]" : "text-white";
+
   return (
-    <svg
-      width="48"
-      height="48"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className="opacity-80"
-    >
-      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-      <circle cx="9" cy="7" r="4" />
-      <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-    </svg>
+    <div className={`inline-flex items-center gap-3 px-1.5 py-1.5 rounded-full ${badgeBg} shadow-sm mb-4`}>
+      <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${circleBg} ${numColor}`}>
+        {number}
+      </div>
+      <span className={`text-base font-bold pr-4 ${textColor}`}>
+        {title}
+      </span>
+    </div>
   );
 }
-
-function IconVerify() {
-  return (
-    <svg
-      width="48"
-      height="48"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className="opacity-80"
-    >
-      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-      <polyline points="22 4 12 14.01 9 11.01" />
-    </svg>
-  );
-}
-
-function IconConnect() {
-  return (
-    <svg
-      width="48"
-      height="48"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className="opacity-80"
-    >
-      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-      <circle cx="9" cy="7" r="4" />
-      <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-    </svg>
-  );
-}
-
-function IconCollaborate() {
-  return (
-    <svg
-      width="48"
-      height="48"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className="opacity-80"
-    >
-      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-      <circle cx="9" cy="7" r="4" />
-      <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-    </svg>
-  );
-}
-
-const stepIcons = [IconRegister, IconVerify, IconConnect, IconCollaborate];
 
 export default function HowItWorksFlow() {
   const sectionRef = useRef(null);
@@ -200,7 +157,6 @@ export default function HowItWorksFlow() {
 
   return (
     <section
-      id="how-it-works"
       ref={sectionRef}
       className="relative w-full bg-white py-10 md:py-14 px-4 md:px-8 overflow-hidden"
     >
@@ -228,124 +184,133 @@ export default function HowItWorksFlow() {
             viewBox={`0 0 ${VIEWBOX_WIDTH} ${VIEWBOX_HEIGHT}`}
             preserveAspectRatio="xMidYMid meet"
           >
-            {/* Path A: Card1 right-center → right → down to Card2 left-center */}
+            <defs>
+              <marker
+                id="arrowhead"
+                markerWidth="10"
+                markerHeight="7"
+                refX="0"
+                refY="3.5"
+                orient="auto"
+              >
+                <polygon points="0 0, 10 3.5, 0 7" fill="#9CA3AF" />
+              </marker>
+            </defs>
+            {/* Path A: Card 1 (tl) center-right -> down to Card 2 (mr) top-left area */}
             <path
               ref={pathARef}
-              d="M 580 120 L 660 120 L 660 320"
+              d="M 500 140 L 850 140 L 850 240"
               stroke="#9CA3AF"
-              strokeWidth="4"
-              strokeDasharray="12 10"
+              strokeWidth="2"
+              strokeDasharray="4 6"
               fill="none"
               strokeLinecap="round"
               strokeLinejoin="round"
+              markerEnd="url(#arrowhead)"
             />
-            {/* Path B: Card2 bottom-center → down → left across gap → down to Card3 left-center */}
+            {/* Path B: Card 2 (mr) center-bottom -> across -> down to Card 3 (bl) top-left area */}
             <path
               ref={pathBRef}
-              d="M 920 400 L 920 450 L 60 450 L 60 580"
+              d="M 970 440 L 970 480 L 230 480 L 230 520"
               stroke="#9CA3AF"
-              strokeWidth="4"
-              strokeDasharray="12 10"
+              strokeWidth="2"
+              strokeDasharray="4 6"
               fill="none"
               strokeLinecap="round"
               strokeLinejoin="round"
+              markerEnd="url(#arrowhead)"
             />
-            {/* Path C: Card3 right-center → right → down to Card4 left-center */}
+            {/* Path C: Card 3 (bl) center-right -> down to Card 4 (br) top-left area */}
             <path
               ref={pathCRef}
-              d="M 580 580 L 660 580 L 660 760"
+              d="M 500 620 L 850 620 L 850 720"
               stroke="#9CA3AF"
-              strokeWidth="4"
-              strokeDasharray="12 10"
+              strokeWidth="2"
+              strokeDasharray="4 6"
               fill="none"
               strokeLinecap="round"
               strokeLinejoin="round"
+              markerEnd="url(#arrowhead)"
             />
           </svg>
 
           <div ref={cardsWrapperRef} className="contents">
-          {steps.map((step, i) => {
-            const pos = cardPositions[step.position];
-            const Icon = stepIcons[i];
-            const isPurple = step.variant === "purple";
-            return (
-              <div
-                key={step.number}
-                data-how-card
-                className="absolute w-[520px] h-[180px] rounded-3xl shadow-sm flex items-center gap-8 px-10 py-6 opacity-0 group"
-                style={{
-                  left: pos.left,
-                  right: pos.right,
-                  top: pos.top,
-                  backgroundColor: isPurple ? "#6B2A7A" : "#F5F6F8",
-                  color: isPurple ? "white" : "#111827",
-                }}
-              >
-                <div className="relative shrink-0 flex flex-col items-center">
-                  <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-2 ${isPurple ? 'bg-white/10 text-white' : 'bg-gray-100 text-gray-700'}`}>
-                    <Icon />
+            {steps.map((step, i) => {
+              const pos = cardPositions[step.position];
+              const iconSrc = stepIcons[i];
+              const isPurple = step.variant === "purple";
+              return (
+                <div
+                  key={step.number}
+                  data-how-card
+                  className="absolute w-[460px] h-[200px] rounded-[32px] shadow-sm px-10 py-8 opacity-0 group overflow-hidden"
+                  style={{
+                    left: pos.left,
+                    right: pos.right,
+                    top: pos.top,
+                    backgroundColor: isPurple ? "#6B2A7A" : "#F8F9FA",
+                    color: isPurple ? "white" : "#1A1A1A",
+                  }}
+                >
+                  <div className="relative z-10">
+                    <PillBadge
+                      number={step.number}
+                      title={step.title}
+                      isPurple={isPurple}
+                    />
+                    <p
+                      className={`text-[17px] leading-relaxed font-medium pr-10 ${isPurple ? "text-white/90" : "text-gray-700"
+                        }`}
+                    >
+                      {step.description}
+                    </p>
                   </div>
-                  <span className={`flex items-center justify-center w-8 h-8 rounded-full font-black text-sm border-2 ${isPurple ? 'bg-amber-400 border-[#6B2A7A] text-[#6B2A7A]' : 'bg-gray-900 border-[#F5F6F8] text-white'}`}>
-                    {step.number}
-                  </span>
+                  <div className={`absolute bottom-6 right-8 flex items-center justify-center w-12 h-12 ${isPurple ? "opacity-100" : "opacity-90"}`}>
+                    <img
+                      src={iconSrc}
+                      alt={step.title}
+                      className={`w-full h-full object-contain ${isPurple ? "brightness-0 invert" : ""}`}
+                    />
+                  </div>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="text-xl font-black mb-2 tracking-tight">
-                    {step.title}
-                  </h3>
-                  <p
-                    className={`text-lg leading-snug ${
-                      isPurple ? "text-white/80" : "text-gray-600"
-                    }`}
-                  >
-                    {step.description}
-                  </p>
-                </div>
-              </div>
-            );
-          })}
+              );
+            })}
           </div>
         </div>
 
         {/* Mobile: vertical stack */}
         <div className="md:hidden space-y-6 max-w-lg mx-auto pt-4">
           {steps.map((step, i) => {
-            const Icon = stepIcons[i];
+            const iconSrc = stepIcons[i];
             const isPurple = step.variant === "purple";
             return (
-              <div key={step.number} className="relative flex">
-                {i < steps.length - 1 && (
-                  <div
-                    className="absolute left-7 top-[80px] bottom-0 w-0 border-l-4 border-dashed border-gray-300 -mb-6"
-                    style={{ height: "calc(100% + 24px)" }}
-                  />
-                )}
+              <div key={step.number} className="relative">
                 <div
-                  className="relative w-full rounded-3xl shadow-sm flex items-start gap-5 px-6 py-8 min-h-[160px]"
+                  className="relative w-full rounded-[24px] shadow-sm px-6 py-8 min-h-[200px] overflow-hidden"
                   style={{
-                    backgroundColor: isPurple ? "#6B2A7A" : "#F5F6F8",
-                    color: isPurple ? "white" : "#111827",
+                    backgroundColor: isPurple ? "#6B2A7A" : "#F8F9FA",
+                    color: isPurple ? "white" : "#1A1A1A",
                   }}
                 >
-                  <div className="relative shrink-0 flex flex-col items-center">
-                    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-2 ${isPurple ? 'bg-white/10 text-white' : 'bg-gray-200 text-gray-700'}`}>
-                      <Icon />
-                    </div>
-                    <span className={`flex items-center justify-center w-8 h-8 rounded-full font-black text-sm border-2 ${isPurple ? 'bg-amber-400 border-[#6B2A7A] text-[#6B2A7A]' : 'bg-gray-900 border-[#F5F6F8] text-white'}`}>
-                      {step.number}
-                    </span>
-                  </div>
-                  <div className="flex-1 min-w-0 container-pt-1">
-                    <h3 className="text-xl font-black mb-2 tracking-tight">
-                      {step.title}
-                    </h3>
+                  <div className="relative z-10">
+                    <PillBadge
+                      number={step.number}
+                      title={step.title}
+                      isPurple={isPurple}
+                    />
                     <p
-                      className={`text-lg leading-snug ${
-                        isPurple ? "text-white/80" : "text-gray-600"
-                      }`}
+                      className={`text-[16px] leading-relaxed font-medium pr-8 ${isPurple ? "text-white/90" : "text-gray-700"
+                        }`}
                     >
                       {step.description}
                     </p>
+                  </div>
+                  <div className={`absolute bottom-6 right-6 flex items-center justify-center w-10 h-10 ${isPurple ? "opacity-100" : "opacity-90"}`}>
+                    <img
+                      src={iconSrc}
+                      alt={step.title}
+                      className={`w-full h-full object-contain ${isPurple ? "brightness-0 invert" : ""}`}
+                    />
                   </div>
                 </div>
               </div>

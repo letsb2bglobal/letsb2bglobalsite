@@ -4,9 +4,9 @@
  */
 
 export const howItWorksSteps = [
-  "Register as an Individual Business or Business Entity",
-  "Complete your profile and submit verification details",
-  "Get approved by the platform",
+  "Create your Let'sB2B account as a tourism professional or business entity.",
+  "Complete your profile and verification to access the trusted trade network.",
+  "Get approved and start exploring opportunities",
   "Connect digitally with verified global trade partners",
   "Collaborate, trade, and grow your business",
 ];
@@ -22,7 +22,7 @@ export const howItWorksCards = [
   {
     number: "02",
     title: "Get Verified",
-    description: `${howItWorksSteps[1]}. ${howItWorksSteps[2]}`,
+    description: howItWorksSteps[1],
     variant: "light" as const,
     position: "mr" as const,
   },

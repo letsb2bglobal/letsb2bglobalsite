@@ -166,7 +166,6 @@ export default function FeaturesSection() {
     >
       <section
         ref={sectionRef}
-        id="features"
         data-section="features"
         className="sticky top-0 left-0 right-0 z-0 h-screen w-full overflow-hidden"
       >

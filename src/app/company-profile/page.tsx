@@ -404,7 +404,7 @@ export default function CompanyProfilePage() {
           />
           <div className="flex flex-col">
             <span className="text-lg font-medium text-black">
-              Let's <span className="font-bold">B2B</span>
+              Lets <span className="font-bold">B2B</span>
             </span>
             <span className="text-[10px] tracking-[0.4em] text-[#94a3b8] -mt-1">
               GLOBAL
@@ -993,8 +993,8 @@ export default function CompanyProfilePage() {
                   onClick={handleSocialMediaSave}
                   disabled={uploading || socialFiles.length === 0}
                   className={`px-5 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 ${uploading || socialFiles.length === 0
-                      ? "opacity-70 cursor-not-allowed"
-                      : ""
+                    ? "opacity-70 cursor-not-allowed"
+                    : ""
                     }`}
                 >
                   {uploading ? "Uploading..." : "Save"}

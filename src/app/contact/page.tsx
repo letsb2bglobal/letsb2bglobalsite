@@ -272,7 +272,7 @@ export default function ContactPage() {
               {/* Join CTA */}
               <div className="mt-12 text-center">
                 <p className="text-base text-gray-600 mb-6 md:text-lg">
-                  Ready to join the global tourism &; hospitality B2B network?
+                  Ready to join the global tourism & hospitality B2B network?
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
                   <Link
