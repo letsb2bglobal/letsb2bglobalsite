@@ -1,91 +1,109 @@
 "use client";
 
 import React from "react";
-import { useFormContext } from "react-hook-form";
+import { useFormContext, Controller } from "react-hook-form";
+import { ChevronDown } from "lucide-react";
 
-const BUDGET_TYPES = [
-  { value: "perRoom", label: "Per Room per Night" },
-  { value: "perPerson", label: "Per Person" },
-  { value: "perDay", label: "Per Day" },
-  { value: "perTransfer", label: "Per Transfer" },
-  { value: "perDelegate", label: "Per Delegate" },
-  { value: "totalEvent", label: "Total Event Budget" },
-  { value: "treatmentStay", label: "Treatment & Stay Total" },
+const CURRENCIES = [
+  { value: "INR", symbol: "₹" },
+  { value: "USD", symbol: "$" },
+  { value: "EUR", symbol: "€" },
 ];
-
-const CURRENCIES = ["INR", "USD", "EUR"];
 
 const BudgetSelector = () => {
   const {
     register,
+    control,
     formState: { errors },
+    watch,
   } = useFormContext();
 
+  const currency = watch("budget.currency") || "INR";
+  const currentCurrency =
+    CURRENCIES.find((c) => c.value === currency) || CURRENCIES[0];
+
   return (
-    <div className="bg-[#F7F7FB] rounded-2xl p-6 border border-gray-100">
-      <label className="block text-xs font-black text-[#6B3FA0] uppercase tracking-[0.2em] mb-4">
-        Budget Section
-      </label>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* Currency */}
-        <div className="col-span-1">
-          <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">
-            Currency
-          </label>
-          <select
-            {...register("budget.currency")}
-            className="w-full h-11 px-4 bg-white border border-gray-100 rounded-xl focus:ring-2 focus:ring-[#6B3FA0]/20 outline-none font-bold text-[13px] transition-all"
-          >
-            {CURRENCIES.map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {/* Amount */}
-        <div className="col-span-1">
-          <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">
-            Budget Amount
-          </label>
-          <div className="relative">
-             <input
-              type="number"
-              {...register("budget.amount", { valueAsNumber: true })}
-              placeholder="0.00"
-              className="w-full h-11 px-4 bg-white border border-gray-100 rounded-xl focus:ring-2 focus:ring-[#6B3FA0]/20 outline-none font-bold text-[13px] transition-all"
-             />
+    <div>
+      <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+        {/* Budget input with currency selector inline */}
+        <div className="flex h-11 w-[360px] bg-white border border-gray-200 rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-[#6B3FA0]/20 focus-within:border-[#6B3FA0]/30 transition-all">
+          <Controller
+            name="budget.amount"
+            control={control}
+            defaultValue={undefined}
+            render={({ field }) => (
+              <input
+                type="number"
+                {...field}
+                value={field.value === 0 || field.value === undefined ? "" : field.value}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  field.onChange(val === "" ? 0 : parseFloat(val) || 0);
+                }}
+                placeholder="Budget Range"
+                className="flex-1 min-w-0 h-full px-4 bg-transparent outline-none font-medium text-[13px] text-gray-800 placeholder:text-gray-400"
+              />
+            )}
+          />
+          <div className="relative flex items-center border-l border-gray-200 pl-2 pr-8 shrink-0 h-full min-w-[60px]">
+            <select
+              {...register("budget.currency")}
+              className="absolute inset-0 w-full opacity-0 cursor-pointer"
+            >
+              {CURRENCIES.map((c) => (
+                <option key={c.value} value={c.value}>
+                  {c.value === "INR" ? "₹" : c.value === "USD" ? "$" : "€"}
+                </option>
+              ))}
+            </select>
+            <span className="font-medium text-[13px] text-gray-600 pointer-events-none">
+              {currentCurrency.symbol}
+            </span>
+            <ChevronDown
+              size={16}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+            />
           </div>
-          {(errors.budget as any)?.amount && (
-            <p className="text-red-500 text-[10px] mt-1 font-bold italic">
-              Budget is required
-            </p>
-          )}
         </div>
 
-        {/* Type */}
-        <div className="col-span-1">
-          <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">
-            Budget Type
-          </label>
-          <select
-            {...register("budget.budgetType")}
-            className="w-full h-11 px-4 bg-white border border-gray-100 rounded-xl focus:ring-2 focus:ring-[#6B3FA0]/20 outline-none font-bold text-[13px] transition-all"
-          >
-            {BUDGET_TYPES.map((t) => (
-              <option key={t.value} value={t.value}>
-                {t.label}
-              </option>
-            ))}
-          </select>
-        </div>
+        {/* Budget type - required by schema, defaults from form */}
+        <select
+          {...register("budget.budgetType")}
+          className="sr-only"
+          aria-hidden
+        >
+          <option value="perRoom">Per Room per Night</option>
+          <option value="perPerson">Per Person</option>
+          <option value="perDay">Per Day</option>
+          <option value="perTransfer">Per Transfer</option>
+          <option value="perDelegate">Per Delegate</option>
+          <option value="totalEvent">Total Event Budget</option>
+          <option value="treatmentStay">Treatment & Stay Total</option>
+        </select>
+
+        {/* <select
+  {...register("budget.budgetType")}
+  className="h-11 px-3 border border-gray-200 rounded-xl bg-white text-[13px] text-gray-700"
+>
+  <option value="perRoom">Per Room per Night</option>
+  <option value="perPerson">Per Person</option>
+  <option value="perDay">Per Day</option>
+  <option value="perTransfer">Per Transfer</option>
+  <option value="perDelegate">Per Delegate</option>
+  <option value="totalEvent">Total Event Budget</option>
+  <option value="treatmentStay">Treatment & Stay Total</option>
+</select> */}
+
+        <p className="text-[11px] text-red-500 font-medium italic shrink-0">
+          *per room per night
+        </p>
       </div>
-      
-      <p className="text-[10px] text-gray-400 mt-3 font-medium italic">
-        * Provide an indicative budget to get more accurate responses from partners.
-      </p>
+
+      {(errors.budget as { amount?: { message?: string } })?.amount && (
+        <p className="text-red-500 text-[10px] mt-1 font-bold italic">
+          Budget is required
+        </p>
+      )}
     </div>
   );
 };
