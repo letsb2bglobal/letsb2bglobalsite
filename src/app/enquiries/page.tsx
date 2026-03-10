@@ -231,6 +231,7 @@ function EnquiriesContent() {
             message_body: newMessage.trim(),
             sender_profile_id: myProfile.documentId,
             sender_profile: myProfile,
+            sender_profile_id: String(myProfile?.documentId ?? myProfile?.userId ?? user?.id ?? 0),
             createdAt: new Date().toISOString()
           };
           setMessages((prev) => [...prev, optimisticMsg as EnquiryMessage]);
