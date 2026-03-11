@@ -85,7 +85,11 @@ export default function HomeRoute() {
 
           {/* Feed - full width on mobile, center column on md+ */}
           <div className="col-span-1 md:col-span-8 lg:col-span-6 flex flex-col gap-6">
-            <Feed posts={posts} isLoading={postsLoading} />
+            <Feed 
+              posts={posts} 
+              isLoading={postsLoading} 
+              currentUserProfileId={activeWorkspace?.data?.id}
+            />
           </div>
 
           {/* Right Sidebar - only on lg and above */}

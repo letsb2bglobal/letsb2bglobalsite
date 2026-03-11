@@ -1,10 +1,11 @@
 "use client";
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import CreatePost from './CreatePost';
 import PostCard from './PostCard';
 import { ChevronDown } from 'lucide-react';
 import { Post } from '@/lib/posts';
+import { getUserConnections, Connection } from '@/lib/connections';
 
 const formatTime = (dateString: string) => {
   const date = new Date(dateString);
@@ -30,9 +31,56 @@ interface TradeWallPost extends Post {
 interface FeedProps {
   posts: Post[];
   isLoading: boolean;
+  currentUserProfileId?: number;
 }
 
-const Feed: React.FC<FeedProps> = ({ posts, isLoading }) => {
+interface FollowState {
+  [profileId: string]: {
+    isFollowing: boolean;
+    connectionDocumentId?: string;
+  };
+}
+
+const Feed: React.FC<FeedProps> = ({ posts, isLoading, currentUserProfileId }) => {
+  const [followStates, setFollowStates] = useState<FollowState>({});
+
+  // Fetch user's connections to determine follow states
+  useEffect(() => {
+    const fetchConnectionStates = async () => {
+      if (!currentUserProfileId) return;
+
+      try {
+        const { following } = await getUserConnections(currentUserProfileId);
+        
+        const states: FollowState = {};
+        following.forEach((conn: Connection) => {
+          if (conn.following?.documentId) {
+            states[conn.following.documentId] = {
+              isFollowing: true,
+              connectionDocumentId: conn.documentId,
+            };
+          }
+        });
+        setFollowStates(states);
+      } catch (error) {
+        console.error('Error fetching connection states:', error);
+      }
+    };
+
+    fetchConnectionStates();
+  }, [currentUserProfileId]);
+
+  // Handle follow state changes from PostCard
+  const handleFollowChange = (authorProfileId: string, isFollowing: boolean, connectionDocId?: string) => {
+    setFollowStates(prev => ({
+      ...prev,
+      [authorProfileId]: {
+        isFollowing,
+        connectionDocumentId: connectionDocId,
+      },
+    }));
+  };
+
   return (
     <div className="flex flex-col gap-5">
       <CreatePost />
@@ -68,6 +116,8 @@ const Feed: React.FC<FeedProps> = ({ posts, isLoading }) => {
           posts.map((post) => {
             const twPost = post as TradeWallPost;
             const details = post.enquiry_details?.[0] || {};
+            const authorDocId = post.user_profile?.documentId;
+            const followState = authorDocId ? followStates[authorDocId] : undefined;
             
             return (
               <PostCard 
@@ -75,7 +125,7 @@ const Feed: React.FC<FeedProps> = ({ posts, isLoading }) => {
                 author={{
                   name: post.user_profile?.company_name || post.title || "B2B Partner",
                   avatar: "",
-                  isFollowing: false
+                  isFollowing: followState?.isFollowing || false
                 }}
                 time={formatTime(post.createdAt)}
                 title={post.title || "B2B Opportunity"}
@@ -110,7 +160,11 @@ const Feed: React.FC<FeedProps> = ({ posts, isLoading }) => {
                 budget={post.budget}
                 mediaItems={post.media_items}
                 postDocumentId={post.documentId}
-                authorProfileId={post.user_profile?.documentId}
+                authorProfileId={authorDocId}
+                authorProfileNumericId={post.user_profile?.id}
+                currentUserProfileId={currentUserProfileId}
+                connectionDocumentId={followState?.connectionDocumentId}
+                onFollowChange={handleFollowChange}
               />
             );
           })

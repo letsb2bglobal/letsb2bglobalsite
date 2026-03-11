@@ -1,18 +1,29 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, Suspense } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import {
   Search,
   MapPin,
   MessageSquare,
   MoreVertical,
   ChevronDown,
+  UserPlus,
+  Loader2,
 } from "lucide-react";
 import Image from "next/image";
 import TrendingCard from "@/components/home/TrendingCard";
 import SuggestionsCard from "@/components/home/SuggestionsCard";
+import { useTeam } from "@/context/TeamContext";
+import {
+  getPendingInvitations,
+  acceptInvitation,
+  rejectInvitation,
+  type Connection as ApiConnection,
+} from "@/lib/connections";
 
 type TabType = "connections" | "invitations" | "suggestions";
+const VALID_TABS: TabType[] = ["connections", "invitations", "suggestions"];
 
 interface Connection {
   id: string;
@@ -60,10 +71,32 @@ const mockConnections: Connection[] = [
   },
 ];
 
-export default function NetworkPage() {
-  const [activeTab, setActiveTab] = useState<TabType>("connections");
+
+function NetworkPageContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  
+  // Get initial tab from URL or default to "connections"
+  const getInitialTab = (): TabType => {
+    const tabParam = searchParams.get("tab");
+    if (tabParam && VALID_TABS.includes(tabParam as TabType)) {
+      return tabParam as TabType;
+    }
+    return "connections";
+  };
+
+  const [activeTab, setActiveTab] = useState<TabType>(getInitialTab);
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("recently_added");
+  
+  // Invitations state
+  const [invitations, setInvitations] = useState<ApiConnection[]>([]);
+  const [invitationsLoading, setInvitationsLoading] = useState(false);
+  const [invitationsError, setInvitationsError] = useState<string | null>(null);
+  const [processingIds, setProcessingIds] = useState<Set<string>>(new Set());
+
+  const { activeWorkspace } = useTeam();
+  const userProfileId = activeWorkspace?.data?.id;
 
   const tabs: { id: TabType; label: string }[] = [
     { id: "connections", label: "Connections" },
@@ -74,6 +107,84 @@ export default function NetworkPage() {
   const filteredConnections = mockConnections.filter((conn) =>
     conn.name.toLowerCase().includes(searchQuery.toLowerCase()),
   );
+
+  // Handle tab change and update URL
+  const handleTabChange = (tab: TabType) => {
+    setActiveTab(tab);
+    router.push(`/network?tab=${tab}`, { scroll: false });
+  };
+
+  // Sync tab state with URL changes (e.g., browser back/forward)
+  useEffect(() => {
+    const tabParam = searchParams.get("tab");
+    if (tabParam && VALID_TABS.includes(tabParam as TabType)) {
+      setActiveTab(tabParam as TabType);
+    }
+  }, [searchParams]);
+
+  // Fetch invitations when tab becomes active
+  useEffect(() => {
+    if (activeTab === "invitations" && userProfileId) {
+      fetchInvitations();
+    }
+  }, [activeTab, userProfileId]);
+
+  const fetchInvitations = async () => {
+    if (!userProfileId) return;
+    
+    setInvitationsLoading(true);
+    setInvitationsError(null);
+    
+    try {
+      const data = await getPendingInvitations(userProfileId);
+      setInvitations(data);
+    } catch (error) {
+      console.error("Failed to fetch invitations:", error);
+      setInvitationsError("Failed to load invitations");
+    } finally {
+      setInvitationsLoading(false);
+    }
+  };
+
+  const handleAcceptInvitation = async (connectionDocumentId: string) => {
+    setProcessingIds((prev) => new Set(prev).add(connectionDocumentId));
+    
+    try {
+      await acceptInvitation(connectionDocumentId);
+      // Remove from list after accepting
+      setInvitations((prev) => 
+        prev.filter((inv) => inv.documentId !== connectionDocumentId)
+      );
+    } catch (error) {
+      console.error("Failed to accept invitation:", error);
+    } finally {
+      setProcessingIds((prev) => {
+        const next = new Set(prev);
+        next.delete(connectionDocumentId);
+        return next;
+      });
+    }
+  };
+
+  const handleRejectInvitation = async (connectionDocumentId: string) => {
+    setProcessingIds((prev) => new Set(prev).add(connectionDocumentId));
+    
+    try {
+      await rejectInvitation(connectionDocumentId);
+      // Remove from list after rejecting
+      setInvitations((prev) => 
+        prev.filter((inv) => inv.documentId !== connectionDocumentId)
+      );
+    } catch (error) {
+      console.error("Failed to reject invitation:", error);
+    } finally {
+      setProcessingIds((prev) => {
+        const next = new Set(prev);
+        next.delete(connectionDocumentId);
+        return next;
+      });
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[#f6f2f8] pt-[72px]">
@@ -91,7 +202,7 @@ export default function NetworkPage() {
                   {tabs.map((tab) => (
                     <button
                       key={tab.id}
-                      onClick={() => setActiveTab(tab.id)}
+                      onClick={() => handleTabChange(tab.id)}
                       className={`px-6 py-4 text-[16px] font-medium transition-colors relative ${
                         activeTab === tab.id
                           ? "text-[#6B3FA0]"
@@ -109,41 +220,123 @@ export default function NetworkPage() {
             </div>
 
             <div className="bg-white rounded-xl border border-gray-100 shadow-sm mt-4">
-              {/* Search and Sort Bar */}
-              <div className="p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-gray-50">
-                <div className="flex items-center gap-4">
-                  <span className="text-[14px] font-semibold text-[#000000]">
-                    209 connections
-                  </span>
-                  <div className="relative">
-                    <Search
-                      size={16}
-                      className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-                    />
-                    <input
-                      type="text"
-                      placeholder="Search by name"
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="pl-9 pr-4 py-1 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#6B3FA0]/20 focus:border-[#6B3FA0] w-[200px] sm:w-[240px] md:w-[280px] lg:w-[330px] xl:w-[370px]"
-                    />
+              {/* Connections Tab Content */}
+              {activeTab === "connections" && (
+                <>
+                  {/* Search and Sort Bar */}
+                  <div className="p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-gray-50">
+                    <div className="flex items-center gap-4">
+                      <span className="text-[14px] font-semibold text-[#000000]">
+                        209 connections
+                      </span>
+                      <div className="relative">
+                        <Search
+                          size={16}
+                          className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                        />
+                        <input
+                          type="text"
+                          placeholder="Search by name"
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          className="pl-9 pr-4 py-1 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#6B3FA0]/20 focus:border-[#6B3FA0] w-[200px] sm:w-[240px] md:w-[280px] lg:w-[330px] xl:w-[370px]"
+                        />
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-gray-500">Sort by:</span>
+                      <button className="flex items-center gap-1 text-sm font-semibold text-gray-700 hover:text-[#6B3FA0]">
+                        Recently added
+                        <ChevronDown size={16} />
+                      </button>
+                    </div>
                   </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-500">Sort by:</span>
-                  <button className="flex items-center gap-1 text-sm font-semibold text-gray-700 hover:text-[#6B3FA0]">
-                    Recently added
-                    <ChevronDown size={16} />
-                  </button>
-                </div>
-              </div>
 
-              {/* Connections List */}
-              <div className="divide-y divide-gray-50">
-                {filteredConnections.map((connection) => (
-                  <ConnectionCard key={connection.id} connection={connection} />
-                ))}
-              </div>
+                  {/* Connections List */}
+                  <div className="divide-y divide-gray-50">
+                    {filteredConnections.map((connection) => (
+                      <ConnectionCard key={connection.id} connection={connection} />
+                    ))}
+                  </div>
+                </>
+              )}
+
+              {/* Invitations Tab Content */}
+              {activeTab === "invitations" && (
+                <>
+                  {/* Header Bar */}
+                  <div className="p-4 flex items-center justify-between border-b border-gray-50">
+                    <span className="text-[14px] font-semibold text-[#000000]">
+                      Invitations ({invitations.length})
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-gray-500">Sort by:</span>
+                      <button className="flex items-center gap-1 text-sm font-semibold text-gray-700 hover:text-[#6B3FA0]">
+                        Newest
+                        <ChevronDown size={16} />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Loading State */}
+                  {invitationsLoading && (
+                    <div className="flex flex-col items-center justify-center py-16">
+                      <Loader2 size={32} className="text-[#6B3FA0] animate-spin" />
+                      <p className="mt-3 text-sm text-gray-500">Loading invitations...</p>
+                    </div>
+                  )}
+
+                  {/* Error State */}
+                  {!invitationsLoading && invitationsError && (
+                    <div className="flex flex-col items-center justify-center py-16">
+                      <p className="text-sm text-red-500">{invitationsError}</p>
+                      <button 
+                        onClick={fetchInvitations}
+                        className="mt-3 text-sm text-[#6B3FA0] hover:underline"
+                      >
+                        Try again
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Empty State */}
+                  {!invitationsLoading && !invitationsError && invitations.length === 0 && (
+                    <div className="flex flex-col items-center justify-center py-16">
+                      <div className="w-16 h-16 rounded-full bg-[#f6f2f8] flex items-center justify-center mb-4">
+                        <UserPlus size={28} className="text-[#6B3FA0]" />
+                      </div>
+                      <h4 className="text-[15px] font-semibold text-gray-900 mb-1">
+                        No pending invitations
+                      </h4>
+                      <p className="text-sm text-gray-500 text-center max-w-xs">
+                        When someone sends you a connection request, it will appear here
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Invitations List */}
+                  {!invitationsLoading && !invitationsError && invitations.length > 0 && (
+                    <div className="divide-y divide-gray-50">
+                      {invitations.map((invitation) => (
+                        <InvitationCard 
+                          key={invitation.id} 
+                          invitation={invitation}
+                          onAccept={() => handleAcceptInvitation(invitation.documentId)}
+                          onReject={() => handleRejectInvitation(invitation.documentId)}
+                          isProcessing={processingIds.has(invitation.documentId)}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </>
+              )}
+
+              {/* Suggestions Tab Content */}
+              {activeTab === "suggestions" && (
+                <div className="p-8 text-center text-gray-500">
+                  <p className="text-sm">Suggestions coming soon...</p>
+                </div>
+              )}
             </div>
 
             {/* Cards below main content - visible below lg (two columns) */}
@@ -171,6 +364,22 @@ export default function NetworkPage() {
         }
       `}</style>
     </div>
+  );
+}
+
+// Wrapper component with Suspense boundary for useSearchParams
+export default function NetworkPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-[#f6f2f8] pt-[72px] flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 size={32} className="text-[#6B3FA0] animate-spin" />
+          <p className="text-sm text-gray-500">Loading network...</p>
+        </div>
+      </div>
+    }>
+      <NetworkPageContent />
+    </Suspense>
   );
 }
 
@@ -232,6 +441,85 @@ function ConnectionCard({ connection }: { connection: Connection }) {
             </>
           )}
         </div>
+      </div>
+    </div>
+  );
+}
+
+interface InvitationCardProps {
+  invitation: ApiConnection;
+  onAccept: () => void;
+  onReject: () => void;
+  isProcessing: boolean;
+}
+
+function InvitationCard({ invitation, onAccept, onReject, isProcessing }: InvitationCardProps) {
+  const follower = invitation.follower;
+  const displayName = follower?.full_name || follower?.company_name || "Unknown User";
+  
+  // Build location string from available fields
+  const locationParts = [follower?.city, follower?.state, follower?.country].filter(Boolean);
+  const location = locationParts.length > 0 ? locationParts.join(", ") : "Location not available";
+
+  // Generate a consistent color based on the name
+  const getAvatarColor = (name: string) => {
+    const colors = ['#f5e6d3', '#e8d5f0', '#d5e8f0', '#f0e8d5', '#d5f0e8', '#f0d5e8'];
+    const index = name.charCodeAt(0) % colors.length;
+    return colors[index];
+  };
+
+  return (
+    <div className="flex items-center justify-between p-4 hover:bg-gray-50/50 transition-colors">
+      <div className="flex items-center gap-4">
+        {/* Profile Image */}
+        <div className="w-14 h-14 rounded-full border border-gray-200 bg-white flex items-center justify-center overflow-hidden shrink-0">
+          {follower?.profileImageUrl ? (
+            <Image
+              src={follower.profileImageUrl}
+              alt={displayName}
+              width={48}
+              height={48}
+              className="w-12 h-12 rounded-full object-cover"
+            />
+          ) : (
+            <div 
+              className="w-12 h-12 rounded-full flex items-center justify-center text-gray-700 font-semibold text-sm"
+              style={{ backgroundColor: getAvatarColor(displayName) }}
+            >
+              {displayName.substring(0, 2).toUpperCase()}
+            </div>
+          )}
+        </div>
+
+        {/* Info */}
+        <div className="flex flex-col gap-1">
+          <h4 className="text-[15px] font-bold text-gray-900">
+            {displayName}
+          </h4>
+          <div className="flex items-center gap-1.5 text-gray-500">
+            <MapPin size={14} className="shrink-0" />
+            <span className="text-[13px]">{location}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Actions */}
+      <div className="flex items-center gap-4">
+        <button 
+          onClick={onReject}
+          disabled={isProcessing}
+          className="text-sm font-medium text-gray-600 hover:text-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {isProcessing ? "..." : "Ignore"}
+        </button>
+        <button 
+          onClick={onAccept}
+          disabled={isProcessing}
+          className="px-6 py-2 bg-[#6B3FA0] text-white text-sm font-semibold rounded-lg hover:bg-[#5a3590] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+        >
+          {isProcessing && <Loader2 size={14} className="animate-spin" />}
+          Accept
+        </button>
       </div>
     </div>
   );
