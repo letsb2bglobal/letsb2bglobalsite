@@ -696,6 +696,18 @@ export default function CompleteProfileContent() {
     }
   };
 
+  const handlePrevious = () => {
+    setErrors({});
+    if (showPreferenceAfterAdd) {
+      setShowPreferenceAfterAdd(false);
+      setCurrentStep(2);
+      return;
+    }
+    if (currentStep > 1) {
+      setCurrentStep(currentStep - 1);
+    }
+  };
+
   return (
     <AuthLayout variant="signup" header={stepper} hideCardStyle={false} noInnerScroll usePageBackground>
       {isInitializing ? (
@@ -1151,12 +1163,12 @@ export default function CompleteProfileContent() {
               </div>
               <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full sm:w-auto justify-end items-stretch sm:items-center">
                   <button
-                  onClick={handleSkip}
-                    disabled={isLoading}
+                  onClick={handlePrevious}
+                    disabled={isLoading || currentStep === 1}
                   className="flex items-center justify-center w-full sm:w-[144.51px] h-12 sm:h-[50px] text-gray-700 font-semibold text-sm hover:opacity-90 transition-all disabled:opacity-50 rounded-2xl"
                   style={{ backgroundColor: "#E6E6E6" }}
                   >
-                    Skip
+                    Previous
                   </button>
                   <button
                   onClick={() => (showPreferenceAfterAdd ? handlePreferenceAfterAddNext() : submitStep())}
