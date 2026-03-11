@@ -7,9 +7,10 @@ import Image from "next/image";
 import ProgressCard from "./ProgressCard";
 interface ProfileCardProps {
   profile?: UserProfile | null;
+  showProgress?: boolean;
 }
 
-const ProfileCard: React.FC<ProfileCardProps> = ({ profile }) => {
+const ProfileCard: React.FC<ProfileCardProps> = ({ profile, showProgress = true }) => {
   return (
     <div className="bg-white rounded-[12px] shadow-sm overflow-hidden border border-gray-100 mb-4">
       {/* Banner */}
@@ -54,11 +55,14 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ profile }) => {
               : "About the Company"}
           </span>
 
-          <div className="border-t border-gray-200 mt-5"></div>
-
-          <div className="mt-4">
-            <ProgressCard profile={profile} />
-          </div>
+          {showProgress && (
+            <>
+              <div className="border-t border-gray-200 mt-5"></div>
+              <div className="mt-4">
+                <ProgressCard profile={profile} />
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>

@@ -281,7 +281,7 @@ const TransportationForm = () => {
                   {...register("details.specialInstructions")}
                   className="w-4 h-4 rounded border-gray-200 text-[#6B3FA0] focus:ring-[#6B3FA0]"
                 />
-                <span className="text-[16px] font-medium text-[#000000] group-hover:text-gray-900 transition-colors">
+                <span className="md:text-[16px] text-[14px] truncate font-medium text-[#000000] group-hover:text-gray-900 transition-colors">
                   {instr}
                 </span>
               </label>

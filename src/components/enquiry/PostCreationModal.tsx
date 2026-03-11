@@ -55,7 +55,7 @@ const PostCreationModal: React.FC<PostCreationModalProps> = ({
     defaultValues: {
       type: "accommodation",
       title: "",
-      description: "", 
+      description: "",
       details: {},
       budget: {
         amount: 0,
@@ -73,6 +73,7 @@ const PostCreationModal: React.FC<PostCreationModalProps> = ({
     reset,
     watch,
     setValue,
+    getValues,
     formState: { errors },
   } = methods;
 
@@ -86,6 +87,7 @@ const PostCreationModal: React.FC<PostCreationModalProps> = ({
   }, [activeType, setValue]);
 
   const onSubmit = async (data: MasterEnquiryForm) => {
+    console.log("FORM TAGS:", data.tags);
     setIsSubmitting(true);
     try {
       const apiUrl =
@@ -111,35 +113,52 @@ const PostCreationModal: React.FC<PostCreationModalProps> = ({
             }
           : data.details;
 
+      if (Array.isArray(details.timeline)) {
+        details.timeline = details.timeline[0];
+      }
+
       const postData = {
-        title: data.title,
-        type: data.type,
-    
-        description: data.description,
-        destination:
-          data.details.destination ||
-          data.details.city ||
-          data.details.venueLocation ||
-          "",
-        enquiry_details: [
-          {
-            __component: componentMap[data.type] || `enquiry.${data.type}`,
-            ...details,
+        data: {
+          title: data.title,
+          type: data.type,
+
+          description: data.description,
+          destination:
+            data.details.destination ||
+            data.details.city ||
+            data.details.venueLocation ||
+            "",
+          enquiry_details: [
+            {
+              __component: componentMap[data.type] || `enquiry.${data.type}`,
+              ...details,
+            },
+          ],
+          budget: {
+            amount: data.budget.amount,
+            currency: data.budget.currency,
+            budgetType: data.budget.budgetType,
           },
-        ],
-        budget: {
-          amount: data.budget.amount,
-          currency: data.budget.currency,
-          budgetType: data.budget.budgetType,
+          // tags: Array.isArray(getValues("tags")) ? getValues("tags") : [],
+          tags: data.tags ?? [],
+          user_profile: activeWorkspace?.data?.documentId,
+          status: "Open",
+          publishedAt: new Date().toISOString(),
         },
-        tags: data.tags,
-        user_profile: activeWorkspace?.data?.documentId,
-        status: "Open",
-        publishedAt: new Date().toISOString(),
       };
 
       const formData = new FormData();
-      formData.append("data", JSON.stringify(postData));
+      // formData.append("data", JSON.stringify(postData));
+      formData.append("data", JSON.stringify(postData.data));
+      //       formData.append("data", JSON.stringify({
+      //         ...postData.data,
+      //         tags: data.tags ?? []
+      //       }));
+
+      //       console.log("POST DATA:", postData.data);
+      // console.log("FORMDATA TAGS:", data.tags);
+
+      console.log("POST DATA:", postData.data);
 
       // Append binary files if any
       if (data.binaryFiles && data.binaryFiles.length > 0) {
@@ -191,16 +210,16 @@ const PostCreationModal: React.FC<PostCreationModalProps> = ({
       <div className="w-full max-w-[768px] bg-white rounded-[24px] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 my-auto">
         {/* Header */}
         <header className="px-6 py-6 border-b border-gray-100 flex items-center justify-between bg-white sticky top-0 z-10">
-          <div className="flex gap-1.5 border border-[#D1D1D1] rounded-lg p-1.5 bg-[#F2F2F2] w-[241px]">
+          <div className="flex gap-1.5 border border-[#D1D1D1] rounded-lg p-1.5 bg-[#F2F2F2] md:w-[241px]">
             <div className="w-6 h-6 rounded-full bg-gradient-to-br from-[#6B3FA0] to-[#8E54D7] flex items-center justify-center text-white font-medium text-lg">
               {user?.username?.substring(0, 1).toUpperCase() || "L"}
             </div>
             <div className="flex flex-col">
-              <h2 className="text-[20px] font-medium text-[#000000]">
+              <h2 className="md:text-[20px] text-[16px] font-medium text-[#000000]">
                 {user?.username || "Le Tourister"}
               </h2>
               <div className="flex items-center gap-1">
-                <span className="text-[14px] text-[#676767]">
+                <span className="md:text-[14px] text-[12px] text-[#676767]">
                   Post To Anyone
                 </span>
                 <ChevronDown
@@ -211,9 +230,9 @@ const PostCreationModal: React.FC<PostCreationModalProps> = ({
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center md:gap-3 gap-0">
             <div className="">
-              <span className="text-[16px] font-medium text-[#000000]">
+              <span className="md:text-[16px] text-[14px] font-medium text-[#000000]">
                 {activeType
                   .replace(/_/g, " ")
                   .replace(/\b\w/g, (c) => c.toUpperCase())}
@@ -229,7 +248,7 @@ const PostCreationModal: React.FC<PostCreationModalProps> = ({
         </header>
 
         {/* Modal Body */}
-        <div className="p-6 max-h-[calc(100vh-200px)] overflow-y-auto no-scrollbar">
+        <div className="md:p-8 p-4">
           <FormProvider {...methods}>
             <form
               id="enquiry-form"
