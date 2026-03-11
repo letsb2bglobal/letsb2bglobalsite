@@ -30,7 +30,7 @@ export default function PaymentSuccessPage() {
         
         <div className="space-y-3">
           <button
-            onClick={() => router.push("/")}
+            onClick={() => router.push("/home")}
             className="w-full py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-200"
           >
             Go to Home

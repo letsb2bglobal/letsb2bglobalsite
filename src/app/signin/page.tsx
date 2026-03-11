@@ -4,6 +4,7 @@ import React, { Suspense, useState, useEffect, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
+import { Eye, EyeOff } from 'lucide-react';
 import AuthLayout from '@/components/AuthLayout';
 import {
   setAuthData,
@@ -104,7 +105,7 @@ function SigninContent() {
       setAuthData(data.jwt, data.user);
       try {
         const profile = await checkUserProfile(data.user.id);
-        router.push(profile ? '/' : '/complete-profile');
+        router.push(profile ? '/home' : '/complete-profile');
       } catch {
         router.push('/complete-profile');
       }
@@ -255,7 +256,7 @@ function SigninContent() {
   // ── Logo (shared) ─────────────────────────────────────────────────────
   const Logo = () => (
     <div className="flex items-center justify-center mb-4">
-      <Image src="/LetsB2B_logo1.png" alt="LetsB2B" width={456} height={118} className="object-contain max-w-full h-auto" />
+      <Image src="/LetsB2B_logo1.png" alt="LetsB2B" width={460} height={122} className="object-contain max-w-full h-auto" />
     </div>
   );
 
@@ -519,6 +520,16 @@ function SigninContent() {
                       document.getElementById(`otp-forgot-${i - 1}`)?.focus();
                     }
                   }}
+                  onPaste={(e) => {
+                    e.preventDefault();
+                    const pastedData = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
+                    if (pastedData) {
+                      setForgotOtp(pastedData);
+                      clearAll();
+                      const focusIndex = Math.min(pastedData.length, 5);
+                      document.getElementById(`otp-forgot-${focusIndex}`)?.focus();
+                    }
+                  }}
                   autoFocus={i === 0}
                   className="w-full aspect-square min-w-0 text-center text-base sm:text-xl font-bold border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-800 bg-white transition-all"
                 />
@@ -581,21 +592,30 @@ function SigninContent() {
 
             {/* New password */}
             <div className="space-y-1">
-              <input
-                type={showNewPassword ? 'text' : 'password'}
-                value={newPassword}
-                onChange={(e) => { setNewPassword(e.target.value); if (errors.newPassword) setErrors((p) => ({ ...p, newPassword: '' })); }}
-                placeholder="Enter New Password"
-                autoFocus
-                autoComplete="new-password"
-                className="w-full px-4 text-gray-800 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-400 transition-all"
-                style={{
-                  height: "52px",
-                  borderRadius: "8px",
-                  background: "#FFFFFF",
-                  border: errors.newPassword ? "1px solid #f87171" : "1px solid #F3D1EE",
-                }}
-              />
+              <div className="relative">
+                <input
+                  type={showNewPassword ? 'text' : 'password'}
+                  value={newPassword}
+                  onChange={(e) => { setNewPassword(e.target.value); if (errors.newPassword) setErrors((p) => ({ ...p, newPassword: '' })); }}
+                  placeholder="Enter New Password"
+                  autoFocus
+                  autoComplete="new-password"
+                  className="w-full px-4 pr-12 text-gray-800 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-400 transition-all"
+                  style={{
+                    height: "52px",
+                    borderRadius: "8px",
+                    background: "#FFFFFF",
+                    border: errors.newPassword ? "1px solid #f87171" : "1px solid #F3D1EE",
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowNewPassword(!showNewPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  {showNewPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
               {errors.newPassword && <p className="text-red-500 text-xs font-medium ml-1">{errors.newPassword}</p>}
             </div>
 

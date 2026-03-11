@@ -28,7 +28,7 @@ export default function PaymentFailedPage() {
             Try Again
           </button>
           <button
-            onClick={() => router.push("/")}
+            onClick={() => router.push("/home")}
             className="w-full py-3 bg-white text-gray-700 border border-gray-200 rounded-xl font-bold hover:bg-gray-50 transition-all"
           >
             Go to Home

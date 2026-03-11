@@ -396,12 +396,12 @@ export default function CompanyProfilePage() {
       {/* Top Header */}
       <header className="flex items-center justify-between px-8 py-4 bg-slate-50 border-b border-slate-200">
         <div className="flex items-center gap-2">
-          {/* <Image
-            src="/images/favi_lb2b.png"
+          <Image
+            src="/b2bheaderlogo1.png"
             alt="LetsB2B Logo"
             width={36}
             height={36}
-          /> */}
+          /> 
           <div className="flex flex-col">
             <span className="text-lg font-medium text-black">
               Lets <span className="font-bold">B2B</span>
