@@ -439,12 +439,12 @@ const Header = () => {
             </Link>
 
             <Link
-              href="/"
+              href="/network"
               className={`flex items-center gap-2 px-3.5 py-2 text-[16px] ${
-                pathname === "/" ? "text-[#6B3FA0]" : "text-[#434343]"
+                pathname === "/network" ? "text-[#6B3FA0]" : "text-[#434343]"
               }`}
             >
-              {/* {pathname === "/" && (
+              {/* {pathname === "/network" && (
                 <Image
                   src="/assets/icons/network.png"
                   alt="Network"
