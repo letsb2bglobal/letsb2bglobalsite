@@ -74,7 +74,7 @@ function SolidCard({
     <Link
       href={href}
       data-card
-      className={`opacity-0 flex rounded-2xl md:rounded-3xl overflow-hidden min-h-[140px] md:min-h-[180px] ${color} shadow-sm hover:shadow-md transition-all cursor-pointer items-center justify-start p-5 md:p-6 group ${className}`}
+      className={`opacity-0 flex rounded-2xl md:rounded-3xl overflow-hidden min-h-[140px] md:min-h-[180px] ${color} shadow-sm hover:shadow-md transition-all cursor-pointer items-end justify-start p-5 md:p-6 group ${className}`}
     >
       <span
         className="text-white font-semibold text-base md:text-lg lg:text-[22px] lg:leading-[1.4] text-left group-hover:scale-105 transition-transform duration-500 max-w-full whitespace-pre-line"
@@ -373,7 +373,7 @@ export default function GlobalTourismTradeNetworkSection() {
             {/* Hero Card */}
             <div
               data-card
-              className="opacity-0 rounded-[20px] bg-[#612A79] border border-[#E3E3E3] p-6 md:p-8 text-white text-left shadow-sm min-h-[130px] flex flex-col justify-center"
+              className="opacity-0 rounded-[20px] bg-[#612A79] border border-[#E3E3E3] p-6 md:p-8 text-white text-left shadow-sm min-h-[130px] flex flex-col justify-end"
             >
               <h3 className="text-lg md:text-xl lg:text-[24px] lg:leading-[1.4] font-semibold mb-2">
                 Explore Verified Tourism Trade Partners
@@ -402,7 +402,6 @@ export default function GlobalTourismTradeNetworkSection() {
               title="Hotels, Resorts & Homestays"
               imageSrc={`${BASE}/hotels_stays.png`}
               className="min-h-[80px] lg:min-h-[100px]"
-              align="items-center"
             />
 
             {/* Row 4 */}
