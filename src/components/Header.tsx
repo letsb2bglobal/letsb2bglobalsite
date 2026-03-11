@@ -22,14 +22,14 @@ const LANDING_MENU: {
   id?: string;
   primary?: boolean;
 }[] = [
-  { label: "About Us", href: "/aboutus" },
-  { label: "Features", id: "features" },
-  { label: "How It Works", id: "how-it-works" },
-  { label: "Why LetsB2B", id: "why-choose-us" },
-  { label: "Pricing", href: "/pricing" },
-  { label: "Contact Us", href: "/contact" },
-  { label: "Get Started", href: "/signup", primary: true },
-];
+    { label: "About Us", href: "/aboutus" },
+    { label: "Features", id: "features" },
+    { label: "How It Works", id: "how-it-works" },
+    { label: "Why LetsB2B", id: "why-choose-us" },
+    { label: "Pricing", href: "/pricing" },
+    { label: "Contact Us", href: "/contact" },
+    { label: "Get Started", href: "/signup", primary: true },
+  ];
 
 // Pages that use the landing-style header (dark nav, pill menu)
 const LANDING_HEADER_PAGES = [
@@ -73,9 +73,9 @@ const Header = () => {
         setOpenDropdown(false);
       }
     };
-  
+
     document.addEventListener("mousedown", handleClickOutside);
-  
+
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
@@ -150,7 +150,7 @@ const Header = () => {
       console.error("Notification check failed", err);
     }
   }, []);
-  
+
 
   useEffect(() => {
     if (user?.id) {
@@ -165,8 +165,18 @@ const Header = () => {
 
   const handleSectionClick = useCallback((id: string) => {
     setMobileMenuOpen(false);
-    const el = document.getElementById(id);
-    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+    let attempts = 0;
+    const tryScroll = () => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "start" });
+        if (attempts < 5) {
+          attempts++;
+          setTimeout(tryScroll, 300);
+        }
+      }
+    };
+    tryScroll();
   }, []);
 
   if (!isLoggedIn && pathname !== "/signin" && pathname !== "/signup") {
@@ -180,17 +190,16 @@ const Header = () => {
       ].includes(pathname);
       return (
         <header
-          className={`sticky top-0 left-0 right-0 z-100 transition-all duration-300 ${
-            scrolledPastLanding ||
+          className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-300 ${scrolledPastLanding ||
             pathname === "/pricing" ||
             pathname === "/aboutus" ||
             pathname === "/contact" ||
             isPolicyPage
-              ? "bg-[#1a1625] border-b border-white/10"
-              : "border-transparent bg-transparent"
-          }`}
+            ? "bg-[#1a1625] border-b border-white/10"
+            : "border-transparent bg-transparent"
+            }`}
         >
-          <div className="max-w-[1440px] mx-auto flex items-center justify-between h-16 sm:h-20 px-4 sm:px-5 lg:px-10">
+          <div className="max-w-[1440px] mx-auto flex items-center justify-between h-16 sm:h-18 px-4 sm:px-5 lg:px-10">
             <Link
               href="/"
               className="flex items-center gap-2 sm:gap-3 shrink-0 min-w-0"
@@ -200,7 +209,7 @@ const Header = () => {
                 alt="LetsB2B - Less Noise, Pure Business"
                 width={180}
                 height={48}
-                className="h-9 w-auto object-contain sm:h-12"
+                className="h-9 w-auto object-contain sm:h-10"
                 priority
               />
             </Link>
@@ -222,11 +231,10 @@ const Header = () => {
                       key={item.id}
                       type="button"
                       onClick={() => handleSectionClick(item.id!)}
-                      className={`px-4 py-2.5 text-sm font-bold rounded-[27px] transition-colors whitespace-nowrap ${
-                        isActive
-                          ? "text-[#6B3FA0] bg-[#6B3FA0]/15"
-                          : "text-gray-800 hover:text-[#6B3FA0] hover:bg-gray-100"
-                      }`}
+                      className={`px-4 py-2.5 text-sm font-bold rounded-[27px] transition-colors whitespace-nowrap ${isActive
+                        ? "text-[#6B3FA0] bg-[#6B3FA0]/15"
+                        : "text-gray-800 hover:text-[#6B3FA0] hover:bg-gray-100"
+                        }`}
                     >
                       {item.label}
                     </button>
@@ -234,11 +242,10 @@ const Header = () => {
                     <Link
                       key={item.id}
                       href={`/#${item.id}`}
-                      className={`px-4 py-2.5 text-sm font-bold rounded-[27px] transition-colors whitespace-nowrap ${
-                        isActive
-                          ? "text-[#6B3FA0] bg-[#6B3FA0]/15"
-                          : "text-gray-800 hover:text-[#6B3FA0] hover:bg-gray-100"
-                      }`}
+                      className={`px-4 py-2.5 text-sm font-bold rounded-[27px] transition-colors whitespace-nowrap ${isActive
+                        ? "text-[#6B3FA0] bg-[#6B3FA0]/15"
+                        : "text-gray-800 hover:text-[#6B3FA0] hover:bg-gray-100"
+                        }`}
                     >
                       {item.label}
                     </Link>
@@ -249,11 +256,10 @@ const Header = () => {
                     <Link
                       key={item.href}
                       href={item.href!}
-                      className={`px-5 py-2.5 text-sm font-bold rounded-[27px] transition-colors whitespace-nowrap shrink-0 ${
-                        isActive
-                          ? "text-white bg-[#5a3590] ring-2 ring-[#6B3FA0] ring-offset-2"
-                          : "text-white bg-[#6B3FA0] hover:bg-[#5a3590]"
-                      }`}
+                      className={`px-5 py-2.5 text-sm font-bold rounded-[27px] transition-colors whitespace-nowrap shrink-0 ${isActive
+                        ? "text-white bg-[#5a3590] ring-2 ring-[#6B3FA0] ring-offset-2"
+                        : "text-white bg-[#6B3FA0] hover:bg-[#5a3590]"
+                        }`}
                     >
                       {item.label}
                     </Link>
@@ -263,11 +269,10 @@ const Header = () => {
                   <Link
                     key={item.href}
                     href={item.href!}
-                    className={`px-4 py-2.5 text-sm font-bold rounded-[27px] transition-colors whitespace-nowrap shrink-0 ${
-                      isActive
-                        ? "text-[#6B3FA0] bg-[#6B3FA0]/15"
-                        : "text-gray-800 hover:text-[#6B3FA0] hover:bg-gray-100"
-                    }`}
+                    className={`px-4 py-2.5 text-sm font-bold rounded-[27px] transition-colors whitespace-nowrap shrink-0 ${isActive
+                      ? "text-[#6B3FA0] bg-[#6B3FA0]/15"
+                      : "text-gray-800 hover:text-[#6B3FA0] hover:bg-gray-100"
+                      }`}
                   >
                     {item.label}
                   </Link>
@@ -291,11 +296,10 @@ const Header = () => {
 
           {/* Full-page pull menu overlay + panel with close icon */}
           <div
-            className={`md:hidden fixed inset-0 z-[110] transition-opacity duration-300 ${
-              mobileMenuOpen
-                ? "opacity-100 pointer-events-auto"
-                : "opacity-0 pointer-events-none"
-            }`}
+            className={`md:hidden fixed inset-0 z-[110] transition-opacity duration-300 ${mobileMenuOpen
+              ? "opacity-100 pointer-events-auto"
+              : "opacity-0 pointer-events-none"
+              }`}
             aria-hidden={!mobileMenuOpen}
           >
             {/* Backdrop - tap to close */}
@@ -307,9 +311,8 @@ const Header = () => {
             />
             {/* Slide-in panel from right */}
             <div
-              className={`absolute right-0 top-0 bottom-0 w-full max-w-[320px] bg-[#1a1625] shadow-2xl flex flex-col transition-transform duration-300 ease-out ${
-                mobileMenuOpen ? "translate-x-0" : "translate-x-full"
-              }`}
+              className={`absolute right-0 top-0 bottom-0 w-full max-w-[320px] bg-[#1a1625] shadow-2xl flex flex-col transition-transform duration-300 ease-out ${mobileMenuOpen ? "translate-x-0" : "translate-x-full"
+                }`}
               role="dialog"
               aria-label="Navigation menu"
             >
@@ -337,11 +340,10 @@ const Header = () => {
                         key={item.id}
                         type="button"
                         onClick={() => handleSectionClick(item.id!)}
-                        className={`px-4 py-3.5 text-left text-base font-bold rounded-xl transition-colors ${
-                          isActive
-                            ? "text-[#22c55e] bg-white/10"
-                            : "text-white hover:bg-white/10"
-                        }`}
+                        className={`px-4 py-3.5 text-left text-base font-bold rounded-xl transition-colors ${isActive
+                          ? "text-[#22c55e] bg-white/10"
+                          : "text-white hover:bg-white/10"
+                          }`}
                       >
                         {item.label}
                       </button>
@@ -349,11 +351,10 @@ const Header = () => {
                       <Link
                         key={item.id}
                         href={`/#${item.id}`}
-                        className={`px-4 py-3.5 text-base font-bold rounded-xl transition-colors ${
-                          isActive
-                            ? "text-[#22c55e] bg-white/10"
-                            : "text-white hover:bg-white/10"
-                        }`}
+                        className={`px-4 py-3.5 text-base font-bold rounded-xl transition-colors ${isActive
+                          ? "text-[#22c55e] bg-white/10"
+                          : "text-white hover:bg-white/10"
+                          }`}
                         onClick={() => setMobileMenuOpen(false)}
                       >
                         {item.label}
@@ -365,11 +366,10 @@ const Header = () => {
                       <Link
                         key={item.href}
                         href={item.href!}
-                        className={`mt-4 mx-4 py-3.5 text-center text-base font-bold rounded-xl transition-colors ${
-                          isActive
-                            ? "text-white bg-[#5a3590] ring-2 ring-[#22c55e]"
-                            : "text-white bg-[#6B3FA0] hover:bg-[#5a3590]"
-                        }`}
+                        className={`mt-4 mx-4 py-3.5 text-center text-base font-bold rounded-xl transition-colors ${isActive
+                          ? "text-white bg-[#5a3590] ring-2 ring-[#22c55e]"
+                          : "text-white bg-[#6B3FA0] hover:bg-[#5a3590]"
+                          }`}
                         onClick={() => setMobileMenuOpen(false)}
                       >
                         {item.label}
@@ -380,11 +380,10 @@ const Header = () => {
                     <Link
                       key={item.href}
                       href={item.href!}
-                      className={`px-4 py-3.5 text-base font-bold rounded-xl transition-colors ${
-                        isActive
-                          ? "text-[#22c55e] bg-white/10"
-                          : "text-white hover:bg-white/10"
-                      }`}
+                      className={`px-4 py-3.5 text-base font-bold rounded-xl transition-colors ${isActive
+                        ? "text-[#22c55e] bg-white/10"
+                        : "text-white hover:bg-white/10"
+                        }`}
                       onClick={() => setMobileMenuOpen(false)}
                     >
                       {item.label}
@@ -423,9 +422,8 @@ const Header = () => {
           <div className="hidden xl:flex items-center gap-2 pl-6">
             <Link
               href="/home"
-              className={`flex items-center gap-2 px-3.5 py-2 text-[16px] ${
-                pathname === "/home" ? "text-[#6B3FA0]" : "text-[#434343]"
-              }`}
+              className={`flex items-center gap-2 px-3.5 py-2 text-[16px] ${pathname === "/home" ? "text-[#6B3FA0]" : "text-[#434343]"
+                }`}
             >
               {pathname === "/home" && (
                 <Image
@@ -440,9 +438,8 @@ const Header = () => {
 
             <Link
               href="/"
-              className={`flex items-center gap-2 px-3.5 py-2 text-[16px] ${
-                pathname === "/" ? "text-[#6B3FA0]" : "text-[#434343]"
-              }`}
+              className={`flex items-center gap-2 px-3.5 py-2 text-[16px] ${pathname === "/" ? "text-[#6B3FA0]" : "text-[#434343]"
+                }`}
             >
               {/* {pathname === "/" && (
                 <Image
@@ -457,9 +454,8 @@ const Header = () => {
 
             <Link
               href="/enquiries"
-              className={`flex items-center gap-2 px-3.5 py-2 text-[16px] ${
-                pathname === "/enquiries" ? "text-[#6B3FA0]" : "text-[#434343]"
-              }`}
+              className={`flex items-center gap-2 px-3.5 py-2 text-[16px] ${pathname === "/enquiries" ? "text-[#6B3FA0]" : "text-[#434343]"
+                }`}
             >
               {/* {pathname === "/enquiries" && (
                 <Image
@@ -474,9 +470,8 @@ const Header = () => {
 
             <Link
               href="/messages"
-              className={`flex items-center gap-2 px-3.5 py-2 text-[16px] ${
-                pathname === "/messages" ? "text-[#6B3FA0]" : "text-[#434343]"
-              }`}
+              className={`flex items-center gap-2 px-3.5 py-2 text-[16px] ${pathname === "/messages" ? "text-[#6B3FA0]" : "text-[#434343]"
+                }`}
             >
               {/* {pathname === "/messages" && (
                 <Image

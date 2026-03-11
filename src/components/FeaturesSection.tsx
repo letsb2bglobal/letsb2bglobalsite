@@ -124,8 +124,8 @@ export default function FeaturesSection() {
             scrollTrigger: {
               trigger: wrap,
               start: "top top",
-              end: "bottom top",
-              scrub: true,
+              end: "+=150%",
+              scrub: 1,
               pin: true,
               anticipatePin: 1,
               invalidateOnRefresh: true,
@@ -134,7 +134,6 @@ export default function FeaturesSection() {
           tl.to(strip, {
             x: -maxX,
             ease: "none",
-            duration: 1,
           });
         }
 
@@ -161,8 +160,7 @@ export default function FeaturesSection() {
   return (
     <div
       ref={wrapRef}
-      className="relative"
-      style={{ height: "200vh" }}
+      className="relative w-full"
     >
       <section
         ref={sectionRef}
@@ -184,7 +182,7 @@ export default function FeaturesSection() {
         {/* Content */}
         <div className="relative z-10 flex h-full flex-col">
           {/* Title + subtitle */}
-          <div className={`shrink-0 w-full px-4 pt-8 sm:px-5 sm:pt-10 md:pt-12 lg:px-10 lg:pt-16 text-center ${poppins.className}`}>
+          <div className={`shrink-0 w-full px-4 pt-6 sm:px-5 sm:pt-8 md:pt-10 lg:px-10 lg:pt-12 text-center ${poppins.className}`}>
             <div className="relative w-full min-h-[72px] sm:min-h-[90px] md:min-h-[100px] flex items-center justify-center">
               <span
                 className="pointer-events-none select-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 font-bold text-white whitespace-nowrap text-[100px] leading-[1.1] sm:text-[140px] md:text-[160px] lg:text-[200px] lg:leading-[1.2]"
@@ -231,6 +229,8 @@ export default function FeaturesSection() {
                     </p>
                   </div>
                 ))}
+                {/* Spacer to allow the last card to be better centered/spaced at the end of scroll */}
+                <div className="w-[10vw] shrink-0" />
               </div>
             </div>
           </div>

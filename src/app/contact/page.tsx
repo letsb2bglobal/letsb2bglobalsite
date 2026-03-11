@@ -239,7 +239,7 @@ export default function ContactPage() {
                 {/* Feedback & Support */}
                 <div className="bg-[#1a1625] rounded-2xl p-8 lg:p-10 text-white">
                   <Mail className="w-10 h-10 text-[#22c55e] mb-6" />
-                  <h2 className="text-xl md:text-2xl font-black mb-3 tracking-tight">Feedback &; Support</h2>
+                  <h2 className="text-xl md:text-2xl font-black mb-3 tracking-tight">Feedback & Support</h2>
                   <p className="text-white/80 text-base leading-relaxed mb-6 md:text-lg">
                     Have a question, suggestion, or need help? Reach out and we&apos;ll get back to you as soon as possible.
                   </p>
