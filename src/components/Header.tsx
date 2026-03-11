@@ -195,14 +195,14 @@ const Header = () => {
               href="/"
               className="flex items-center gap-2 sm:gap-3 shrink-0 min-w-0"
             >
-              <Image
-                src="/b2bheaderlogo2.png"
+              {/* <Image
+                src="/b2bheaderlogo1.png"
                 alt="LetsB2B - Less Noise, Pure Business"
                 width={180}
                 height={48}
                 className="h-9 w-auto object-contain sm:h-12"
                 priority
-              />
+              /> */}
             </Link>
 
             {/* Desktop nav: pill with menu links */}
@@ -410,7 +410,7 @@ const Header = () => {
         <div className="flex items-center gap-6 shrink-0">
           <Link href="/" className="flex items-center gap-2">
             <Image
-              src="/assets/icons/logo.png"
+              src="/b2bheaderlogo1.png"
               alt="LetsB2B Logo"
               width={164}
               height={50}

@@ -397,7 +397,7 @@ export default function CompanyProfilePage() {
       <header className="flex items-center justify-between px-8 py-4 bg-slate-50 border-b border-slate-200">
         <div className="flex items-center gap-2">
           <Image
-            src="/images/favi_lb2b.png"
+            src="/b2bheaderlogo1.png"
             alt="LetsB2B Logo"
             width={36}
             height={36}
