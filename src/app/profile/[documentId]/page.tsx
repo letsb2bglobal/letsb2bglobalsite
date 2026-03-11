@@ -562,8 +562,8 @@ export default function PublicProfilePage() {
     <ProtectedRoute>
       <div className="min-h-screen bg-[#f2f1f6] pb-10">
         <div className="mx-auto max-w-[1320px] px-3 py-4 sm:px-4 lg:px-6">
-          <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
-            <main className="space-y-4">
+          <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_320px] md:mt-[90px] mt-[70px]">
+            <main className="space-y-4 ">
               <section className="overflow-hidden rounded-[20px] border border-[#ddd6e5] bg-white shadow-[0_8px_28px_rgba(49,27,63,0.06)]">
                 <div
                   className={`relative h-40 overflow-hidden sm:h-48 lg:h-56 ${profile.headerImageUrl ? "cursor-pointer" : ""}`}

@@ -316,7 +316,7 @@ export const logActivity = async (data: {
 /**
  * Get the unified TradeWall feed (Posts + Enquiries)
  */
-export const getTradeWallFeed = async (page: number = 1, pageSize: number = 10): Promise<PostResponse> => {
+export const getTradeWallFeed = async (page: number = 1, pageSize: number = 30): Promise<PostResponse> => {
   const token = getToken();
   try {
     const response = await fetch(`${apiUrl}/api/trade-wall?page=${page}&pageSize=${pageSize}`, {

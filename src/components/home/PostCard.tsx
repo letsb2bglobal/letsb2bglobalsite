@@ -28,17 +28,19 @@ interface PostCardProps {
     budgetType: string;
   };
   mediaItems?: any[];
+  postDocumentId?: string;
   authorProfileId?: string;
 }
 
 const PostCard: React.FC<PostCardProps> = ({ 
-  author, time, title, description, type, details, imageUrl, location, date, guests, tags, budget, mediaItems, authorProfileId
+  author, time, title, description, type, details, imageUrl, location, date, guests, tags, budget, mediaItems, postDocumentId, authorProfileId
 }) => {
   const router = useRouter();
   const { showToast } = useToast();
   const [responding, setResponding] = useState(false);
 
-  const handleRespond = async () => {
+  const handleRespond = async (e: React.MouseEvent) => {
+    e.stopPropagation();
     if (!authorProfileId) {
       showToast("Cannot respond to this partner at the moment.", "error");
       return;
@@ -58,8 +60,27 @@ const PostCard: React.FC<PostCardProps> = ({
       setResponding(false);
     }
   };
+
+  // const handleCardClick = () => {
+  //   console.log("Clicking post:", title, "-> Post Document ID:", postDocumentId);
+  //   if (postDocumentId) {
+  //     router.push(`/profile/${postDocumentId}`);
+  //   }
+  // };
+
+  const handleCardClick = () => {
+    console.log("Opening profile:", authorProfileId);
+  
+    if (authorProfileId) {
+      router.push(`/profile/${authorProfileId}`);
+    }
+  };
+
   return (
-    <div className="bg-white rounded-[12px] shadow-sm p-5 border border-gray-100 flex flex-col gap-4">
+    <div 
+      onClick={handleCardClick}
+      className="bg-white rounded-[12px] shadow-sm p-5 border border-gray-100 flex flex-col gap-4 cursor-pointer hover:shadow-md transition-shadow"
+    >
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -75,10 +96,16 @@ const PostCard: React.FC<PostCardProps> = ({
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <button className="p-2 text-gray-400 hover:text-[#6B3FA0] hover:bg-[#f6f2f8] rounded-full transition-all">
+          <button 
+            onClick={(e) => e.stopPropagation()}
+            className="p-2 text-gray-400 hover:text-[#6B3FA0] hover:bg-[#f6f2f8] rounded-full transition-all"
+          >
             <Bookmark size={18} />
           </button>
-          <button className="p-2 text-gray-400 hover:text-[#6B3FA0] hover:bg-[#f6f2f8] rounded-full transition-all">
+          <button 
+            onClick={(e) => e.stopPropagation()}
+            className="p-2 text-gray-400 hover:text-[#6B3FA0] hover:bg-[#f6f2f8] rounded-full transition-all"
+          >
             <MoreHorizontal size={18} />
           </button>
         </div>
@@ -99,6 +126,7 @@ const PostCard: React.FC<PostCardProps> = ({
                    <video 
                     src={item.url} 
                     controls 
+                    onClick={(e) => e.stopPropagation()}
                     className="w-full h-full object-cover"
                    />
                 ) : item.type === 'documents' || item.mime === 'application/pdf' || item.url?.endsWith('.pdf') || item.url?.endsWith('.xlsx') ? (
@@ -114,6 +142,7 @@ const PostCard: React.FC<PostCardProps> = ({
                       href={item.url} 
                       target="_blank" 
                       rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
                       className="mt-2 px-6 py-2 bg-indigo-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-black transition-all shadow-lg shadow-indigo-100"
                     >
                       Download
@@ -332,7 +361,10 @@ const PostCard: React.FC<PostCardProps> = ({
       {/* Footer Actions */}
       <div className="flex items-center justify-between pt-4 border-t border-gray-100">
         <div className="flex items-center gap-4 sm:gap-6">
-          <button className="flex items-center gap-2 text-gray-500 hover:text-[#6B3FA0] transition-colors font-black text-[10px] uppercase tracking-[0.1em]">
+          <button 
+            onClick={(e) => e.stopPropagation()}
+            className="flex items-center gap-2 text-gray-500 hover:text-[#6B3FA0] transition-colors font-black text-[10px] uppercase tracking-[0.1em]"
+          >
             <Share2 size={16} />
             <span>Share</span>
           </button>
