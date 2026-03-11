@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Outfit, Inter } from "next/font/google";
+import { Geist, Geist_Mono, Outfit, Inter, Instrument_Sans } from "next/font/google";
 import "./globals.css";
 import Script from 'next/script';
 
@@ -25,6 +25,12 @@ const inter = Inter({
   weight: ["300", "400", "500", "600", "700"],
 });
 
+const instrumentSans = Instrument_Sans({
+  variable: "--font-instrument-sans",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+});
+
 export const metadata: Metadata = {
   title: "LetsB2B | Global Networking",
   description: "Marketplace and Networking Platform for B2B Professionals",
@@ -43,7 +49,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${outfit.variable} ${inter.variable} antialiased font-inter`}
+        className={`${geistSans.variable} ${geistMono.variable} ${outfit.variable} ${inter.variable} ${instrumentSans.variable} antialiased font-inter`}
         suppressHydrationWarning
       >
         <ToastProvider>

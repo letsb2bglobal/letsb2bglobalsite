@@ -207,6 +207,51 @@ export const uploadProfileMedia = async (files: File[]): Promise<any> => {
 };
 
 /**
+ * Get onboarding profile for Preview page (step 4)
+ * URL: /api/user-profiles?filters[userId][$eq]=ID&populate=*&status=draft
+ * Returns the draft profile with all steps 1–3 data populated.
+ */
+export const getOnboardingProfileDraft = async (
+  userId: number
+): Promise<UserProfile | null> => {
+  const token = getToken();
+  if (!token) return null;
+
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://api.letsb2b.com";
+
+  try {
+    const params = new URLSearchParams({
+      "filters[userId][$eq]": String(userId),
+      populate: "*",
+      status: "draft",
+    });
+    const url = `${apiUrl}/api/user-profiles?${params.toString()}`;
+
+    const response = await fetch(url, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (!response.ok) {
+      if (response.status === 404) return null;
+      return null;
+    }
+
+    const result = await response.json();
+    const data = result.data ?? result;
+    const list = Array.isArray(data) ? data : data?.data ?? [data];
+    const profile = list[0] ?? null;
+    return profile as UserProfile | null;
+  } catch (error) {
+    console.warn("Error fetching onboarding profile draft:", error);
+    return null;
+  }
+};
+
+/**
  * Check if user profile exists for the given userId
  * URL: /api/user-profiles?filters[userId][$eq]=ID&populate=*
  */
@@ -288,7 +333,8 @@ export const getMyContexts = async (): Promise<{
     });
     if (!response.ok) {
       if (response.status === 404) return { exists: false, ownProfile: null, memberships: [] };
-      throw new Error("Failed to fetch user contexts");
+      console.warn("Failed to fetch user contexts:", response.status);
+      return { exists: false, ownProfile: null, memberships: [] };
     }
 
     const result = await response.json();
@@ -565,6 +611,71 @@ export const getProfileByDocumentId = async (
     return data.data;
   } catch (error) {
     console.error("Error fetching user profile:", error);
+    throw error;
+  }
+};
+
+/**
+ * Update user profile by numeric id (triggered from Add Additional Info button)
+ * PUT /api/user-profiles/:id
+ */
+export interface UpdateUserProfilePayload {
+  company_name?: string;
+  business_type?: string[];
+  rooms_count?: number;
+  description?: string;
+  languages?: string[];
+  website_link?: string;
+  country?: string;
+  state?: string;
+  city?: string;
+  contact_person_name?: string;
+  designation?: string;
+  email?: string;
+  phone_numbers?: string[];
+  preferred_collaborations?: string[];
+  [key: string]: unknown;
+}
+
+export const updateUserProfileById = async (
+  profileId: number,
+  data: UpdateUserProfilePayload
+): Promise<UserProfile | null> => {
+  const token = getToken();
+  if (!token) throw new Error("No authentication token found");
+
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://api.letsb2b.com";
+
+  try {
+    const url = `${apiUrl}/api/user-profiles/${profileId}`;
+    const body = JSON.stringify({ data });
+
+    const response = await fetch(url, {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body,
+    });
+
+    if (!response.ok) {
+      const text = await response.text();
+      let message = `Failed to update profile (${response.status})`;
+      try {
+        const err = JSON.parse(text);
+        message = err?.error?.message || message;
+      } catch {
+        if (text) message = text;
+      }
+      throw new Error(message);
+    }
+
+    const result = await response.json();
+    const profile = result.data ?? result;
+    return profile as UserProfile;
+  } catch (error) {
+    console.error("Error updating user profile:", error);
     throw error;
   }
 };
