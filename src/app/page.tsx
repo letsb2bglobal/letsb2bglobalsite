@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/components/ProtectedRoute"; // Using the hook
 import {
@@ -33,6 +33,7 @@ import LandingScrollTriggerRefresh from "@/components/LandingScrollTriggerRefres
 
 export default function Home() {
   const router = useRouter();
+  const pathname = usePathname();
   const user = useAuth();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [allProfiles, setAllProfiles] = useState<UserProfile[]>([]);
@@ -75,6 +76,18 @@ export default function Home() {
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Scroll to section when landing on home with a hash (e.g. from footer link on another page)
+  useEffect(() => {
+    if (typeof window === "undefined" || pathname !== "/") return;
+    const hash = window.location.hash?.replace("#", "").trim();
+    if (!hash) return;
+    const timer = setTimeout(() => {
+      const el = document.getElementById(hash);
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 200);
+    return () => clearTimeout(timer);
+  }, [pathname]);
 
   useEffect(() => {
     if (!mounted) return;
@@ -310,12 +323,12 @@ export default function Home() {
               <p className="text-base text-white/90 mt-3 max-w-xl sm:text-lg sm:mt-4">
                 Finding reliable and trusted business partners for global growth and trading.
               </p>
-              {/* Tags: hidden on mobile to reduce clutter */}
-              <div className="hidden sm:flex flex-wrap gap-2 mt-4">
+              {/* Tags: horizontal scroll on mobile, wrap on sm+ */}
+              <div className="flex sm:flex-wrap gap-2 mt-4 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-hide sm:overflow-visible sm:mx-0 sm:px-0">
                 {partnerTypes.map((t) => (
                   <span
                     key={t}
-                    className="px-3 py-1.5 rounded-full bg-white/10 text-white/90 text-xs font-semibold border border-orange-500/30"
+                    className="px-3 py-1.5 rounded-full bg-white/10 text-white/90 text-xs font-semibold border border-orange-500/30 whitespace-nowrap shrink-0"
                   >
                     {t}
                   </span>
