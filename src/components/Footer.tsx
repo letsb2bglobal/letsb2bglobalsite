@@ -23,12 +23,22 @@ const Footer = () => {
     if (href.startsWith('/#') && pathname === '/') {
       e.preventDefault();
       const id = href.replace('/#', '');
-      const el = document.getElementById(id);
-      if (el) {
-        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        // Update URL hash without reload
-        window.history.pushState(null, '', href);
-      }
+      
+      let attempts = 0;
+      const tryScroll = () => {
+        const el = document.getElementById(id);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          if (attempts < 5) {
+            attempts++;
+            setTimeout(tryScroll, 300);
+          }
+        }
+      };
+      
+      tryScroll();
+      // Update URL hash without reload
+      window.history.pushState(null, '', href);
     }
   };
 

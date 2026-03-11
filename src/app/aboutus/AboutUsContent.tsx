@@ -101,31 +101,42 @@ export default function AboutUs() {
       <section
         className="relative flex flex-col min-h-[70vh] overflow-hidden bg-[#0a0a0a]"
       >
-        {/* Gradient: deep red/orange at bottom-left, fading to dark toward top-right */}
+        {/* Background video — behind hero and green bar */}
+        <div className="absolute inset-0 z-0">
+          <video
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="auto"
+            className="h-full w-full object-cover"
+            src="/about-us-section/about_us_hero_bg.mp4"
+          />
+        </div>
+
+        {/* 70% Dark Overlay */}
+        <div className="absolute inset-0 z-[1] bg-black/70 pointer-events-none" aria-hidden />
+
+        {/* Gradient overlay for depth (matching homepage style) */}
         <div
-          className="absolute inset-0 z-0 pointer-events-none"
+          className="absolute inset-0 z-[2] pointer-events-none"
           style={{
             background: `
-              radial-gradient(ellipse 140% 120% at 0% 100%, #8b2508 0%, #a63c0a 18%, #c2410c 32%, #6b2a08 50%, rgba(20,12,8,0.9) 70%, transparent 85%),
-              #0a0a0a
-            `,
+                linear-gradient(90deg, rgba(10,10,10,0.4) 0%, transparent 60%),
+                radial-gradient(ellipse 100% 100% at 0% 100%, rgba(139,37,8,0.2) 0%, transparent 60%)
+              `,
           }}
           aria-hidden
         />
+
         {/* Subtle noise texture */}
         <div
-          className="absolute inset-0 z-0 pointer-events-none opacity-[0.03]"
+          className="absolute inset-0 z-[3] pointer-events-none opacity-[0.03]"
           style={{
             backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`,
           }}
           aria-hidden
         />
-        {/* Abstract dark shapes (right side) */}
-        <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden" aria-hidden>
-          <div className="absolute right-0 top-1/4 w-64 h-64 rounded-full border border-white/[0.04] bg-gradient-to-br from-white/[0.02] to-transparent" />
-          <div className="absolute right-[10%] top-1/3 w-48 h-48 rotate-12 border border-white/[0.03] bg-white/[0.02] rounded-3xl" />
-          <div className="absolute right-[5%] bottom-1/4 w-72 h-40 -rotate-6 border border-white/[0.04] bg-black/20 rounded-full blur-sm" />
-        </div>
 
         <div className="relative z-10 flex flex-1 min-h-0 flex-col justify-center w-full max-w-[1440px] mx-auto px-4 sm:px-5 lg:px-10 pt-24 pb-12 sm:pb-16">
           <div className="py-4 sm:py-6 max-w-2xl">
@@ -213,7 +224,7 @@ export default function AboutUs() {
                   </div>
                   <h3 className="text-xl md:text-2xl font-black mb-4 tracking-tight">Mission</h3>
                   <ul className="space-y-3">
-                    {["A trusted global tourism trade network", "Digital connection for verified Businesses", "Ethical B2B partnerships and business growth"].map((m, i) => (
+                    {["A trusted global tourism trade network", "Digital connection for verified businesses", "Ethical B2B partnerships and business growth"].map((m, i) => (
                       <li key={i} className="flex items-start gap-3 text-base text-white/90 md:text-lg">
                         <ArrowRight className="w-4 h-4 text-[#22c55e] shrink-0 mt-0.5" />
                         {m}
@@ -359,7 +370,7 @@ export default function AboutUs() {
       </SectionWrapper>
 
       {/* FAQ */}
-      <section className="py-16 lg:py-20 bg-gray-50 scroll-mt-20" id="faq">
+      <section className="py-16 lg:py-20 bg-gray-50 scroll-mt-20" id="faqs">
         <div className="w-full max-w-[1440px] mx-auto px-5 lg:px-10">
           <div className="pl-6 lg:pl-8">
             <div className="max-w-3xl mx-auto">

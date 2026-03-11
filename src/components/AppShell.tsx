@@ -28,7 +28,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className={`flex flex-col min-h-screen ${isSignupPage ? "h-screen overflow-hidden" : ""}`}>
-      {showHeader && <div className="flex-shrink-0">{showHeader}</div>}
+      {showHeader}
       <main className={`flex-grow min-h-0 ${isSignupPage ? "overflow-hidden" : ""}`}>{children}</main>
       {showFooter && <div className="flex-shrink-0">{showFooter}</div>}
     </div>

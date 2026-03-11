@@ -77,16 +77,49 @@ export default function Home() {
     setMounted(true);
   }, []);
 
-  // Scroll to section when landing on home with a hash (e.g. from footer link on another page)
+  // Scroll to section when landing on home with a hash or when hash changes
   useEffect(() => {
     if (typeof window === "undefined" || pathname !== "/") return;
-    const hash = window.location.hash?.replace("#", "").trim();
-    if (!hash) return;
-    const timer = setTimeout(() => {
-      const el = document.getElementById(hash);
-      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
-    }, 200);
-    return () => clearTimeout(timer);
+
+    const scrollByHash = () => {
+      const hash = window.location.hash?.replace("#", "").trim();
+      if (!hash) return;
+
+      let attempts = 0;
+      let lastPos = -1;
+      
+      const tryScroll = () => {
+        const el = document.getElementById(hash);
+        if (el) {
+          const headerOffset = 90; // Header height + safety margin
+          const elementPosition = el.getBoundingClientRect().top + window.pageYOffset;
+          const targetPos = elementPosition - headerOffset;
+
+          // Only scroll if the position has meaningfully changed OR it's the first few attempts
+          if (Math.abs(targetPos - lastPos) > 5 || attempts < 3) {
+            window.scrollTo({
+              top: targetPos,
+              behavior: attempts === 0 ? "auto" : "smooth" // Instant jump first, smooth later
+            });
+            lastPos = targetPos;
+          }
+          
+          if (attempts < 25) { // Poll for ~4 seconds total
+            attempts++;
+            setTimeout(tryScroll, 150);
+          }
+        } else if (attempts < 40) {
+          attempts++;
+          setTimeout(tryScroll, 100);
+        }
+      };
+
+      tryScroll();
+    };
+
+    scrollByHash();
+    window.addEventListener("hashchange", scrollByHash);
+    return () => window.removeEventListener("hashchange", scrollByHash);
   }, [pathname]);
 
   useEffect(() => {
@@ -290,7 +323,7 @@ export default function Home() {
         <section
           id="landing"
           data-section="landing"
-          className="relative -mt-20 h-screen flex flex-col bg-[#1a1625] overflow-hidden"
+          className="relative h-screen flex flex-col bg-[#1a1625] overflow-hidden"
         >
           {/* Background video — behind hero and green bar */}
           <div className="absolute inset-0 z-0">
@@ -318,34 +351,34 @@ export default function Home() {
           />
           {/* Hero content — same horizontal container as header, pt for clearance under sticky header */}
           <div className="relative z-10 flex flex-1 min-h-0 flex-col justify-center w-full max-w-[1440px] mx-auto px-4 sm:px-5 lg:px-10 pt-20">
-            <div className="py-4 sm:py-6">
-              <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 text-white font-semibold border border-white/20 rounded-full text-xs uppercase tracking-widest mb-6 shadow-lg shadow-black/10">
+            <div className="py-2 sm:py-3">
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-white/10 text-white font-semibold border border-white/20 rounded-full text-[10px] uppercase tracking-widest mb-3 shadow-lg shadow-black/10">
                 Less Noise, Pure Business
               </div>
-              <h1 className="text-3xl font-black text-white tracking-tight leading-tight sm:text-4xl md:text-5xl lg:text-6xl">
+              <h1 className="text-2xl font-black text-white tracking-tight leading-tight sm:text-4xl md:text-4xl lg:text-4xl xl:text-5xl 2xl:text-6xl">
                 Global Tourism and Hospitality
               </h1>
-              <h2 className="text-3xl font-black text-white tracking-tight leading-tight mt-0.5 sm:mt-1 sm:text-4xl md:text-5xl lg:text-6xl">
+              <h2 className="text-2xl font-black text-white tracking-tight leading-tight mt-0 sm:mt-0.5 sm:text-4xl md:text-4xl lg:text-4xl xl:text-5xl 2xl:text-6xl">
                 Trade Network
               </h2>
-              <p className="text-base text-white/90 mt-3 max-w-xl sm:text-lg sm:mt-4">
+              <p className="text-xs text-white/90 mt-1.5 max-w-xl sm:text-base sm:mt-2">
                 Finding reliable and trusted business partners for global growth and trading.
               </p>
               {/* Tags: horizontal scroll on mobile, wrap on sm+ */}
-              <div className="flex sm:flex-wrap gap-2 mt-4 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-hide sm:overflow-visible sm:mx-0 sm:px-0">
+              <div className="flex sm:flex-wrap gap-1.5 mt-2.5 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-hide sm:overflow-visible sm:mx-0 sm:px-0">
                 {partnerTypes.map((t) => (
                   <span
                     key={t}
-                    className="px-3 py-1.5 rounded-full bg-white/10 text-white/90 text-xs font-semibold border border-orange-500/30 whitespace-nowrap shrink-0"
+                    className="px-2.5 py-1 rounded-full bg-white/10 text-white/90 text-[10px] font-semibold border border-orange-500/30 whitespace-nowrap shrink-0"
                   >
                     {t}
                   </span>
                 ))}
               </div>
-              <p className="hidden sm:block text-base text-white/80 mt-4 max-w-2xl">
+              <p className="hidden sm:block text-sm text-white/80 mt-3 max-w-2xl">
                 Join our growing community and experience our industry-leading matchmaking for tourism and hospitality.
               </p>
-              <div className="flex flex-col gap-2 mt-5 sm:flex-row sm:flex-wrap sm:gap-3 sm:mt-6">
+              <div className="flex flex-col gap-2 mt-3.5 sm:flex-row sm:flex-wrap sm:gap-3 sm:mt-4">
                 <Link
                   href="/signup"
                   className="inline-flex items-center justify-center w-full sm:w-auto px-6 py-3.5 bg-white text-[#1a1625] font-bold rounded-full hover:bg-white/95 transition-colors text-sm"
@@ -359,19 +392,19 @@ export default function Home() {
                 Explore Platform
               </Link> */}
               </div>
-              <div className="flex flex-wrap gap-4 mt-4 sm:gap-6 sm:mt-6">
-                <div className="flex items-center gap-1.5 text-white/90 text-xs sm:text-sm sm:gap-2">
-                  <svg className="w-4 h-4 sm:w-5 sm:h-5 text-blue-400 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+              <div className="flex flex-wrap gap-4 mt-3 sm:gap-5 sm:mt-3.5">
+                <div className="flex items-center gap-1 text-white/90 text-[11px] sm:text-xs">
+                  <svg className="w-4 h-4 text-blue-400 shrink-0" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                   </svg>
                   <span className="font-semibold">Verified Members</span>
                 </div>
-                <div className="flex items-center gap-1.5 text-white/90 text-xs sm:text-sm sm:gap-2">
-                  <span className="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-amber-400 text-[#1a1625] flex items-center justify-center text-[10px] font-black shrink-0">0</span>
+                <div className="flex items-center gap-1 text-white/90 text-[11px] sm:text-xs">
+                  <span className="w-4 h-4 rounded-full bg-amber-400 text-[#1a1625] flex items-center justify-center text-[9px] font-black shrink-0">0</span>
                   <span className="font-semibold">Noise</span>
                 </div>
-                <div className="flex items-center gap-1.5 text-white/90 text-xs sm:text-sm sm:gap-2">
-                  <Handshake className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-400 shrink-0" strokeWidth={2} />
+                <div className="flex items-center gap-1 text-white/90 text-[11px] sm:text-xs">
+                  <Handshake className="w-4 h-4 text-emerald-400 shrink-0" strokeWidth={2} />
                   <span className="font-semibold">Pure Business</span>
                 </div>
               </div>
