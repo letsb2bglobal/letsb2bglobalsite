@@ -37,41 +37,36 @@ const ProgressCard: React.FC<ProgressCardProps> = ({ profile }) => {
 
   const progress = getProgress();
 
+  const getProgressGradient = () => {
+    if (progress >= 80) return "from-green-500 via-green-400 to-green-300";
+    if (progress >= 50) return "from-yellow-400 via-yellow-300 to-amber-200";
+    if (progress > 0) return "from-orange-500 via-orange-400 to-amber-300";
+    return "from-gray-300 via-gray-200 to-gray-100";
+  };
+
+  const getProgressSubtitle = () => {
+    if (progress >= 90) return "Your profile is fully completed";
+    if (progress >= 70) return "Your profile is almost completed";
+    if (progress >= 40) return "Your profile is halfway completed";
+    if (progress > 0) return "You’ve just started completing your profile";
+    return "Start completing your profile";
+  };
+
   return (
     <div className="flex flex-col gap-1">
       <div className="flex items-center gap-4">
-        {/* Progress Ring */}
-        <div className="relative w-12 h-12 flex items-center justify-center">
-          <svg className="w-full h-full -rotate-90">
-            <circle
-              cx="24"
-              cy="24"
-              r="20"
-              stroke="currentColor"
-              strokeWidth="4"
-              fill="transparent"
-              className="text-[#f6f2f8]"
-            />
-            <circle
-              cx="24"
-              cy="24"
-              r="20"
-              stroke="currentColor"
-              strokeWidth="4"
-              fill="transparent"
-              strokeDasharray={126}
-              strokeDashoffset={126 - (126 * progress) / 100}
-              className="text-[#6B3FA0] transition-all duration-1000"
-            />
-          </svg>
-          <span className="absolute text-[10px] font-bold text-[#6B3FA0]">
+        {/* Progress circle with light inner gradient */}
+        <div
+          className={`w-14 h-14 rounded-full p-[2px] bg-gradient-to-br ${getProgressGradient()} shadow-md`}
+        >
+          <div className="w-full h-full rounded-full bg-white/10 flex items-center justify-center text-white font-bold text-xs">
             {progress}%
-          </span>
+          </div>
         </div>
         <div className="flex flex-col">
-          <h3 className="text-xs font-bold text-gray-800">Complete Profile</h3>
-          <span className="text-[10px] text-gray-400 font-medium">
-            Stand out in the market
+          <h3 className="text-xs font-bold text-gray-800">Profile Completed</h3>
+          <span className="text-[10px] text-gray-500 font-medium">
+            {getProgressSubtitle()}
           </span>
         </div>
       </div>

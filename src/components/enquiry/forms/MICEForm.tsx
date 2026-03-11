@@ -207,7 +207,7 @@ const MICEForm = () => {
                   {...register("details.venueRequirements")}
                   className="w-4 h-4 rounded border-gray-200 text-[#6B3FA0] focus:ring-[#6B3FA0]"
                 />
-                <span className="text-[16px] font-medium text-[#000000] group-hover:text-gray-900 transition-colors">
+                <span className="md:text-[16px] text-[14px] font-medium text-[#000000] group-hover:text-gray-900 transition-colors">
                   {req}
                 </span>
               </label>
@@ -299,7 +299,7 @@ const MICEForm = () => {
                   {...register("details.technicalRequirements")}
                   className="w-4 h-4 rounded border-gray-200 text-[#6B3FA0] focus:ring-[#6B3FA0]"
                 />
-                <span className="text-[16px] font-medium text-[#000000] group-hover:text-gray-900 transition-colors">
+                <span className="md:text-[16px] text-[14px] font-medium text-[#000000] group-hover:text-gray-900 transition-colors">
                   {req}
                 </span>
               </label>
@@ -324,7 +324,7 @@ const MICEForm = () => {
                   {...register("details.foodAndBeverage")}
                   className="w-4 h-4 rounded border-gray-200 text-[#6B3FA0] focus:ring-[#6B3FA0]"
                 />
-                <span className="text-[16px] font-medium text-[#000000] group-hover:text-gray-900 transition-colors">
+                <span className="md:text-[16px] text-[14px] font-medium text-[#000000] group-hover:text-gray-900 transition-colors">
                   {item}
                 </span>
               </label>
@@ -349,7 +349,7 @@ const MICEForm = () => {
                   {...register("details.decisionStatus")}
                   className="w-4 h-4 rounded border-gray-200 text-[#6B3FA0] focus:ring-[#6B3FA0]"
                 />
-                <span className="text-[16px] font-medium text-[#000000">
+                <span className="md:text-[16px] text-[14px] font-medium text-[#000000">
                   {status}
                 </span>
               </label>
@@ -370,7 +370,7 @@ const MICEForm = () => {
                 {...register("budget.budgetType")}
                 className="w-4 h-4 rounded-full border-2 border-gray-300 text-[#6B3FA0] focus:ring-[#6B3FA0] checked:bg-[#6B3FA0]"
               />
-              <span className="text-[16px] font-medium text-gray-800">
+              <span className="md:text-[16px] text-[14px] font-medium text-gray-800">
                 Per Delegate
               </span>
             </label>
@@ -381,7 +381,7 @@ const MICEForm = () => {
                 {...register("budget.budgetType")}
                 className="w-4 h-4 rounded-full border-2 border-gray-300 text-[#6B3FA0] focus:ring-[#6B3FA0] checked:bg-[#6B3FA0]"
               />
-              <span className="text-[16px] font-medium text-gray-800">
+              <span className="md:text-[16px] text-[14px] font-medium text-gray-800">
                 Total Event
               </span>
             </label>

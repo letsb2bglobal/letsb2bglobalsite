@@ -70,14 +70,15 @@ export default function SignupHeader({ sticky = true }: { sticky?: boolean }) {
           </Link>
 
           {/* Right: Download app + Login or Profile dropdown */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             <Link
               href="/download"
-              className="flex items-center gap-2 px-4 py-2 rounded-full text-white font-semibold text-sm transition-all"
+              className="flex items-center justify-center gap-1.5 sm:gap-2 px-3 py-2 sm:px-4 rounded-full text-white font-semibold text-xs sm:text-sm transition-all shrink-0"
               style={{ background: PURPLE }}
+              aria-label="Download App"
             >
-              <Image src="/androidLogo.png" alt="" width={20} height={20} />
-              Download App
+              <Image src="/androidLogo.png" alt="" width={18} height={18} className="sm:w-5 sm:h-5 shrink-0" />
+              <span className="hidden sm:inline">Download App</span>
             </Link>
 
             {loggedIn ? (

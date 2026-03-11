@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Globe, ShieldCheck, MessageSquare, BarChart2,
   CheckCircle2, Users, Megaphone, ArrowRight,
@@ -71,7 +71,7 @@ function SectionWrapper({ children, className = '' }: { children: React.ReactNod
 
 function SectionDark({ children, className = '', id }: { children: React.ReactNode; className?: string; id?: string }) {
   return (
-    <section id={id} className={`relative bg-[#1a1625] text-white py-16 lg:py-20 ${className}`}>
+    <section id={id} className={`relative bg-[#1a1625] text-white py-16 lg:py-20 scroll-mt-24 ${className}`}>
       <div className="w-full max-w-[1440px] mx-auto px-5 lg:px-10">
         <div className="pl-6 lg:pl-8">
           {children}
@@ -82,6 +82,18 @@ function SectionDark({ children, className = '', id }: { children: React.ReactNo
 }
 
 export default function AboutUs() {
+  // Scroll to section when landing with hash (e.g. footer "Verification Policy" -> /aboutus#verification)
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const hash = window.location.hash?.replace("#", "").trim();
+    if (!hash) return;
+    const timer = setTimeout(() => {
+      const el = document.getElementById(hash);
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 200);
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
     <div className="min-h-screen bg-[#1a1625]">
 

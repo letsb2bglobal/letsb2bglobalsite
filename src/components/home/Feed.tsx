@@ -49,7 +49,7 @@ const Feed: React.FC<FeedProps> = ({ posts, isLoading }) => {
       </div>
 
       <div className="flex flex-col gap-5">
-        {isLoading && posts.length === 0 ? (
+        {isLoading ? (
           <div className="bg-white rounded-2xl border border-gray-100 p-24 text-center shadow-sm flex flex-col items-center justify-center animate-in fade-in zoom-in duration-500">
             <div className="flex flex-col items-center gap-6">
               <div className="relative">
@@ -115,20 +115,15 @@ const Feed: React.FC<FeedProps> = ({ posts, isLoading }) => {
           })
         ) : (
           <div className="bg-white rounded-2xl border border-gray-100 p-16 text-center shadow-sm flex flex-col items-center justify-center animate-in fade-in zoom-in duration-500">
-            {isLoading ? (
-              <div className="flex flex-col items-center gap-4">
-                <div className="w-12 h-12 border-4 border-purple-100 border-t-[#6B3FA0] rounded-full animate-spin"></div>
-                <p className="text-[#6B3FA0] font-black text-xs uppercase tracking-widest animate-pulse">Checking for new posts...</p>
-              </div>
-            ) : (
-              <>
-                <div className="w-20 h-20 bg-[#f6f2f8] rounded-full flex items-center justify-center mb-6 text-[#6B3FA0]">
-                   <ChevronDown size={40} strokeWidth={1} />
-                </div>
-                <h3 className="text-xl font-black text-gray-900 mb-2 uppercase tracking-tight">No posts available</h3>
-                <p className="text-gray-400 text-sm font-bold italic">Be the first to share a B2B opportunity!</p>
-              </>
-            )}
+            <div className="w-20 h-20 bg-[#f6f2f8] rounded-full flex items-center justify-center mb-6 text-[#6B3FA0]">
+              <ChevronDown size={40} strokeWidth={1} />
+            </div>
+            <h3 className="text-xl font-black text-gray-900 mb-2 uppercase tracking-tight">
+              No posts available
+            </h3>
+            <p className="text-gray-400 text-sm font-bold italic">
+              Be the first to share a B2B opportunity!
+            </p>
           </div>
         )}
       </div>

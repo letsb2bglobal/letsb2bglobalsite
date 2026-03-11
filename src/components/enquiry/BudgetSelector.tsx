@@ -26,7 +26,7 @@ const BudgetSelector = () => {
     <div>
       <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
         {/* Budget input with currency selector inline */}
-        <div className="flex h-11 w-[360px] bg-white border border-gray-200 rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-[#6B3FA0]/20 focus-within:border-[#6B3FA0]/30 transition-all">
+        <div className="flex h-11 md:w-[360px] bg-white border border-gray-200 rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-[#6B3FA0]/20 focus-within:border-[#6B3FA0]/30 transition-all">
           <Controller
             name="budget.amount"
             control={control}
