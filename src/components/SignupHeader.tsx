@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { useAuth } from '@/components/ProtectedRoute';
 import { getUser, getProfileData, isAuthenticated, clearAuthData } from '@/lib/auth';
@@ -21,10 +21,13 @@ const ACCOUNT_LINKS = [
 
 export default function SignupHeader({ sticky = true }: { sticky?: boolean }) {
   const router = useRouter();
+  const pathname = usePathname();
   const user = useAuth();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [mounted, setMounted] = useState(false);
+
+  const hideDownloadButton = pathname === '/add-additional-details';
 
   useEffect(() => {
     setMounted(true);
@@ -61,7 +64,7 @@ export default function SignupHeader({ sticky = true }: { sticky?: boolean }) {
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2">
             <Image
-              src="/letsb2b_logo_white.png"
+              src="/b2bheaderlogo1.png"
               alt="LetsB2B"
               width={120}
               height={32}
@@ -71,15 +74,17 @@ export default function SignupHeader({ sticky = true }: { sticky?: boolean }) {
 
           {/* Right: Download app + Login or Profile dropdown */}
           <div className="flex items-center gap-2 sm:gap-3">
-            <Link
-              href="/download"
-              className="flex items-center justify-center gap-1.5 sm:gap-2 px-3 py-2 sm:px-4 rounded-full text-white font-semibold text-xs sm:text-sm transition-all shrink-0"
-              style={{ background: PURPLE }}
-              aria-label="Download App"
-            >
-              <Image src="/androidLogo.png" alt="" width={18} height={18} className="sm:w-5 sm:h-5 shrink-0" />
-              <span className="hidden sm:inline">Download App</span>
-            </Link>
+            {!hideDownloadButton && (
+              <Link
+                href="/download"
+                className="flex items-center justify-center gap-1.5 sm:gap-2 px-3 py-2 sm:px-4 rounded-full text-white font-semibold text-xs sm:text-sm transition-all shrink-0"
+                style={{ background: PURPLE }}
+                aria-label="Download App"
+              >
+                <Image src="/androidLogo.png" alt="" width={18} height={18} className="sm:w-5 sm:h-5 shrink-0" />
+                <span className="hidden sm:inline">Download App</span>
+              </Link>
+            )}
 
             {loggedIn ? (
               <div className="relative" ref={dropdownRef}>

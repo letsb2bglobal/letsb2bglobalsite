@@ -68,7 +68,7 @@ const Footer = () => {
           <div className="lg:col-span-2 space-y-6">
             <Link href="/" className="inline-block">
               <Image
-                src="/letsb2b_logo_white.png"
+                src="/b2bheaderlogo2.png"
                 alt="LetsB2B - Global Tourism & Hospitality B2B Network"
                 width={200}
                 height={54}

@@ -196,7 +196,7 @@ const Header = () => {
               className="flex items-center gap-2 sm:gap-3 shrink-0 min-w-0"
             >
               <Image
-                src="/letsb2b_logo_white.png"
+                src="/b2bheaderlogo2.png"
                 alt="LetsB2B - Less Noise, Pure Business"
                 width={180}
                 height={48}

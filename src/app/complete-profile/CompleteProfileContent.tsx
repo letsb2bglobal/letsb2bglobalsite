@@ -73,8 +73,9 @@ export default function CompleteProfileContent() {
   const user = useAuth();
   const { showToast } = useToast();
   
-  // State for flow control
-  const [currentStep, setCurrentStep] = useState(1);
+  // State for flow control - check URL for step param
+  const initialStep = Number(searchParams.get("step")) || 1;
+  const [currentStep, setCurrentStep] = useState(initialStep);
   const [isLoading, setIsLoading] = useState(false);
   const [submitError, setSubmitError] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -1172,10 +1173,17 @@ export default function CompleteProfileContent() {
 
             {/* Business Added success modal */}
             {showBusinessAddedModal && (
-              <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" onClick={() => setShowBusinessAddedModal(false)}>
+              <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: "rgba(4, 2, 17, 0.62)" }} onClick={() => setShowBusinessAddedModal(false)}>
                 <div
-                  className="relative w-full max-w-md rounded-2xl bg-white p-6 sm:p-8 shadow-lg animate-in fade-in zoom-in-95 duration-200"
-                  style={{ boxShadow: "2px 5px 13px 0px #E1C0EC" }}
+                  className="relative bg-white shadow-lg animate-in fade-in zoom-in-95 duration-200"
+                  style={{ 
+                    width: "100%",
+                    maxWidth: "667px",
+                    minHeight: "246px",
+                    borderRadius: "24px",
+                    padding: "32px",
+                    boxShadow: "2px 5px 13px 0px #E1C0EC"
+                  }}
                   onClick={e => e.stopPropagation()}
                 >
                   <button
@@ -1188,13 +1196,22 @@ export default function CompleteProfileContent() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                     </svg>
                   </button>
-                  <h3 className="text-xl sm:text-2xl font-bold text-gray-900 pr-8">Business Added</h3>
-                  <p className="mt-4 text-gray-700 text-sm sm:text-base leading-relaxed">
+                  <h3 className="text-xl sm:text-2xl font-bold text-gray-900 text-center">Business Added</h3>
+                  <p 
+                    className="mt-4 text-center"
+                    style={{ 
+                      fontFamily: "'Inter Display', Inter, sans-serif",
+                      fontWeight: 400,
+                      fontSize: "16px",
+                      lineHeight: "24px",
+                      color: "#000000"
+                    }}
+                  >
                     Your business has been added!{" "}
-                    <span className="font-semibold" style={{ color: PURPLE }}>
-                      Our team will reach out to you soon.
-                    </span>{" "}
-                    In the meantime, feel free to continue with your onboarding.
+                    <span style={{ color: "#A81972" }}>Our team will reach out to you soon.</span>{" "}
+                    In the
+                    <br />
+                    meantime, feel free to continue with your onboarding.
                   </p>
                   <button
                     type="button"
