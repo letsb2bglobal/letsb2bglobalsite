@@ -3,7 +3,8 @@
 import React, { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/components/ProtectedRoute";
-import { getMyProfile } from "@/lib/profile";
+import { getMyProfile, completeOnboardingStep, getOnboardingProfileDraft, updateUserProfileById } from "@/lib/profile";
+import { uploadKYCWithData, KYCDocumentFiles } from "@/lib/kyc";
 import Image from "next/image";
 import AuthLayout from "@/components/AuthLayout";
 import SignupHeader from "@/components/SignupHeader";
@@ -51,6 +52,15 @@ const PURPLE = "#612178";
 const PURPLE_LIGHT = "#E0CCF0";   // light purple circle for inactive steps
 const PURPLE_DARK = "#8C4D9F";    // dark purple for inactive number & text
 
+const ChevronDownIcon = () => (
+  <svg className="w-4 h-4 text-gray-800 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+  </svg>
+);
+const SELECT_WRAPPER = "relative flex items-center";
+const SELECT_CHEVRON = "absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none flex items-center justify-center z-10";
+const SELECT_BASE = "w-full pl-4 pr-12 py-3 border border-gray-300 rounded-lg text-gray-800 bg-white focus:outline-none focus:border-[#612178] transition-colors appearance-none";
+
 interface FormData {
   business_type: string[];
   company_name: string;
@@ -85,6 +95,8 @@ export default function CompleteProfileContent() {
   const [cameFromAddFlow, setCameFromAddFlow] = useState(false);
   const [addBusinessForm, setAddBusinessForm] = useState({ businessName: "", description: "" });
   const [areaInputValue, setAreaInputValue] = useState("");
+  const [draftProfile, setDraftProfile] = useState<{ id: number } | null>(null);
+  const [kycFiles] = useState<KYCDocumentFiles>({});
   // Form State
   const [formData, setFormData] = useState<FormData>(initialFormData);
 
@@ -145,6 +157,44 @@ export default function CompleteProfileContent() {
     }
     initProfile();
   }, [user, router]);
+
+  // Fetch latest onboarding data when landing on Preview (step 4)
+  useEffect(() => {
+    async function loadPreviewData() {
+      if (currentStep !== 4 || !user?.id) return;
+      try {
+        const profile = await getOnboardingProfileDraft(user.id);
+        if (profile) {
+          setDraftProfile(profile as { id: number });
+          const rawTypes = profile.business_type;
+          let businessTypes: string[] = [];
+          if (Array.isArray(rawTypes)) {
+            businessTypes = rawTypes as string[];
+          } else if (typeof rawTypes === "string" && rawTypes) {
+            try {
+              const parsed = JSON.parse(rawTypes);
+              businessTypes = Array.isArray(parsed) ? parsed : [rawTypes];
+            } catch {
+              businessTypes = [rawTypes];
+            }
+          }
+            setFormData((prev) => ({
+              ...prev,
+              business_type: businessTypes,
+              company_name: String(profile.company_name ?? prev.company_name),
+              business_details:
+                ((profile as unknown as { business_details?: Record<string, unknown> }).business_details) ??
+                prev.business_details,
+              preferred_collaborations: ((profile as { preferred_collaborations?: string[] }).preferred_collaborations) ?? prev.preferred_collaborations,
+              email: String(profile.email ?? user?.email ?? prev.email),
+            }));
+        }
+      } catch (err) {
+        console.warn("Error loading preview data:", err);
+      }
+    }
+    loadPreviewData();
+  }, [currentStep, user?.id, user?.email]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -251,7 +301,57 @@ export default function CompleteProfileContent() {
     setSubmitError("");
 
     try {
-      // API disabled for now - advance steps locally
+      // Step 1 (Business Type): call onboarding-step API
+      if (step === 1 && !showPreferenceAfterAdd && formData.business_type.length > 0) {
+        await completeOnboardingStep({
+          step: 1,
+          business_type: formData.business_type,
+        });
+      }
+
+      // Step 2 (Business Information): call onboarding-step API + optional KYC upload
+      if (step === 2 && formData.company_name) {
+        await completeOnboardingStep({
+          step: 2,
+          company_name: formData.company_name,
+          business_details: formData.business_details,
+        });
+
+        // Optionally upload KYC documents + metadata from Business Information step
+        if (user?.id) {
+          const details = formData.business_details || {};
+          const yearVal = (details as any).year_of_establishment;
+          const year =
+            typeof yearVal === "number"
+              ? yearVal
+              : yearVal != null
+              ? Number(yearVal)
+              : undefined;
+
+          const gst_number = (details as any).gst_number as string | undefined;
+          const pan_number = (details as any).pan_number as string | undefined;
+
+          const hasKycData = year !== undefined || !!gst_number || !!pan_number;
+
+          if (hasKycData) {
+            await uploadKYCWithData(kycFiles, {
+              year_of_establishment: year,
+              gst_number,
+              pan_number,
+              user_profile: user.id,
+            });
+          }
+        }
+      }
+
+      // Step 3 (Preference): call onboarding-step API
+      if (step === 3 && formData.preferred_collaborations.length > 0) {
+        await completeOnboardingStep({
+          step: 3,
+          preferred_collaborations: formData.preferred_collaborations,
+        });
+      }
+
       // Add flow: Step 2 -> Step 4 (skip 3); Who Are You flow: Step 2 -> Step 3
       let nextStep = step < 4 ? step + 1 : 4;
       if (step === 2 && cameFromAddFlow) {
@@ -312,16 +412,19 @@ export default function CompleteProfileContent() {
               {errors.company_name && <p className="text-red-500 text-xs font-bold mt-1">{errors.company_name}</p>}
             </div>
             <div>
-              <select
-                value={(details.hotel_type as string) || ""}
-                onChange={(e) => updateDetails("hotel_type", e.target.value)}
-                className={`w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-800 bg-white focus:outline-none focus:border-[#612178] transition-colors ${errors.hotel_type ? "border-red-500" : ""}`}
-              >
-                <option value="">Hotel Type</option>
-                {HOTEL_TYPE_OPTIONS.map((opt) => (
-                  <option key={opt} value={opt}>{opt}</option>
-                ))}
-              </select>
+              <div className={`${SELECT_WRAPPER} ${errors.hotel_type ? "[&_select]:border-red-500" : ""}`}>
+                <span className={SELECT_CHEVRON}><ChevronDownIcon /></span>
+                <select
+                  value={(details.hotel_type as string) || ""}
+                  onChange={(e) => updateDetails("hotel_type", e.target.value)}
+                  className={`${SELECT_BASE} ${errors.hotel_type ? "border-red-500" : ""}`}
+                >
+                  <option value="">Hotel Type</option>
+                  {HOTEL_TYPE_OPTIONS.map((opt) => (
+                    <option key={opt} value={opt}>{opt}</option>
+                  ))}
+                </select>
+              </div>
               {errors.hotel_type && <p className="text-red-500 text-xs font-bold mt-1">{errors.hotel_type}</p>}
             </div>
             <div>
@@ -446,16 +549,19 @@ export default function CompleteProfileContent() {
               {errors.company_name && <p className="text-red-500 text-xs font-bold mt-1">{errors.company_name}</p>}
             </div>
             <div>
-              <select
-                value={(details.location as string) || ""}
-                onChange={(e) => updateDetails("location", e.target.value)}
-                className={`w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-800 bg-white focus:outline-none focus:border-[#612178] transition-colors ${errors.location ? "border-red-500" : ""}`}
-              >
-                <option value="">Location</option>
-                {LOCATION_OPTIONS.map((opt) => (
-                  <option key={opt} value={opt}>{opt}</option>
-                ))}
-              </select>
+              <div className={`${SELECT_WRAPPER} ${errors.location ? "[&_select]:border-red-500" : ""}`}>
+                <span className={SELECT_CHEVRON}><ChevronDownIcon /></span>
+                <select
+                  value={(details.location as string) || ""}
+                  onChange={(e) => updateDetails("location", e.target.value)}
+                  className={`${SELECT_BASE} ${errors.location ? "border-red-500" : ""}`}
+                >
+                  <option value="">Location</option>
+                  {LOCATION_OPTIONS.map((opt) => (
+                    <option key={opt} value={opt}>{opt}</option>
+                  ))}
+                </select>
+              </div>
               {errors.location && <p className="text-red-500 text-xs font-bold mt-1">{errors.location}</p>}
             </div>
             <div>
@@ -662,15 +768,28 @@ export default function CompleteProfileContent() {
     setShowPreferenceAfterAdd(true);
   };
 
-  const handlePreferenceAfterAddNext = () => {
+  const handlePreferenceAfterAddNext = async () => {
     if (formData.preferred_collaborations.length === 0) {
       setErrors({ preferred_collaborations: "Please select at least one preferred collaboration" });
       return;
     }
     setErrors({});
-    setShowPreferenceAfterAdd(false);
-    setCameFromAddFlow(true);
-    setCurrentStep(2);
+    setIsLoading(true);
+    setSubmitError("");
+    try {
+      await completeOnboardingStep({
+        step: 3,
+        preferred_collaborations: formData.preferred_collaborations,
+      });
+      setShowPreferenceAfterAdd(false);
+      setCameFromAddFlow(true);
+      setCurrentStep(4); // Go to Preview with filled details
+    } catch (error) {
+      console.error("Preference step error:", error);
+      setSubmitError(error instanceof Error ? error.message : "Failed to save preferences");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handlePreferenceAfterAddSkip = () => {
@@ -708,7 +827,7 @@ export default function CompleteProfileContent() {
               showAddBusinessModal ? (
               /* Add Your Unique Business - uses same AuthLayout card as Who Are You (no extra wrapper) */
               <div key="add-business" className="animate-in fade-in slide-in-from-bottom-2 duration-300 space-y-5">
-                    <div>
+                  <div>
                       <h3 className="text-xl sm:text-2xl font-bold text-gray-900">Add Your Unique Business</h3>
                       <p className="text-sm text-gray-600 mt-1">Enter Your Business Detail Below</p>
                     </div>
@@ -762,7 +881,7 @@ export default function CompleteProfileContent() {
                   <h3 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">Business You Are Looking For</h3>
                   <p className="text-gray-600 text-sm mt-1">Select Business you want to collaborate with</p>
                 </div>
-                <div className="grid grid-cols-2 lg:grid-cols-[repeat(4,120px)] gap-3 sm:gap-4 lg:justify-between w-full min-w-0">
+                <div className="grid grid-cols-2 lg:grid-cols-[repeat(4,120px)] gap-3 sm:gap-4 lg:gap-10 w-full min-w-0">
                   {BUSINESS_TYPES.map(type => {
                     const isSelected = formData.preferred_collaborations.includes(type);
                     return (
@@ -821,14 +940,14 @@ export default function CompleteProfileContent() {
                     <span className="text-lg">+</span> Add Your Business
                   </button>
                 </div>
-                <div className="grid grid-cols-2 lg:grid-cols-[repeat(4,120px)] gap-3 sm:gap-4 lg:justify-between w-full min-w-0">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6 w-full min-w-0">
                   {BUSINESS_TYPES.map(type => {
                     const isSelected = formData.business_type.includes(type);
                     return (
                       <div 
                         key={type}
                         onClick={() => toggleBusinessType(type)}
-                        className="w-full max-w-[160px] sm:max-w-none justify-self-center sm:justify-self-auto h-[100px] sm:h-[120px] rounded-2xl border-2 transition-all cursor-pointer flex flex-col overflow-hidden"
+                        className="w-[172px] h-[175px] justify-self-center sm:justify-self-auto rounded-2xl border-2 transition-all cursor-pointer flex flex-col overflow-hidden"
                         style={
                           isSelected
                             ? {
@@ -844,13 +963,13 @@ export default function CompleteProfileContent() {
                         }
                       >
                         {BUSINESS_TYPE_IMAGES[type] && (
-                          <div className="relative w-full flex-1 min-h-0 rounded-t-[14px] overflow-hidden">
+                          <div className="relative w-full h-[135px] rounded-t-[14px] overflow-hidden">
                             <Image
                               src={BUSINESS_TYPE_IMAGES[type]!}
                               alt={type}
                               fill
                               className="object-cover object-center"
-                              sizes="120px"
+                              sizes="172px"
                             />
                           </div>
                         )}
@@ -875,14 +994,14 @@ export default function CompleteProfileContent() {
                   <h3 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">Business You Are Looking For</h3>
                   <p className="text-gray-600 text-sm mt-1">Select Business you want to collaborate with</p>
                 </div>
-                <div className="grid grid-cols-2 lg:grid-cols-[repeat(4,120px)] gap-3 sm:gap-4 lg:justify-between w-full min-w-0">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6 w-full min-w-0">
                   {BUSINESS_TYPES.map(type => {
                     const isSelected = formData.preferred_collaborations.includes(type);
                     return (
-                      <div
+                      <div 
                         key={type}
                         onClick={() => togglePreference(type)}
-                        className="w-full max-w-[160px] sm:max-w-none justify-self-center sm:justify-self-auto h-[100px] sm:h-[120px] rounded-2xl border-2 transition-all cursor-pointer flex flex-col overflow-hidden"
+                        className="w-[172px] h-[175px] justify-self-center sm:justify-self-auto rounded-2xl border-2 transition-all cursor-pointer flex flex-col overflow-hidden"
                         style={
                           isSelected
                             ? {
@@ -898,13 +1017,13 @@ export default function CompleteProfileContent() {
                         }
                       >
                         {BUSINESS_TYPE_IMAGES[type] && (
-                          <div className="relative w-full flex-1 min-h-0 rounded-t-[14px] overflow-hidden">
+                          <div className="relative w-full h-[135px] rounded-t-[14px] overflow-hidden">
                             <Image
                               src={BUSINESS_TYPE_IMAGES[type]!}
                               alt={type}
                               fill
                               className="object-cover object-center"
-                              sizes="120px"
+                              sizes="172px"
                             />
                           </div>
                         )}
@@ -934,12 +1053,12 @@ export default function CompleteProfileContent() {
                   <div className="flex justify-start relative -mt-12 pl-4 sm:pl-6">
                     <div className="w-24 h-24 rounded-full bg-white border-4 border-white shadow-lg flex items-center justify-center overflow-hidden z-10">
                       <Image src="/profilecamera.png" alt="" width={24} height={24} className="object-contain" />
-                    </div>
                   </div>
-                </div>
-
+                      </div>
+                    </div>
+                    
                 {/* Business info - company name with Edit */}
-                <div className="pt-14 sm:pt-12 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-2 mb-4">
+                <div className="pt-3 sm:pt-3 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-2 mb-4">
                   <div className="min-w-0 flex-1">
                     <h4
                       className="break-words text-2xl sm:text-[32px] leading-tight sm:leading-[40px]"
@@ -967,7 +1086,7 @@ export default function CompleteProfileContent() {
                     >
                       {String(formData.email || (user?.email != null ? user.email : ""))}
                     </span>
-                  </div>
+                       </div>
                   <button
                     type="button"
                     onClick={() => setCurrentStep(2)}
@@ -982,7 +1101,7 @@ export default function CompleteProfileContent() {
                     </svg>
                     Edit
                   </button>
-                </div>
+                       </div>
 
                 {/* Business stats - Hotel/DMC/Restaurant details */}
                 {(formData.business_type.length > 0 || !!(formData.business_details?.hotel_type || formData.business_details?.areas_serviced)) && (
@@ -1014,24 +1133,40 @@ export default function CompleteProfileContent() {
                         <span>Capacity: {String(formData.business_details?.capacity ?? "-")}</span>
                       </>
                     )}
-                  </div>
-                )}
+                       </div>
+                    )}
 
-                {/* Business You Are Finding For - tags with x and + */}
+                {/* Business You Are Finding For - tags with Edit and + */}
                 <div className="mb-8">
-                  <p
-                    className="mb-3"
-                    style={{
-                      fontFamily: '"Inter", "Inter Display", sans-serif',
-                      fontWeight: 700,
-                      fontSize: 20,
-                      lineHeight: 1.5,
-                      letterSpacing: 0,
-                      color: '#000000',
-                    }}
-                  >
-                    Business You Are Finding For
-                  </p>
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
+                    <p
+                      className="min-w-0"
+                      style={{
+                        fontFamily: '"Inter", "Inter Display", sans-serif',
+                        fontWeight: 700,
+                        fontSize: 20,
+                        lineHeight: 1.5,
+                        letterSpacing: 0,
+                        color: '#000000',
+                      }}
+                    >
+                      Business You Are Finding For
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setCurrentStep(3)}
+                      className="inline-flex items-center justify-center gap-1.5 font-semibold text-sm shrink-0 rounded-[16px] w-full sm:w-[87.45px] h-[45px] sm:h-[44.77px]"
+                      style={{
+                        backgroundColor: '#F7E0FF',
+                        color: PURPLE,
+                      }}
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                      </svg>
+                      Edit
+                    </button>
+                  </div>
                   <div className="flex flex-wrap items-center gap-2">
                     {formData.preferred_collaborations.map((type) => (
                       <span
@@ -1047,7 +1182,7 @@ export default function CompleteProfileContent() {
                           backgroundColor: '#FDF5FF',
                         }}
                       >
-                        {type}
+                            {type}
                         <button
                           type="button"
                           onClick={() => setFormData((prev) => ({ ...prev, preferred_collaborations: prev.preferred_collaborations.filter((t) => t !== type) }))}
@@ -1058,8 +1193,8 @@ export default function CompleteProfileContent() {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                           </svg>
                         </button>
-                      </span>
-                    ))}
+                          </span>
+                        ))}
                     <button
                       type="button"
                       onClick={() => setCurrentStep(3)}
@@ -1071,9 +1206,9 @@ export default function CompleteProfileContent() {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                       </svg>
                     </button>
+                    </div>
                   </div>
-                </div>
-
+                  
                 {/* Profile completion + buttons in one row */}
                 <div
                   className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 py-6 mt-6 rounded-[24px] px-4 sm:px-6 min-w-0"
@@ -1097,12 +1232,46 @@ export default function CompleteProfileContent() {
                   <div className="flex flex-col sm:flex-row gap-3 shrink-0 w-full sm:w-auto">
                     <button
                       type="button"
-                      onClick={() => {
-                      try {
-                        sessionStorage.setItem('completeProfileFormData', JSON.stringify({ company_name: formData.company_name, business_details: formData.business_details, email: formData.email || user?.email }));
-                      } catch { /* ignore */ }
-                      router.push('/add-additional-details');
-                    }}
+                      onClick={async () => {
+                        if (!draftProfile?.id) {
+                          try {
+                            sessionStorage.setItem('completeProfileFormData', JSON.stringify({ company_name: formData.company_name, business_details: formData.business_details, email: formData.email || user?.email }));
+                          } catch { /* ignore */ }
+                          router.push('/add-additional-details');
+                          return;
+                        }
+                        setIsLoading(true);
+                        setSubmitError('');
+                        try {
+                          const details = formData.business_details || {};
+                          const rooms = details.number_of_rooms;
+                          const roomsCount = typeof rooms === 'number' ? rooms : parseInt(String(rooms || '0'), 10) || 0;
+                          const profile = await updateUserProfileById(draftProfile.id, {
+                            company_name: formData.company_name || '',
+                            business_type: formData.business_type || [],
+                            preferred_collaborations: formData.preferred_collaborations || [],
+                            rooms_count: roomsCount,
+                            description: (details.description as string) || '',
+                            languages: (details.languages as string[]) || [],
+                            website_link: (details.website as string) || '',
+                            country: (details.country as string) || '',
+                            state: (details.state as string) || '',
+                            city: (details.city as string) || '',
+                            contact_person_name: (details.contact_person as string) || '',
+                            designation: (details.designation as string) || '',
+                            email: formData.email || user?.email || '',
+                            phone_numbers: (details.phone_numbers as string[]) || [],
+                          });
+                          if (profile) {
+                            sessionStorage.setItem('addAdditionalDetailsProfile', JSON.stringify(profile));
+                          }
+                          router.push('/add-additional-details');
+                        } catch (err) {
+                          setSubmitError(err instanceof Error ? err.message : 'Failed to update profile');
+                        } finally {
+                          setIsLoading(false);
+                        }
+                      }}
                       disabled={isLoading}
                       className="inline-flex items-center justify-center gap-2 font-semibold text-sm rounded-[16px] hover:bg-gray-50 transition-all disabled:opacity-50 shrink-0 w-full sm:w-[218.6px] h-[50px]"
                       style={{
@@ -1149,23 +1318,23 @@ export default function CompleteProfileContent() {
                 />
               </div>
               <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full sm:w-auto justify-end items-stretch sm:items-center">
-                <button
+                  <button
                   onClick={handleSkip}
-                  disabled={isLoading}
+                    disabled={isLoading}
                   className="flex items-center justify-center w-full sm:w-[144.51px] h-12 sm:h-[50px] text-gray-700 font-semibold text-sm hover:opacity-90 transition-all disabled:opacity-50 rounded-2xl"
                   style={{ backgroundColor: "#E6E6E6" }}
-                >
-                  Skip
-                </button>
-                <button
+                  >
+                    Skip
+                  </button>
+                  <button
                   onClick={() => (showPreferenceAfterAdd ? handlePreferenceAfterAddNext() : submitStep())}
-                  disabled={isLoading}
+                    disabled={isLoading}
                   className="flex items-center justify-center w-full sm:w-[144.51px] h-12 sm:h-[50px] text-white font-semibold text-sm transition-all disabled:opacity-50 rounded-2xl"
                   style={{ backgroundColor: PURPLE, boxShadow: "0px 4px 10px -2px #00000040" }}
-                >
-                  {isLoading ? "PROCESSING..." : "Next"}
-                </button>
-              </div>
+                  >
+                    {isLoading ? "PROCESSING..." : "Next"}
+                  </button>
+                </div>
             </div>
             </>
             )}
@@ -1205,8 +1374,8 @@ export default function CompleteProfileContent() {
                     Continue
                   </button>
                 </div>
-              </div>
-            )}
+                </div>
+              )}
         </div>
       )}
     </AuthLayout>
