@@ -90,6 +90,53 @@ export type TradeWallCategory = typeof TRADE_WALL_CATEGORIES[number];
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://api.letsb2b.com';
 
+/**
+ * Fetch a single post by its documentId
+ * Uses direct filter first (faster), then fallback to trade-wall
+ */
+export const getPostByDocumentId = async (documentId: string): Promise<Post | null> => {
+  const token = getToken();
+  
+  // First try: direct posts endpoint with filter (faster, smaller response)
+  try {
+    const response = await fetch(`${apiUrl}/api/posts?filters[documentId][$eq]=${documentId}&populate=user_profile`, {
+      method: 'GET',
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+    });
+
+    if (response.ok) {
+      const result = await response.json();
+      const posts = result.data || [];
+      if (posts.length > 0) return posts[0];
+    }
+  } catch (error) {
+    console.error('Error fetching post by filter:', error);
+  }
+
+  // Second try: trade-wall with small page size
+  try {
+    const response = await fetch(`${apiUrl}/api/trade-wall?page=1&pageSize=20`, {
+      method: 'GET',
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+    });
+
+    if (response.ok) {
+      const result = await response.json();
+      const posts = result.data || [];
+      const post = posts.find((p: Post) => p.documentId === documentId);
+      if (post) return post;
+    }
+  } catch (error) {
+    console.error('Error fetching from trade-wall:', error);
+  }
+
+  return null;
+};
+
 export const getAllPosts = async (): Promise<PostResponse> => {
   const token = getToken();
   

@@ -33,7 +33,7 @@ import {
 } from "@/lib/profile";
 import EnquiryModal from "@/components/EnquiryModal";
 import ContactInfoModal from "@/components/ContactInfoModal";
-import { deletePost, getPostsByUserId, getTradeWallFeed, type Post } from "@/lib/posts";
+import { deletePost, getPostsByUserId, getTradeWallFeed, getPostByDocumentId, type Post } from "@/lib/posts";
 import { getOrCreateDirectThread } from "@/lib/enquiry";
 import FollowButton from "@/components/FollowButton";
 import ConnectionsModal from "@/components/ConnectionsModal";
@@ -489,35 +489,65 @@ export default function PublicProfilePage() {
     },
   ];
   useEffect(() => {
+    if (!documentId) return;
+
+    const abortController = new AbortController();
+
     const fetchProfile = async () => {
-      if (!documentId) return;
+      setLoading(true);
 
       try {
+        // Try direct profile fetch first (faster path for profile URLs)
         let data = await getProfileByDocumentId(documentId).catch(() => null);
-        // Fallback: when viewing own profile, GET /me may succeed where GET /:documentId fails
-        if (!data && user?.id) {
-          const { ownProfile } = await getMyContexts();
-          if (ownProfile?.documentId === documentId) data = ownProfile;
+        if (abortController.signal.aborted) return;
+
+        // If not found, check if it's a post documentId
+        if (!data) {
+          const post = await getPostByDocumentId(documentId);
+          if (abortController.signal.aborted) return;
+
+          if (post?.user_profile?.documentId) {
+            // It's a post, fetch the user's profile
+            data = await getProfileByDocumentId(post.user_profile.documentId).catch(() => null);
+            if (abortController.signal.aborted) return;
+          }
         }
 
-        await fetchNetworkingCounts(documentId);
-
-        if (data) {
-          setProfile(data);
-
-          if (data.userId) {
-            fetchUserPosts(data.userId);
+        // Last fallback: own profile via /me endpoint
+        if (!data) {
+          const contexts = await getMyContexts().catch(() => null);
+          if (abortController.signal.aborted) return;
+          if (contexts?.ownProfile) {
+            data = contexts.ownProfile;
           }
+        }
+
+        if (abortController.signal.aborted) return;
+
+        setProfile(data);
+        
+        if (data) {
+          // Run these in parallel - they don't depend on each other
+          Promise.all([
+            fetchNetworkingCounts(data.documentId || documentId),
+            data.userId ? fetchUserPosts(data.userId) : Promise.resolve()
+          ]);
         }
       } catch (error) {
         console.error("Error fetching public profile:", error);
       } finally {
-        setLoading(false);
+        if (!abortController.signal.aborted) {
+          setLoading(false);
+        }
       }
     };
 
     fetchProfile();
-  }, [documentId, user?.id]);
+
+    return () => {
+      abortController.abort();
+    };
+  }, [documentId]);
 
   const handleMessageClick = async () => {
     if (!user?.id || !profile?.documentId) {
@@ -537,7 +567,10 @@ export default function PublicProfilePage() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#f3f2ef]">
-        <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-[#6b2c91]" />
+        <div className="flex flex-col items-center gap-4">
+          <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-[#6b2c91]" />
+          <p className="text-sm text-gray-500 font-medium">Loading profile...</p>
+        </div>
       </div>
     );
   }
@@ -547,8 +580,9 @@ export default function PublicProfilePage() {
       <div className="min-h-screen flex items-center justify-center bg-[#f3f2ef] px-4">
         <div className="rounded-3xl border border-[#e2dbe9] bg-white p-8 text-center shadow-sm">
           <h1 className="text-2xl font-bold text-[#21172d]">Profile Not Found</h1>
+          <p className="text-gray-500 mt-2 text-sm">The profile you're looking for doesn't exist or has been removed.</p>
           <button
-            onClick={() => router.push("/")}
+            onClick={() => router.push("/home")}
             className="mt-4 rounded-full bg-[#6b2c91] px-5 py-2 text-sm font-semibold text-white transition hover:bg-[#572377]"
           >
             Back to Feed
