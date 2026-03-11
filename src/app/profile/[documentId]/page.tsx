@@ -291,7 +291,7 @@ export default function PublicProfilePage() {
 
   const [saving, setSaving] = useState(false);
 
-  const handleUpdateProfile = async (updates: any) => {
+  const handleUpdateProfile = async (updates: any): Promise<void> => {
     if (!profile?.documentId) return;
     setSaving(true);
     try {
@@ -310,11 +310,9 @@ export default function PublicProfilePage() {
 
       const updatedData = await updateUserProfile(profile.documentId, sanitizedUpdates);
       setProfile(updatedData);
-      return true;
     } catch (error) {
       console.error("Error updating profile:", error);
       alert("Failed to update profile. Please try again.");
-      return false;
     } finally {
       setSaving(false);
     }
