@@ -604,11 +604,14 @@ export const getProfileByDocumentId = async (
     });
 
     if (!response.ok) {
+      if (response.status === 404) return null;
       throw new Error("Failed to fetch user profile");
     }
 
     const data = await response.json();
-    return data.data;
+    // API may return { data: profile } (Strapi) or the profile object at top level
+    const profile = data?.data ?? data;
+    return profile && typeof profile === "object" ? profile : null;
   } catch (error) {
     console.error("Error fetching user profile:", error);
     throw error;
