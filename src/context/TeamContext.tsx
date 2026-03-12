@@ -4,7 +4,10 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { getMyContexts, UserProfile } from "@/lib/profile";
 import { getMyPermissions, MyPermissions } from "@/lib/team";
 import { useAuth } from "@/components/ProtectedRoute";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
+
+// Pages that are part of onboarding flow - don't redirect to complete-profile
+const ONBOARDING_PATHS = ['/complete-profile', '/add-additional-details', '/signup', '/signin'];
 
 export interface Workspace {
   label: string;
@@ -30,12 +33,16 @@ const TeamContext = createContext<TeamContextType | undefined>(undefined);
 export function TeamProvider({ children }: { children: ReactNode }) {
   const user = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
   const [permissions, setPermissions] = useState<MyPermissions | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   
   // Workspace states
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [activeWorkspace, setActiveWorkspace] = useState<Workspace | null>(null);
+
+  // Check if current path is an onboarding page
+  const isOnboardingPath = ONBOARDING_PATHS.some(path => pathname?.startsWith(path));
 
   const fetchPermissions = async () => {
     if (!user) {
@@ -51,7 +58,12 @@ export function TeamProvider({ children }: { children: ReactNode }) {
       const contextData = await getMyContexts();
       
       if (!contextData.exists) {
-        // 4. THE FLOW FOR NEW USERS - Redirect to complete profile
+        // Skip redirect for onboarding pages (user is still completing profile)
+        if (isOnboardingPath) {
+          setIsLoading(false);
+          return;
+        }
+        // Redirect to complete profile for other pages
         router.push("/complete-profile");
         return;
       }

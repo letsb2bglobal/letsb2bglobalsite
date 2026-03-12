@@ -18,9 +18,34 @@ function SignupContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const [step, setStep] = useState<Step>(() =>
-    searchParams.get('step') === 'form' ? 'form' : 'email'
-  );
+  const [step, setStepState] = useState<Step>(() => {
+    const urlStep = searchParams.get('step');
+    if (urlStep === 'form') return 'form';
+    if (typeof window !== 'undefined') {
+      const savedStep = localStorage.getItem('signupStep') as Step | null;
+      if (savedStep === 'form') return 'form';
+    }
+    return 'email';
+  });
+
+  const setStep = (newStep: Step) => {
+    setStepState(newStep);
+    if (typeof window !== 'undefined') {
+      if (newStep === 'email') {
+        localStorage.removeItem('signupStep');
+        // Update URL - remove step param
+        const url = new URL(window.location.href);
+        url.searchParams.delete('step');
+        window.history.replaceState({}, '', url.pathname + url.search);
+      } else {
+        localStorage.setItem('signupStep', newStep);
+        // Update URL with step parameter
+        const url = new URL(window.location.href);
+        url.searchParams.set('step', newStep);
+        window.history.replaceState({}, '', url.pathname + url.search);
+      }
+    }
+  };
   const [formData, setFormData] = useState({ username: '', email: '', password: '', confirmPassword: '' });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -77,7 +102,12 @@ function SignupContent() {
     try {
       const data = await register(formData.email.trim(), formData.password);
       setAuthData(data.jwt, data.user);
-      router.push('/complete-profile');
+      // Clear onboarding localStorage so new user starts from step 1
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('completeProfileStep');
+        localStorage.removeItem('signupStep');
+      }
+      router.push('/complete-profile?step=business-type');
     } catch (err: any) {
       const msg = err?.message || 'Registration failed';
       setErrors((prev) => ({ ...prev, password: msg }));
