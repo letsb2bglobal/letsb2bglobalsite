@@ -14,6 +14,7 @@ import {
 import Image from "next/image";
 import TrendingCard from "@/components/home/TrendingCard";
 import SuggestionsCard from "@/components/home/SuggestionsCard";
+import InsightsCard from "@/components/home/InsightsCard";
 import { useTeam } from "@/context/TeamContext";
 import {
   getPendingInvitations,
@@ -212,7 +213,7 @@ function NetworkPageContent() {
                     <button
                       key={tab.id}
                       onClick={() => handleTabChange(tab.id)}
-                      className={`px-6 py-4 text-[16px] font-medium transition-colors relative ${
+                      className={`md:px-6 px-4 py-4 text-[16px] font-medium transition-colors relative ${
                         activeTab === tab.id
                           ? "text-[#6B3FA0]"
                           : "text-gray-500 hover:text-gray-700"
@@ -252,10 +253,10 @@ function NetworkPageContent() {
                         />
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm text-gray-500">Sort by:</span>
-                      <button className="flex items-center gap-1 text-sm font-semibold text-gray-700 hover:text-[#6B3FA0]">
-                        Recently added
+                    <div className="flex items-center gap-1">
+                      <span className="text-[14px] text-[#000000]">Sort by :</span>
+                      <button className="flex items-center gap-1 text-[14px] font-medium text-[#000000] hover:text-[#6B3FA0]">
+                        Newest
                         <ChevronDown size={16} />
                       </button>
                     </div>
@@ -320,12 +321,12 @@ function NetworkPageContent() {
                 <>
                   {/* Header Bar */}
                   <div className="p-4 flex items-center justify-between border-b border-gray-50">
-                    <span className="text-[14px] font-semibold text-[#000000]">
+                    <span className="text-[14px] font-medium text-[#000000]">
                       Invitations ({invitations.length})
                     </span>
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm text-gray-500">Sort by:</span>
-                      <button className="flex items-center gap-1 text-sm font-semibold text-gray-700 hover:text-[#6B3FA0]">
+                    <div className="flex items-center gap-1">
+                      <span className="text-[14px] text-[#000000]">Sort by :</span>
+                      <button className="flex items-center gap-1 text-[14px] font-medium text-[#000000] hover:text-[#6B3FA0]">
                         Newest
                         <ChevronDown size={16} />
                       </button>
@@ -392,9 +393,9 @@ function NetworkPageContent() {
                     <span className="text-[14px] font-semibold text-[#000000]">
                       Suggestions
                     </span>
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm text-gray-500">Sort by:</span>
-                      <button className="flex items-center gap-1 text-sm font-semibold text-gray-700 hover:text-[#6B3FA0]">
+                    <div className="flex items-center gap-1">
+                      <span className="text-[14px] text-[#000000]">Sort by :</span>
+                      <button className="flex items-center gap-1 text-[14px] font-medium text-[#000000] hover:text-[#6B3FA0]">
                         Newest
                         <ChevronDown size={16} />
                       </button>
@@ -412,16 +413,23 @@ function NetworkPageContent() {
             </div>
 
             {/* Cards below main content - visible below lg (two columns) */}
-            <div className="lg:hidden grid grid-cols-2 gap-4 mt-6">
-              <TrendingCard />
-              <SuggestionsCard />
+            {/* Cards below main content - visible below lg */}
+            <div className="lg:hidden flex flex-col gap-4 mt-6">
+              {/* Stack vertically on mobile, 2-column grid on md */}
+              <div className="flex flex-col md:grid md:grid-cols-2 gap-4">
+                <TrendingCard />
+                <SuggestionsCard />
+              </div>
+              <InsightsCard />
             </div>
           </div>
 
           {/* Right Sidebar - visible from lg and up */}
+          {/* Right Sidebar - visible from lg and up */}
           <div className="hidden lg:flex lg:col-span-3 flex-col gap-4 sticky top-[80px] self-start max-h-[calc(100vh-100px)] overflow-y-auto no-scrollbar">
             <TrendingCard />
             <SuggestionsCard />
+            <InsightsCard />
           </div>
         </div>
       </main>
@@ -497,13 +505,13 @@ function ConnectionCard({ connection }: { connection: ApiConnection }) {
         </div>
 
         {/* Info */}
-        <div className="flex flex-col gap-1">
-          <h4 className="text-[15px] font-bold text-gray-900 hover:text-[#6B3FA0] cursor-pointer transition-colors">
+        <div className="flex flex-col">
+          <h4 className="text-[18px] font-medium text-[#000000] hover:text-[#6B3FA0] cursor-pointer transition-colors">
             {displayName}
           </h4>
           <div className="flex items-center gap-1.5 text-gray-500">
-            <MapPin size={14} className="shrink-0" />
-            <span className="text-[13px]">{location}</span>
+            <MapPin size={18} className="shrink-0" />
+            <span className="text-[16px] font-medium text-[#000000]">{location}</span>
           </div>
         </div>
       </div>
@@ -591,21 +599,21 @@ function InvitationCard({ invitation, onAccept, onReject }: InvitationCardProps)
   const isProcessing = acceptLoading || rejectLoading;
 
   return (
-    <div className="flex items-center justify-between p-4 hover:bg-gray-50/50 transition-colors">
-      <div className="flex items-center gap-4">
+    <div className="flex items-center justify-between p-3 md:p-4 hover:bg-gray-50/50 transition-colors gap-2 md:gap-4">
+      <div className="flex items-center gap-2 md:gap-4 min-w-0 flex-1">
         {/* Profile Image */}
-        <div className="w-14 h-14 rounded-full border border-gray-200 bg-white flex items-center justify-center overflow-hidden shrink-0">
+        <div className="w-10 h-10 md:w-14 md:h-14 rounded-full border border-gray-200 bg-white flex items-center justify-center overflow-hidden shrink-0">
           {follower?.profileImageUrl ? (
             <Image
               src={follower.profileImageUrl}
               alt={displayName}
               width={48}
               height={48}
-              className="w-12 h-12 rounded-full object-cover"
+              className="w-8 h-8 md:w-12 md:h-12 rounded-full object-cover"
             />
           ) : (
             <div 
-              className="w-12 h-12 rounded-full flex items-center justify-center text-gray-700 font-semibold text-sm"
+              className="w-8 h-8 md:w-12 md:h-12 rounded-full flex items-center justify-center text-gray-700 font-semibold text-[10px] md:text-sm"
               style={{ backgroundColor: getAvatarColor(displayName) }}
             >
               {displayName.substring(0, 2).toUpperCase()}
@@ -614,34 +622,33 @@ function InvitationCard({ invitation, onAccept, onReject }: InvitationCardProps)
         </div>
 
         {/* Info */}
-        <div className="flex flex-col gap-1">
-          <h4 className="text-[15px] font-bold text-gray-900">
+        <div className="flex flex-col min-w-0">
+          <h4 className="text-[13px] md:text-[16px] font-semibold text-gray-900 truncate">
             {displayName}
           </h4>
-          <div className="flex items-center gap-1.5 text-gray-500">
-            <MapPin size={14} className="shrink-0" />
-            <span className="text-[13px]">{location}</span>
+          <div className="flex items-center gap-1 text-gray-500">
+            <MapPin size={12} className="shrink-0 md:w-[14px] md:h-[14px]" />
+            <span className="text-[11px] md:text-[14px] text-gray-500 truncate">{location}</span>
           </div>
         </div>
       </div>
 
       {/* Actions */}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2 md:gap-4 shrink-0">
         <button 
           onClick={handleReject}
           disabled={isProcessing}
-          className="text-sm font-medium text-gray-600 hover:text-red-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+          className="text-[12px] md:text-[14px] font-medium text-gray-600 hover:text-red-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {rejectLoading && <Loader2 size={14} className="animate-spin" />}
-          {rejectLoading ? "Ignoring..." : "Ignore"}
+          {rejectLoading ? "..." : "Ignore"}
         </button>
         <button 
           onClick={handleAccept}
           disabled={isProcessing}
-          className="px-6 py-2 bg-[#6B3FA0] text-white text-sm font-semibold rounded-lg hover:bg-[#5a3590] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+          className="px-3 md:px-5 py-1.5 bg-[#6B3FA0] text-white text-[12px] md:text-[14px] font-medium rounded-md md:rounded-lg hover:bg-[#5a3590] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
         >
-          {acceptLoading && <Loader2 size={14} className="animate-spin" />}
-          {acceptLoading ? "Accepting..." : "Accept"}
+          {acceptLoading && <Loader2 size={12} className="animate-spin" />}
+          {acceptLoading ? "..." : "Accept"}
         </button>
       </div>
     </div>
@@ -668,10 +675,10 @@ function SuggestionCard({ suggestion }: { suggestion: Suggestion }) {
   };
 
   return (
-    <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 hover:bg-gray-50/50 transition-colors gap-4">
-      <div className="flex items-center gap-4">
+    <div className="flex items-center justify-between p-3 sm:p-4 hover:bg-gray-50/50 transition-colors gap-2 sm:gap-4">
+      <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-1">
         {/* Profile Image */}
-        <div className="w-14 h-14 sm:w-12 sm:h-12 rounded-full border border-gray-200 bg-white flex items-center justify-center overflow-hidden shrink-0">
+        <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border border-gray-200 bg-white flex items-center justify-center overflow-hidden shrink-0">
           {suggestion.logo ? (
             <Image
               src={suggestion.logo}
@@ -685,7 +692,7 @@ function SuggestionCard({ suggestion }: { suggestion: Suggestion }) {
             />
           ) : (
             <div 
-              className="w-full h-full rounded-full flex items-center justify-center text-white font-bold text-sm"
+              className="w-full h-full rounded-full flex items-center justify-center text-white font-bold text-[10px] sm:text-sm"
               style={{ backgroundColor: suggestion.logoColor || getAvatarColor(suggestion.name) }}
             >
               {suggestion.name.substring(0, 2).toUpperCase()}
@@ -694,22 +701,22 @@ function SuggestionCard({ suggestion }: { suggestion: Suggestion }) {
         </div>
 
         {/* Info */}
-        <div className="flex flex-col gap-0.5 min-w-0">
-          <h4 className="text-[18px] font-medium text-[#000000] truncate">
+        <div className="flex flex-col min-w-0">
+          <h4 className="text-[13px] sm:text-[15px] font-semibold text-gray-900 truncate">
             {suggestion.name}
           </h4>
-          <div className="flex items-center gap-1 text-[#000000]">
-            <MapPin size={18} className="shrink-0" />
-            <span className="text-[16px] font-medium  truncate">{suggestion.location}</span>
+          <div className="flex items-center gap-1">
+            <MapPin size={12} className="shrink-0 text-gray-400 sm:w-[14px] sm:h-[14px]" />
+            <span className="text-[11px] sm:text-[13px] text-gray-500 truncate">{suggestion.location}</span>
           </div>
         </div>
       </div>
 
       {/* Follow Button & Mutual Connections */}
-      <div className="flex flex-col items-end gap-1 pl-[66px] sm:pl-0">
+      <div className="flex flex-col items-end gap-0.5 shrink-0">
         {isFollowing ? (
           <button 
-            className="flex items-center gap-1.5 px-4 py-2 border border-gray-200 text-gray-600 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors"
+            className="flex items-center gap-1 px-2 sm:px-3 py-1 border border-gray-200 text-gray-600 text-[11px] sm:text-sm font-medium rounded-md hover:bg-gray-50 transition-colors"
             disabled
           >
             <span className="text-green-500">✓</span>
@@ -719,17 +726,17 @@ function SuggestionCard({ suggestion }: { suggestion: Suggestion }) {
           <button 
             onClick={handleFollow}
             disabled={isLoading}
-            className="flex items-center gap-1.5 px-4 py-0.5 border border-[#E0E0E0] text-[#006DCB] text-[18px] font-medium rounded-lg cursor-pointer"
+            className="flex items-center gap-1 px-2 sm:px-3 py-1 border border-[#E0E0E0] text-[#006DCB] text-[12px] sm:text-[14px] font-medium rounded-md cursor-pointer hover:bg-blue-50 transition-colors"
           >
             {isLoading ? (
-              <Loader2 size={16} className="animate-spin" />
+              <Loader2 size={12} className="animate-spin" />
             ) : (
-              <span className="text-2xl leading-none mb-1">+</span>
+              <span className="text-base sm:text-lg leading-none">+</span>
             )}
-            {isLoading ? "Following..." : "Follow"}
+            {isLoading ? "..." : "Follow"}
           </button>
         )}
-        <span className="text-[14px] text-[#676767]">
+        <span className="text-[10px] sm:text-[12px] text-gray-500">
           {suggestion.mutualConnections} Mutual Connection{suggestion.mutualConnections !== 1 ? 's' : ''}
         </span>
       </div>
