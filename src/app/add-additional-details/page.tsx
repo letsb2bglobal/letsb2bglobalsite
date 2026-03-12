@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, Suspense } from 'react';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import ProtectedRoute, { useAuth } from '@/components/ProtectedRoute';
 import { getMyProfile } from '@/lib/profile';
 import { uploadKYCWithData, KYCDocumentFiles } from '@/lib/kyc';
@@ -49,8 +49,35 @@ const formatFileSize = (bytes?: number) => {
 
 function AddAdditionalDetailsContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const user = useAuth();
-  const [activeTab, setActiveTab] = useState('company');
+  
+  // Get initial tab from URL param, then localStorage
+  const getInitialTab = () => {
+    const urlTab = searchParams.get('tab');
+    if (urlTab === 'company' || urlTab === 'business' || urlTab === 'kyc') {
+      return urlTab;
+    }
+    if (typeof window !== 'undefined') {
+      const savedTab = localStorage.getItem('additionalDetailsTab');
+      if (savedTab === 'company' || savedTab === 'business' || savedTab === 'kyc') {
+        return savedTab;
+      }
+    }
+    return 'company';
+  };
+  const [activeTab, setActiveTabState] = useState(getInitialTab);
+  
+  const setActiveTab = (tab: string) => {
+    setActiveTabState(tab);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('additionalDetailsTab', tab);
+      // Update URL with tab parameter
+      const url = new URL(window.location.href);
+      url.searchParams.set('tab', tab);
+      router.replace(url.pathname + url.search, { scroll: false });
+    }
+  };
   const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState({
     companyName: '',
@@ -84,6 +111,52 @@ function AddAdditionalDetailsContent() {
   const [additionalPhones, setAdditionalPhones] = useState<{ countryCode: string; phone: string }[]>([]);
   const [showTourismLicense, setShowTourismLicense] = useState(false);
   const [socialMediaProfiles, setSocialMediaProfiles] = useState<{ platform: string; value: string }[]>([]);
+  
+  // Cover and Profile photo state - synced with localStorage
+  const [coverPhotoPreview, setCoverPhotoPreview] = useState<string | null>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('profileCoverPhoto');
+    }
+    return null;
+  });
+  const [profilePhotoPreview, setProfilePhotoPreview] = useState<string | null>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('profileAvatarPhoto');
+    }
+    return null;
+  });
+  const coverPhotoInputRef = useRef<HTMLInputElement | null>(null);
+  const profilePhotoInputRef = useRef<HTMLInputElement | null>(null);
+
+  const handleCoverPhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const dataUrl = reader.result as string;
+        setCoverPhotoPreview(dataUrl);
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('profileCoverPhoto', dataUrl);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleProfilePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const dataUrl = reader.result as string;
+        setProfilePhotoPreview(dataUrl);
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('profileAvatarPhoto', dataUrl);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const SOCIAL_MEDIA_OPTIONS = [
     { value: '', label: 'Select Platform' },
@@ -203,13 +276,14 @@ function AddAdditionalDetailsContent() {
   }, [user]);
 
   const handleCancel = () => {
-    router.push('/home');
+    router.push('/complete-profile?step=4');
   };
 
   const handleSave = async () => {
     setSaving(true);
 
     try {
+      // Handle KYC upload for 'kyc' tab only
       if (activeTab === 'kyc' && user?.id) {
         const year =
           formData.yearOfEstablishment && !Number.isNaN(Number(formData.yearOfEstablishment))
@@ -222,7 +296,8 @@ function AddAdditionalDetailsContent() {
           !!formData.panNumber ||
           kycFiles.company_license instanceof File ||
           kycFiles.gst_certificate instanceof File ||
-          kycFiles.pan_copy instanceof File;
+          kycFiles.pan_copy instanceof File ||
+          kycFiles.tourism_license instanceof File;
 
         if (hasCoreData) {
           await uploadKYCWithData(
@@ -230,6 +305,7 @@ function AddAdditionalDetailsContent() {
               company_license: kycFiles.company_license ?? null,
               gst_certificate: kycFiles.gst_certificate ?? null,
               pan_copy: kycFiles.pan_copy ?? null,
+              tourism_license: kycFiles.tourism_license ?? null,
             },
             {
               year_of_establishment: year,
@@ -355,14 +431,54 @@ function AddAdditionalDetailsContent() {
                   <>
                     {/* Combined: Profile + Company Details */}
                     <div className="rounded-[16px] overflow-hidden bg-white shadow-sm mb-4 sm:mb-6">
-                      <div className="relative h-32 sm:h-40 w-full" style={{ backgroundColor: '#E3BFDD' }}>
-                        <button type="button" className="absolute top-3 right-3 w-10 h-10 rounded-full flex items-center justify-center overflow-hidden" style={{ backgroundColor: PURPLE }} aria-label="Edit cover">
+                      <div className="relative h-32 sm:h-40 w-full overflow-hidden" style={{ backgroundColor: '#E3BFDD' }}>
+                        {coverPhotoPreview && (
+                          <Image 
+                            src={coverPhotoPreview} 
+                            alt="Cover" 
+                            fill 
+                            className="object-cover"
+                          />
+                        )}
+                        <input
+                          ref={coverPhotoInputRef}
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={handleCoverPhotoChange}
+                        />
+                        <button 
+                          type="button" 
+                          onClick={() => coverPhotoInputRef.current?.click()}
+                          className="absolute top-3 right-3 w-10 h-10 rounded-full flex items-center justify-center overflow-hidden cursor-pointer hover:opacity-90 transition-opacity" 
+                          style={{ backgroundColor: PURPLE }} 
+                          aria-label="Edit cover"
+                        >
                           <Image src="/cover_cameralogo.png" alt="" width={20} height={20} className="object-contain" />
                         </button>
                       </div>
                       <div className="flex justify-start relative -mt-12 pl-4 sm:pl-6">
-                        <div className="w-24 h-24 rounded-full bg-white border-4 border-white shadow-lg flex items-center justify-center overflow-hidden z-10 cursor-pointer">
-                          <Image src="/profilecamera.png" alt="" width={24} height={24} className="object-contain" />
+                        <div 
+                          className="w-24 h-24 rounded-full bg-white border-4 border-white shadow-lg flex items-center justify-center overflow-hidden z-10 cursor-pointer hover:opacity-90 transition-opacity relative"
+                          onClick={() => profilePhotoInputRef.current?.click()}
+                        >
+                          {profilePhotoPreview ? (
+                            <Image 
+                              src={profilePhotoPreview} 
+                              alt="Profile" 
+                              fill 
+                              className="object-cover rounded-full"
+                            />
+                          ) : (
+                            <Image src="/profilecamera.png" alt="" width={24} height={24} className="object-contain" />
+                          )}
+                          <input
+                            ref={profilePhotoInputRef}
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={handleProfilePhotoChange}
+                          />
                         </div>
                       </div>
                       <div className="px-6 sm:px-8 pt-4 pb-6 sm:pb-8 space-y-4">
@@ -1045,7 +1161,24 @@ function AddAdditionalDetailsContent() {
                       </button>
                     ) : (
                       <div className="bg-white rounded-[16px] shadow-sm p-6 sm:p-8 space-y-4">
-                        <p className="text-base font-bold text-gray-900">Tourism License</p>
+                        <div className="flex items-center justify-between">
+                          <p className="text-base font-bold text-gray-900">Tourism License</p>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setShowTourismLicense(false);
+                              setKycFiles(prev => ({ ...prev, tourism_license: null }));
+                              setFormData(p => ({ ...p, tourismLicenseNumber: '' }));
+                              if (tourismLicenseInputRef.current) {
+                                tourismLicenseInputRef.current.value = '';
+                              }
+                            }}
+                            className="shrink-0 cursor-pointer"
+                            aria-label="Cancel tourism license"
+                          >
+                            <img src="/cancle_symbole.svg" alt="Cancel" className="w-7 h-7" />
+                          </button>
+                        </div>
                         <div className="border-2 border-dashed rounded-[8px] border-[#696969] p-6 sm:p-8 flex flex-col items-center justify-center text-center gap-4">
                           <div>
                             <p className="text-sm font-medium text-gray-600 mb-3">Upload Tourism License</p>
@@ -1122,7 +1255,16 @@ function AddAdditionalDetailsContent() {
 export default function AddAdditionalDetailsPage() {
   return (
     <ProtectedRoute>
-      <AddAdditionalDetailsContent />
+      <Suspense fallback={
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading...</p>
+          </div>
+        </div>
+      }>
+        <AddAdditionalDetailsContent />
+      </Suspense>
     </ProtectedRoute>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/components/ProtectedRoute";
 import { getMyProfile } from "@/lib/profile";
@@ -73,9 +73,55 @@ export default function CompleteProfileContent() {
   const user = useAuth();
   const { showToast } = useToast();
   
-  // State for flow control - check URL for step param
-  const initialStep = Number(searchParams.get("step")) || 1;
-  const [currentStep, setCurrentStep] = useState(initialStep);
+  // Step name mappings
+  const STEP_NAMES: Record<number, string> = {
+    1: 'business-type',
+    2: 'business-information',
+    3: 'preference',
+    4: 'preview'
+  };
+  
+  const STEP_NUMBERS: Record<string, number> = {
+    'business-type': 1,
+    'business-information': 2,
+    'preference': 3,
+    'preview': 4
+  };
+
+  // State for flow control - check URL for step param, then localStorage
+  const getInitialStep = () => {
+    const urlStep = searchParams.get("step");
+    // Support both number and name formats
+    if (urlStep) {
+      const numStep = Number(urlStep);
+      if (numStep >= 1 && numStep <= 4) return numStep;
+      if (STEP_NUMBERS[urlStep]) return STEP_NUMBERS[urlStep];
+    }
+    if (typeof window !== 'undefined') {
+      const savedStep = localStorage.getItem('completeProfileStep');
+      if (savedStep) {
+        const parsed = Number(savedStep);
+        if (parsed >= 1 && parsed <= 4) return parsed;
+      }
+    }
+    return 1;
+  };
+  const [currentStep, setCurrentStepState] = useState(getInitialStep);
+  
+  // Wrapper to persist step to localStorage and URL
+  const setCurrentStep = (step: number | ((prev: number) => number)) => {
+    setCurrentStepState((prev) => {
+      const newStep = typeof step === 'function' ? step(prev) : step;
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('completeProfileStep', String(newStep));
+        // Update URL with step name
+        const url = new URL(window.location.href);
+        url.searchParams.set('step', STEP_NAMES[newStep] || String(newStep));
+        window.history.replaceState({}, '', url.pathname + url.search);
+      }
+      return newStep;
+    });
+  };
   const [isLoading, setIsLoading] = useState(false);
   const [submitError, setSubmitError] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -86,6 +132,59 @@ export default function CompleteProfileContent() {
   const [cameFromAddFlow, setCameFromAddFlow] = useState(false);
   const [addBusinessForm, setAddBusinessForm] = useState({ businessName: "", description: "" });
   const [areaInputValue, setAreaInputValue] = useState("");
+  
+  // Cover and Profile photo state - synced with localStorage
+  const [coverPhoto, setCoverPhoto] = useState<File | null>(null);
+  const [coverPhotoPreview, setCoverPhotoPreview] = useState<string | null>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('profileCoverPhoto');
+    }
+    return null;
+  });
+  const [profilePhoto, setProfilePhoto] = useState<File | null>(null);
+  const [profilePhotoPreview, setProfilePhotoPreview] = useState<string | null>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('profileAvatarPhoto');
+    }
+    return null;
+  });
+  const coverPhotoInputRef = useRef<HTMLInputElement | null>(null);
+  const profilePhotoInputRef = useRef<HTMLInputElement | null>(null);
+
+  const handleCoverPhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setCoverPhoto(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const dataUrl = reader.result as string;
+        setCoverPhotoPreview(dataUrl);
+        // Sync to localStorage for cross-page persistence
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('profileCoverPhoto', dataUrl);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleProfilePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setProfilePhoto(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const dataUrl = reader.result as string;
+        setProfilePhotoPreview(dataUrl);
+        // Sync to localStorage for cross-page persistence
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('profileAvatarPhoto', dataUrl);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   // Form State
   const [formData, setFormData] = useState<FormData>(initialFormData);
 
@@ -263,6 +362,11 @@ export default function CompleteProfileContent() {
       if (step < 4) {
         setCurrentStep(Math.min(nextStep, 4));
       } else {
+        // Clear onboarding localStorage when profile is completed
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('completeProfileStep');
+          localStorage.removeItem('signupStep');
+        }
         showToast("Profile set up successfully", "success");
         const redirectTo = searchParams.get("redirect") || "/home";
         router.push(redirectTo);
@@ -313,16 +417,13 @@ export default function CompleteProfileContent() {
               {errors.company_name && <p className="text-red-500 text-xs font-bold mt-1">{errors.company_name}</p>}
             </div>
             <div>
-              <select
+              <input
+                type="text"
                 value={(details.hotel_type as string) || ""}
                 onChange={(e) => updateDetails("hotel_type", e.target.value)}
-                className={`w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-800 bg-white focus:outline-none focus:border-[#612178] transition-colors ${errors.hotel_type ? "border-red-500" : ""}`}
-              >
-                <option value="">Hotel Type</option>
-                {HOTEL_TYPE_OPTIONS.map((opt) => (
-                  <option key={opt} value={opt}>{opt}</option>
-                ))}
-              </select>
+                placeholder="Hotel Type"
+                className={`w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-800 placeholder-gray-400 bg-white focus:outline-none focus:border-[#612178] transition-colors ${errors.hotel_type ? "border-red-500" : ""}`}
+              />
               {errors.hotel_type && <p className="text-red-500 text-xs font-bold mt-1">{errors.hotel_type}</p>}
             </div>
             <div>
@@ -447,16 +548,13 @@ export default function CompleteProfileContent() {
               {errors.company_name && <p className="text-red-500 text-xs font-bold mt-1">{errors.company_name}</p>}
             </div>
             <div>
-              <select
+              <input
+                type="text"
                 value={(details.location as string) || ""}
                 onChange={(e) => updateDetails("location", e.target.value)}
-                className={`w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-800 bg-white focus:outline-none focus:border-[#612178] transition-colors ${errors.location ? "border-red-500" : ""}`}
-              >
-                <option value="">Location</option>
-                {LOCATION_OPTIONS.map((opt) => (
-                  <option key={opt} value={opt}>{opt}</option>
-                ))}
-              </select>
+                placeholder="Location"
+                className={`w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-800 placeholder-gray-400 bg-white focus:outline-none focus:border-[#612178] transition-colors ${errors.location ? "border-red-500" : ""}`}
+              />
               {errors.location && <p className="text-red-500 text-xs font-bold mt-1">{errors.location}</p>}
             </div>
             <div>
@@ -602,20 +700,24 @@ export default function CompleteProfileContent() {
   };
 
   const stepper = !isInitializing && (
-      <div className="flex flex-nowrap sm:flex-wrap items-center justify-between sm:justify-between w-full gap-2 sm:gap-1 overflow-x-auto scrollbar-hide -mx-2 px-2 pb-1 min-w-0">
+      <div className="flex items-center justify-center sm:justify-between w-full gap-2 sm:gap-1 min-w-0">
         {STEP_LABELS.map((label, idx) => {
           const stepNum = idx + 1;
           const effectiveStep = showAddBusinessModal ? 2 : showPreferenceAfterAdd ? 3 : currentStep;
           const isActive = effectiveStep === stepNum;
           const isCompleted = effectiveStep > stepNum;
+          
+          // On mobile, only show the active step
+          const showOnMobile = isActive;
+          
           return (
             <React.Fragment key={stepNum}>
               {idx > 0 && (
                 <span className="text-gray-400 text-sm mx-1 hidden sm:inline">&gt;</span>
               )}
-              <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+              <div className={`items-center gap-1 sm:gap-2 shrink-0 ${showOnMobile ? 'flex' : 'hidden sm:flex'}`}>
                 <span
-                  className="flex h-8 w-8 sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-full text-xs sm:text-sm font-bold transition-all duration-300"
+                  className="flex h-6 w-6 sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-full text-[10px] sm:text-sm font-bold transition-all duration-300"
                   style={
                     isActive
                       ? { backgroundColor: PURPLE, color: "white" }
@@ -627,7 +729,7 @@ export default function CompleteProfileContent() {
                   {stepNum}
                 </span>
                 <span
-                  className="text-xs sm:text-sm font-medium whitespace-nowrap"
+                  className="text-[11px] sm:text-sm font-medium whitespace-nowrap"
                   style={
                     isActive
                       ? { color: "#9b6ea8" }
@@ -721,10 +823,20 @@ export default function CompleteProfileContent() {
               showAddBusinessModal ? (
               /* Add Your Unique Business - uses same AuthLayout card as Who Are You (no extra wrapper) */
               <div key="add-business" className="animate-in fade-in slide-in-from-bottom-2 duration-300 space-y-5">
-                  <div>
+                  <div className="flex items-start justify-between">
+                    <div>
                       <h3 className="text-xl sm:text-2xl font-bold text-gray-900">Add Your Unique Business</h3>
                       <p className="text-sm text-gray-600 mt-1">Enter Your Business Detail Below</p>
                     </div>
+                    <button
+                      type="button"
+                      onClick={() => setShowAddBusinessModal(false)}
+                      className="shrink-0 cursor-pointer"
+                      aria-label="Cancel and go back"
+                    >
+                      <img src="/cancle_symbole.svg" alt="Cancel" className="w-7 h-7" />
+                    </button>
+                  </div>
 
                     <div className="space-y-4">
                       <div>
@@ -775,14 +887,14 @@ export default function CompleteProfileContent() {
                   <h3 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">Business You Are Looking For</h3>
                   <p className="text-gray-600 text-sm mt-1">Select Business you want to collaborate with</p>
                 </div>
-                <div className="grid grid-cols-2 lg:grid-cols-[repeat(4,120px)] gap-3 sm:gap-4 lg:justify-between w-full min-w-0">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 gap-y-4 sm:gap-6 lg:gap-[39.6px] w-full max-w-[320px] sm:max-w-none mx-auto sm:mx-0 justify-items-center">
                   {BUSINESS_TYPES.map(type => {
                     const isSelected = formData.preferred_collaborations.includes(type);
                     return (
                       <div
                         key={type}
                         onClick={() => togglePreference(type)}
-                        className="w-full max-w-[160px] sm:max-w-none justify-self-center sm:justify-self-auto h-[100px] sm:h-[120px] rounded-2xl border-2 transition-all cursor-pointer flex flex-col overflow-hidden"
+                        className="w-[145px] h-[155px] sm:w-[160px] sm:h-[170px] lg:w-[172px] lg:h-[181px] rounded-2xl border-2 transition-all cursor-pointer flex flex-col overflow-hidden"
                         style={
                           isSelected
                             ? {
@@ -804,12 +916,12 @@ export default function CompleteProfileContent() {
                               alt={type}
                               fill
                               className="object-cover object-center"
-                              sizes="120px"
+                              sizes="172px"
                             />
                           </div>
                         )}
-                        <div className="flex-shrink-0 flex items-center justify-center h-8 px-1.5 py-0.5">
-                          <h4 className={`font-bold text-[11px] text-center leading-tight truncate max-w-full ${isSelected ? "text-white" : "text-gray-900"}`}>{type}</h4>
+                        <div className="flex-shrink-0 flex items-center justify-center h-9 sm:h-10 px-2 py-1">
+                          <h4 className={`font-bold text-xs sm:text-sm text-center leading-tight truncate max-w-full ${isSelected ? "text-white" : "text-gray-900"}`}>{type}</h4>
                         </div>
                       </div>
                     );
@@ -834,14 +946,14 @@ export default function CompleteProfileContent() {
                     <span className="text-lg">+</span> Add Your Business
                   </button>
                 </div>
-                <div className="grid grid-cols-2 lg:grid-cols-[repeat(4,120px)] gap-3 sm:gap-4 lg:justify-between w-full min-w-0">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 gap-y-4 sm:gap-6 lg:gap-[39.6px] w-full max-w-[320px] sm:max-w-none mx-auto sm:mx-0 justify-items-center">
                   {BUSINESS_TYPES.map(type => {
                     const isSelected = formData.business_type.includes(type);
                     return (
                       <div 
                         key={type}
                         onClick={() => toggleBusinessType(type)}
-                        className="w-full max-w-[160px] sm:max-w-none justify-self-center sm:justify-self-auto h-[100px] sm:h-[120px] rounded-2xl border-2 transition-all cursor-pointer flex flex-col overflow-hidden"
+                        className="w-[145px] h-[155px] sm:w-[160px] sm:h-[170px] lg:w-[172px] lg:h-[181px] rounded-2xl border-2 transition-all cursor-pointer flex flex-col overflow-hidden"
                         style={
                           isSelected
                             ? {
@@ -863,12 +975,12 @@ export default function CompleteProfileContent() {
                               alt={type}
                               fill
                               className="object-cover object-center"
-                              sizes="120px"
+                              sizes="172px"
                             />
                           </div>
                         )}
-                        <div className="flex-shrink-0 flex items-center justify-center h-8 px-1.5 py-0.5">
-                          <h4 className={`font-bold text-[11px] text-center leading-tight truncate max-w-full ${isSelected ? "text-white" : "text-gray-900"}`}>{type}</h4>
+                        <div className="flex-shrink-0 flex items-center justify-center h-9 sm:h-10 px-2 py-1">
+                          <h4 className={`font-bold text-xs sm:text-sm text-center leading-tight truncate max-w-full ${isSelected ? "text-white" : "text-gray-900"}`}>{type}</h4>
                         </div>
                       </div>
                     )
@@ -888,14 +1000,14 @@ export default function CompleteProfileContent() {
                   <h3 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">Business You Are Looking For</h3>
                   <p className="text-gray-600 text-sm mt-1">Select Business you want to collaborate with</p>
                 </div>
-                <div className="grid grid-cols-2 lg:grid-cols-[repeat(4,120px)] gap-3 sm:gap-4 lg:justify-between w-full min-w-0">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 gap-y-4 sm:gap-6 lg:gap-[39.6px] w-full max-w-[320px] sm:max-w-none mx-auto sm:mx-0 justify-items-center">
                   {BUSINESS_TYPES.map(type => {
                     const isSelected = formData.preferred_collaborations.includes(type);
                     return (
                       <div 
                         key={type}
                         onClick={() => togglePreference(type)}
-                        className="w-full max-w-[160px] sm:max-w-none justify-self-center sm:justify-self-auto h-[100px] sm:h-[120px] rounded-2xl border-2 transition-all cursor-pointer flex flex-col overflow-hidden"
+                        className="w-[145px] h-[155px] sm:w-[160px] sm:h-[170px] lg:w-[172px] lg:h-[181px] rounded-2xl border-2 transition-all cursor-pointer flex flex-col overflow-hidden"
                         style={
                           isSelected
                             ? {
@@ -917,12 +1029,12 @@ export default function CompleteProfileContent() {
                               alt={type}
                               fill
                               className="object-cover object-center"
-                              sizes="120px"
+                              sizes="172px"
                             />
                           </div>
                         )}
-                        <div className="flex-shrink-0 flex items-center justify-center h-8 px-1.5 py-0.5">
-                          <h4 className={`font-bold text-[11px] text-center leading-tight truncate max-w-full ${isSelected ? "text-white" : "text-gray-900"}`}>{type}</h4>
+                        <div className="flex-shrink-0 flex items-center justify-center h-9 sm:h-10 px-2 py-1">
+                          <h4 className={`font-bold text-xs sm:text-sm text-center leading-tight truncate max-w-full ${isSelected ? "text-white" : "text-gray-900"}`}>{type}</h4>
                         </div>
                       </div>
                     );
@@ -939,17 +1051,60 @@ export default function CompleteProfileContent() {
 
                 {/* Profile visuals - cover banner + profile pic */}
                 <div className="mb-6">
-                  <div className="relative h-32 sm:h-40 w-full rounded-t-2xl" style={{ backgroundColor: '#E3BFDD' }}>
-                    <button type="button" className="absolute top-3 right-3 w-10 h-10 rounded-full flex items-center justify-center overflow-hidden" style={{ backgroundColor: PURPLE }} aria-label="Edit cover">
+                  <div 
+                    className="relative h-32 sm:h-40 w-full rounded-t-2xl overflow-hidden" 
+                    style={{ backgroundColor: '#E3BFDD' }}
+                  >
+                    {coverPhotoPreview && (
+                      <Image 
+                        src={coverPhotoPreview} 
+                        alt="Cover" 
+                        fill 
+                        className="object-cover"
+                      />
+                    )}
+                    <input
+                      ref={coverPhotoInputRef}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleCoverPhotoChange}
+                    />
+                    <button 
+                      type="button" 
+                      onClick={() => coverPhotoInputRef.current?.click()}
+                      className="absolute top-3 right-3 w-10 h-10 rounded-full flex items-center justify-center overflow-hidden cursor-pointer hover:opacity-90 transition-opacity" 
+                      style={{ backgroundColor: PURPLE }} 
+                      aria-label="Edit cover"
+                    >
                       <Image src="/cover_cameralogo.png" alt="" width={20} height={20} className="object-contain" />
                     </button>
                   </div>
                   <div className="flex justify-start relative -mt-12 pl-4 sm:pl-6">
-                    <div className="w-24 h-24 rounded-full bg-white border-4 border-white shadow-lg flex items-center justify-center overflow-hidden z-10">
-                      <Image src="/profilecamera.png" alt="" width={24} height={24} className="object-contain" />
-                  </div>
-                      </div>
+                    <div 
+                      className="w-24 h-24 rounded-full bg-white border-4 border-white shadow-lg flex items-center justify-center overflow-hidden z-10 cursor-pointer hover:opacity-90 transition-opacity relative"
+                      onClick={() => profilePhotoInputRef.current?.click()}
+                    >
+                      {profilePhotoPreview ? (
+                        <Image 
+                          src={profilePhotoPreview} 
+                          alt="Profile" 
+                          fill 
+                          className="object-cover rounded-full"
+                        />
+                      ) : (
+                        <Image src="/profilecamera.png" alt="" width={24} height={24} className="object-contain" />
+                      )}
+                      <input
+                        ref={profilePhotoInputRef}
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handleProfilePhotoChange}
+                      />
                     </div>
+                  </div>
+                </div>
                     
                 {/* Business info - company name with Edit */}
                 <div className="pt-14 sm:pt-12 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-2 mb-4">
@@ -1114,7 +1269,7 @@ export default function CompleteProfileContent() {
                       try {
                         sessionStorage.setItem('completeProfileFormData', JSON.stringify({ company_name: formData.company_name, business_details: formData.business_details, email: formData.email || user?.email }));
                       } catch { /* ignore */ }
-                      router.push('/add-additional-details');
+                      window.location.href = '/add-additional-details';
                     }}
                       disabled={isLoading}
                       className="inline-flex items-center justify-center gap-2 font-semibold text-sm rounded-[16px] hover:bg-gray-50 transition-all disabled:opacity-50 shrink-0 w-full sm:w-[218.6px] h-[50px]"
@@ -1163,20 +1318,20 @@ export default function CompleteProfileContent() {
               </div>
               <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full sm:w-auto justify-end items-stretch sm:items-center">
                   <button
-                  onClick={handlePrevious}
-                    disabled={isLoading || currentStep === 1}
-                  className="flex items-center justify-center w-full sm:w-[144.51px] h-12 sm:h-[50px] text-gray-700 font-semibold text-sm hover:opacity-90 transition-all disabled:opacity-50 rounded-2xl"
-                  style={{ backgroundColor: "#E6E6E6" }}
-                  >
-                    Previous
-                  </button>
-                  <button
                   onClick={() => (showPreferenceAfterAdd ? handlePreferenceAfterAddNext() : submitStep())}
                     disabled={isLoading}
-                  className="flex items-center justify-center w-full sm:w-[144.51px] h-12 sm:h-[50px] text-white font-semibold text-sm transition-all disabled:opacity-50 rounded-2xl"
+                  className="flex items-center justify-center w-full sm:w-[144.51px] h-12 sm:h-[50px] text-white font-semibold text-sm transition-all disabled:opacity-50 rounded-2xl sm:order-2"
                   style={{ backgroundColor: PURPLE, boxShadow: "0px 4px 10px -2px #00000040" }}
                   >
                     {isLoading ? "PROCESSING..." : "Next"}
+                  </button>
+                  <button
+                  onClick={handlePrevious}
+                    disabled={isLoading || currentStep === 1}
+                  className="flex items-center justify-center w-full sm:w-[144.51px] h-12 sm:h-[50px] text-gray-700 font-semibold text-sm hover:opacity-90 transition-all disabled:opacity-50 rounded-2xl sm:order-1"
+                  style={{ backgroundColor: "#E6E6E6" }}
+                  >
+                    Previous
                   </button>
                 </div>
             </div>

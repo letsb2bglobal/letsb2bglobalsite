@@ -25,10 +25,31 @@ function SigninContent() {
   const searchParams = useSearchParams();
 
   // ── Mode: login | forgot ──────────────────────────────────────────────
-  const [mode, setMode] = useState<'login' | 'forgot'>(() => {
+  const [mode, setModeState] = useState<'login' | 'forgot'>(() => {
     const s = searchParams.get('step');
-    return (s === 'forgot-email' || s === 'forgot-otp' || s === 'forgot-password') ? 'forgot' : 'login';
+    if (s === 'forgot-email' || s === 'forgot-otp' || s === 'forgot-password') return 'forgot';
+    if (typeof window !== 'undefined') {
+      const savedMode = localStorage.getItem('signinMode');
+      if (savedMode === 'forgot') return 'forgot';
+    }
+    return 'login';
   });
+
+  const setMode = (newMode: 'login' | 'forgot') => {
+    setModeState(newMode);
+    if (typeof window !== 'undefined') {
+      if (newMode === 'login') {
+        localStorage.removeItem('signinMode');
+        localStorage.removeItem('signinForgotStep');
+        // Update URL - remove step param
+        const url = new URL(window.location.href);
+        url.searchParams.delete('step');
+        window.history.replaceState({}, '', url.pathname + url.search);
+      } else {
+        localStorage.setItem('signinMode', newMode);
+      }
+    }
+  };
 
   // ── Login state ───────────────────────────────────────────────────────
   const [loginStep, setLoginStep] = useState<LoginStep>('login');
@@ -37,12 +58,34 @@ function SigninContent() {
   const [unverifiedEmail, setUnverifiedEmail] = useState('');
 
   // ── Forgot password state ─────────────────────────────────────────────
-  const [forgotStep, setForgotStep] = useState<ForgotStep>(() => {
+  const [forgotStep, setForgotStepState] = useState<ForgotStep>(() => {
     const s = searchParams.get('step');
     if (s === 'forgot-otp') return 'otp';
     if (s === 'forgot-password') return 'newPassword';
+    if (typeof window !== 'undefined') {
+      const savedStep = localStorage.getItem('signinForgotStep') as ForgotStep | null;
+      if (savedStep === 'otp' || savedStep === 'newPassword') return savedStep;
+    }
     return 'email';
   });
+
+  const setForgotStep = (step: ForgotStep) => {
+    setForgotStepState(step);
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      if (step === 'email') {
+        localStorage.removeItem('signinForgotStep');
+        url.searchParams.set('step', 'forgot-email');
+      } else if (step === 'otp') {
+        localStorage.setItem('signinForgotStep', step);
+        url.searchParams.set('step', 'forgot-otp');
+      } else if (step === 'newPassword') {
+        localStorage.setItem('signinForgotStep', step);
+        url.searchParams.set('step', 'forgot-password');
+      }
+      window.history.replaceState({}, '', url.pathname + url.search);
+    }
+  };
   const [forgotEmail, setForgotEmail] = useState('');
   const [forgotOtp, setForgotOtp] = useState('');
   const [resetToken, setResetToken] = useState('');           // kept in memory only
@@ -105,9 +148,21 @@ function SigninContent() {
       setAuthData(data.jwt, data.user);
       try {
         const profile = await checkUserProfile(data.user.id);
-        router.push(profile ? '/home' : '/complete-profile');
+        if (profile) {
+          router.push('/home');
+        } else {
+          // Clear onboarding localStorage so user starts from step 1
+          if (typeof window !== 'undefined') {
+            localStorage.removeItem('completeProfileStep');
+          }
+          router.push('/complete-profile?step=business-type');
+        }
       } catch {
-        router.push('/complete-profile');
+        // Clear onboarding localStorage so user starts from step 1
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('completeProfileStep');
+        }
+        router.push('/complete-profile?step=business-type');
       }
     } catch (err: any) {
       if (err.message === 'UNVERIFIED_EMAIL') {
