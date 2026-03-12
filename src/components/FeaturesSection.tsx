@@ -2,17 +2,7 @@
 
 import React, { useEffect, useRef } from "react";
 import { Poppins } from "next/font/google";
-import {
-  IconGlobe,
-  IconShieldCheck,
-  IconSearch,
-  IconMessage,
-  IconGrid,
-  IconClipboardList,
-  IconMapPin,
-  IconUser,
-  IconHandshake,
-} from "./FeaturesSection/FeatureIcons";
+import Image from "next/image";
 
 const poppins = Poppins({
   weight: ["400", "700"],
@@ -24,55 +14,55 @@ const FEATURES = [
     title: "Global B2B Networking",
     description:
       "Connect with verified travel & tourism businesses across India and International markets.",
-    Icon: IconGlobe,
+    image: "/our-features-section/global_networking_b2b.png",
   },
   {
     title: "Verified Trade Partners",
     description:
       "Every member goes through a verification process to ensure credibility and trust within the network.",
-    Icon: IconShieldCheck,
+    image: "/our-features-section/verified_trade_partners.png",
   },
   {
     title: "Business Enquiries",
     description:
       "Post and receive genuine B2B enquiries for accommodation, tours, transport, and tourism services.",
-    Icon: IconSearch,
+    image: "/our-features-section/bussiness_enquires.png",
   },
   {
     title: "Secure Messaging",
     description:
       "Communicate directly with verified members through private professional messaging.",
-    Icon: IconMessage,
+    image: "/our-features-section/secure_messaging.png",
   },
   {
     title: "Trade Wall",
     description:
       "Share partnership needs, destination promotions, trade opportunities, and industry announcements.",
-    Icon: IconGrid,
+    image: "/our-features-section/trade_wall.png",
   },
   {
     title: "Enquiry Management",
     description:
       "Track, manage, and respond to all enquiries from a centralized dashboard.",
-    Icon: IconClipboardList,
+    image: "/our-features-section/enquiry_management.png",
   },
   {
     title: "Global Market Access",
     description:
       "Expand your reach and connect with tourism partners across multiple markets and destinations.",
-    Icon: IconMapPin,
+    image: "/our-features-section/global_market_access.png",
   },
   {
     title: "Professional Profiles",
     description:
       "Showcase your company, services, destinations, and expertise to the global tourism trade.",
-    Icon: IconUser,
+    image: "/our-features-section/professional_profiles.png",
   },
   {
     title: "Industry Collaboration",
     description:
       "Build long-term partnerships with travel agents, DMCs, hotels, transport providers, and tourism professionals.",
-    Icon: IconHandshake,
+    image: "/our-features-section/industry_collaboration.png",
   },
 ];
 
@@ -185,21 +175,21 @@ export default function FeaturesSection() {
           <div className={`shrink-0 w-full px-4 pt-6 sm:px-5 sm:pt-8 md:pt-10 lg:px-10 lg:pt-12 text-center ${poppins.className}`}>
             <div className="relative w-full min-h-[72px] sm:min-h-[90px] md:min-h-[100px] flex items-center justify-center">
               <span
-                className="pointer-events-none select-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 font-bold text-white whitespace-nowrap text-[100px] leading-[1.1] sm:text-[140px] md:text-[160px] lg:text-[200px] lg:leading-[1.2]"
-                style={{ opacity: 0.07 }}
+                className="pointer-events-none select-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 font-bold text-white whitespace-nowrap text-[80px] leading-[1.1] sm:text-[110px] md:text-[130px] lg:text-[160px] lg:leading-[1.2]"
+                style={{ opacity: 0.05 }}
                 aria-hidden
               >
                 Features
               </span>
               <h2
-                className="relative left-0 right-0 font-bold text-white text-[40px] leading-tight sm:text-[50px] md:text-[58px] lg:text-[68px]"
+                className="relative left-0 right-0 font-bold text-white text-[32px] leading-tight sm:text-[42px] md:text-[48px] lg:text-[56px]"
               >
                 Features
               </h2>
             </div>
             <p
-              className="mx-auto mt-4 sm:mt-5 max-w-2xl text-center font-normal text-white text-lg leading-snug sm:text-xl lg:text-2xl"
-              style={{ lineHeight: "1.5" }}
+              className="mx-auto mt-4 sm:mt-5 max-w-2xl text-center font-normal text-slate-300 text-base leading-relaxed sm:text-lg lg:text-xl"
+              style={{ lineHeight: "1.6" }}
             >
               Enabling tourism partners to connect, collaborate, and trade with confidence. Built to support trusted partnerships and real business growth across global markets.
             </p>
@@ -218,13 +208,19 @@ export default function FeaturesSection() {
                     key={f.title}
                     className="flex w-[82vw] min-w-[280px] max-w-[400px] shrink-0 flex-col items-start rounded-xl sm:rounded-2xl p-5 sm:p-6 lg:p-6 text-left lg:w-[calc(33.333vw-2rem)] lg:min-w-0 lg:max-w-[360px]"
                   >
-                    <div className="flex h-10 w-10 sm:h-11 sm:w-11 lg:h-12 lg:w-12 items-center justify-start text-white">
-                      <f.Icon />
+                    <div className="flex h-12 w-12 sm:h-14 sm:w-14 lg:h-16 lg:w-16 items-center justify-start">
+                      <Image
+                        src={f.image}
+                        alt={f.title}
+                        width={64}
+                        height={64}
+                        className="object-contain"
+                      />
                     </div>
-                    <h3 className="mt-4 sm:mt-5 text-xl font-bold leading-tight text-white sm:text-2xl lg:text-[28px]">
+                    <h3 className="mt-4 sm:mt-5 text-lg font-bold leading-tight text-white sm:text-xl lg:text-2xl">
                       {f.title}
                     </h3>
-                    <p className="mt-2 sm:mt-3 text-base leading-relaxed text-white/75 sm:text-lg lg:text-[22px]">
+                    <p className="mt-2 sm:mt-3 text-sm leading-relaxed text-slate-300 sm:text-base">
                       {f.description}
                     </p>
                   </div>
