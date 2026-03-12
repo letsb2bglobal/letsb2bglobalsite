@@ -9,10 +9,11 @@ interface ConnectionsModalProps {
   isOpen: boolean;
   onClose: () => void;
   profileId: string;
+  numericProfileId?: number;
   initialTab: "followers" | "following";
 }
 
-export default function ConnectionsModal({ isOpen, onClose, profileId, initialTab }: ConnectionsModalProps) {
+export default function ConnectionsModal({ isOpen, onClose, profileId, numericProfileId, initialTab }: ConnectionsModalProps) {
   const [activeTab, setActiveTab] = useState(initialTab);
   const [list, setList] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -20,18 +21,25 @@ export default function ConnectionsModal({ isOpen, onClose, profileId, initialTa
 
   useEffect(() => {
     if (isOpen) {
+      setActiveTab(initialTab);
+    }
+  }, [isOpen, initialTab]);
+
+  useEffect(() => {
+    if (isOpen) {
       loadList();
     }
-  }, [isOpen, activeTab, verifiedOnly]);
+  }, [activeTab, verifiedOnly, isOpen, numericProfileId]);
 
   const loadList = async () => {
+    console.log('Loading list for:', { activeTab, profileId, numericProfileId });
     setLoading(true);
     try {
       if (activeTab === "followers") {
-        const data = await getFollowers(profileId, { verifiedOnly });
+        const data = await getFollowers(profileId, { verifiedOnly, numericId: numericProfileId });
         setList(data);
       } else {
-        const data = await getFollowing(profileId);
+        const data = await getFollowing(profileId, { numericId: numericProfileId });
         setList(data);
       }
     } catch (error) {
@@ -45,7 +53,7 @@ export default function ConnectionsModal({ isOpen, onClose, profileId, initialTa
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
-      <div className="bg-white rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl flex flex-col h-[80vh]">
+      <div className="bg-white rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl flex flex-col h-[80vh] mt-20">
         {/* Header */}
         <div className="px-6 py-4 border-b border-slate-50 flex items-center justify-between bg-white sticky top-0 z-10">
           <h2 className="text-xl font-black text-slate-900 uppercase tracking-tight">Networking</h2>
@@ -106,50 +114,68 @@ export default function ConnectionsModal({ isOpen, onClose, profileId, initialTa
           ) : list.length > 0 ? (
             <div className="divide-y divide-slate-50">
               {list.map((item) => {
-                const profileInRange = activeTab === "followers" ? item.follower : item.following;
-                // Double check to ensure we only show active profiles
-                if (!profileInRange) return null;
+                // Get the profile data - handle both nested attributes format and direct format
+                const rawProfile = activeTab === "followers" ? item.follower : item.following;
+                if (!rawProfile) return null;
+                
+                // Normalize the profile data (handle Strapi v4 nested structure)
+                const profileInRange = rawProfile.data?.attributes 
+                  ? { id: rawProfile.data.id, ...rawProfile.data.attributes }
+                  : rawProfile.attributes 
+                    ? { id: rawProfile.id, ...rawProfile.attributes }
+                    : rawProfile;
+
+                // Get display name (prefer full_name, fallback to company_name)
+                const displayName = profileInRange.full_name || profileInRange.company_name || "Unknown User";
+                const profileDocId = profileInRange.documentId;
 
                 return (
-                  <div key={item.id} className="p-4 hover:bg-slate-50/50 transition-colors flex items-center justify-between gap-4">
+                  <div key={item.id || item.documentId} className="p-4 hover:bg-slate-50/50 transition-colors flex items-center justify-between gap-4">
                     <Link 
-                      href={`/profile/${profileInRange.documentId}`}
+                      href={profileDocId ? `/profile/${profileDocId}` : "#"}
                       onClick={onClose}
                       className="flex items-center gap-3 flex-1 min-w-0"
                     >
                       <div className="w-12 h-12 rounded-2xl bg-slate-100 overflow-hidden shrink-0 border border-slate-100">
                         {profileInRange.profileImageUrl ? (
-                          <img src={profileInRange.profileImageUrl} alt={profileInRange.company_name} className="w-full h-full object-cover" />
+                          <img src={profileInRange.profileImageUrl} alt={displayName} className="w-full h-full object-cover" />
                         ) : (
-                          <div className="w-full h-full flex items-center justify-center bg-blue-50 text-blue-600 font-black">
-                            {profileInRange.company_name?.charAt(0).toUpperCase()}
+                          <div className="w-full h-full flex items-center justify-center bg-blue-50 text-blue-600 font-black text-sm">
+                            {displayName.substring(0, 2).toUpperCase()}
                           </div>
                         )}
                       </div>
                       <div className="min-w-0">
                         <div className="flex items-center gap-1.5">
-                          <p className="text-sm font-black text-slate-900 truncate uppercase tracking-tight">
-                            {profileInRange.company_name}
+                          <p className="text-sm font-bold text-slate-900 truncate">
+                            {displayName}
                           </p>
                           {(profileInRange.verified_badge || item.is_verified_follow) && (
-                            <svg className="w-3.5 h-3.5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                            <svg className="w-3.5 h-3.5 text-blue-600 shrink-0" fill="currentColor" viewBox="0 0 20 20">
                               <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.64.304 1.25.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                             </svg>
                           )}
                         </div>
-                        <p className="text-[10px] font-bold text-slate-400 truncate uppercase mt-0.5">
-                          {profileInRange.business_type || profileInRange.user_type} • {profileInRange.city}
+                        {(profileInRange.company_name && profileInRange.full_name) && (
+                          <p className="text-[11px] text-slate-500 truncate mt-0.5">
+                            {profileInRange.company_name}
+                          </p>
+                        )}
+                        <p className="text-[10px] text-slate-400 truncate mt-0.5">
+                          {profileInRange.business_type || profileInRange.user_type}{profileInRange.city ? ` • ${profileInRange.city}` : ''}
                         </p>
                         {item.is_mutual && (
-                          <span className="mt-1 inline-flex bg-slate-100 text-slate-500 text-[8px] font-black px-1.5 py-0.5 rounded tracking-widest uppercase">Mutual Partner</span>
+                          <span className="mt-1 inline-flex bg-slate-100 text-slate-500 text-[8px] font-bold px-1.5 py-0.5 rounded">Mutual Connection</span>
                         )}
                       </div>
                     </Link>
                     
-                    <FollowButton 
-                      targetProfileId={profileInRange.documentId} 
-                      className="px-4 py-1.5 text-[10px]"
-                    />
+                    {profileDocId && (
+                      <FollowButton 
+                        targetProfileId={profileDocId} 
+                        className="px-4 py-1.5 text-[10px]"
+                      />
+                    )}
                   </div>
                 );
               })}

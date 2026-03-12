@@ -16,7 +16,7 @@ export interface ConnectionUser {
 export interface Connection {
   id: number;
   documentId: string;
-  status: 'pending' | 'accepted' | 'rejected';
+  status: 'pending' | 'active' | 'accepted' | 'rejected';
   createdAt: string;
   updatedAt: string;
   follower?: ConnectionUser;
@@ -34,6 +34,33 @@ export interface ConnectionsResponse {
     };
   };
 }
+
+/**
+ * Normalize Strapi v4 relation data
+ * Strapi v4 can return relations in different formats depending on the query
+ */
+const normalizeRelation = (relation: any): ConnectionUser | undefined => {
+  if (!relation) return undefined;
+  
+  // If it's already flat (direct object with fields)
+  if (relation.full_name !== undefined || relation.company_name !== undefined) {
+    return relation;
+  }
+  
+  // Strapi v4 nested format: { data: { id, attributes: {...} } }
+  if (relation.data) {
+    const { id, attributes, ...rest } = relation.data;
+    return { id, ...attributes, ...rest };
+  }
+  
+  // Strapi v4 attributes format: { id, attributes: {...} }
+  if (relation.attributes) {
+    const { id, attributes, ...rest } = relation;
+    return { id, ...attributes, ...rest };
+  }
+  
+  return relation;
+};
 
 /**
  * Get pending invitations for the current user
@@ -92,7 +119,7 @@ export const acceptInvitation = async (connectionDocumentId: string): Promise<Co
       },
       body: JSON.stringify({
         data: {
-          status: 'accepted',
+          status: 'active',
         },
       }),
     });
@@ -110,9 +137,9 @@ export const acceptInvitation = async (connectionDocumentId: string): Promise<Co
 };
 
 /**
- * Reject/Ignore a connection invitation
+ * Reject/Ignore a connection invitation - deletes the connection
  */
-export const rejectInvitation = async (connectionDocumentId: string): Promise<Connection> => {
+export const rejectInvitation = async (connectionDocumentId: string): Promise<void> => {
   const token = getToken();
   
   if (!token) {
@@ -121,26 +148,17 @@ export const rejectInvitation = async (connectionDocumentId: string): Promise<Co
 
   try {
     const response = await fetch(`${apiUrl}/api/connections/${connectionDocumentId}`, {
-      method: 'PUT',
+      method: 'DELETE',
       headers: {
         'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        data: {
-          status: 'rejected',
-        },
-      }),
     });
 
     if (!response.ok) {
-      throw new Error('Failed to reject invitation');
+      throw new Error('Failed to ignore invitation');
     }
-
-    const result = await response.json();
-    return result.data;
   } catch (error) {
-    console.error('Error rejecting invitation:', error);
+    console.error('Error ignoring invitation:', error);
     throw error;
   }
 };
@@ -275,14 +293,14 @@ export const getUserConnections = async (userProfileId: number): Promise<{
     const followingParams = new URLSearchParams({
       'filters[follower][id]': String(userProfileId),
       'filters[status][$in][0]': 'pending',
-      'filters[status][$in][1]': 'accepted',
+      'filters[status][$in][1]': 'active',
       'populate[following][fields]': 'full_name,company_name,profileImageUrl',
     });
 
     // Fetch connections where user is being followed (their followers)
     const followersParams = new URLSearchParams({
       'filters[following][id]': String(userProfileId),
-      'filters[status]': 'accepted',
+      'filters[status]': 'active',
       'populate[follower][fields]': 'full_name,company_name,profileImageUrl',
     });
 
@@ -304,6 +322,54 @@ export const getUserConnections = async (userProfileId: number): Promise<{
     };
   } catch (error) {
     console.error('Error fetching user connections:', error);
+    throw error;
+  }
+};
+
+/**
+ * Get mutual connections for a user (people who follow each other)
+ * @param userProfileId - The user's profile ID
+ */
+export const getMutualConnections = async (userProfileId: number): Promise<Connection[]> => {
+  const token = getToken();
+  
+  if (!token) {
+    throw new Error('No authentication token found');
+  }
+
+  try {
+    // Build query string for mutual connections
+    const queryString = `filters[follower][id]=${userProfileId}&filters[is_mutual]=true&populate=following`;
+
+    const response = await fetch(`${apiUrl}/api/connections?${queryString}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch connections');
+    }
+
+    const result = await response.json();
+    console.log('Connections API raw response:', JSON.stringify(result, null, 2));
+    
+    // Normalize the response data
+    const connections: Connection[] = (result.data || []).map((item: any) => {
+      const connection = item.attributes ? { id: item.id, ...item.attributes } : item;
+      
+      return {
+        ...connection,
+        follower: normalizeRelation(connection.follower),
+        following: normalizeRelation(connection.following),
+      };
+    });
+    
+    return connections;
+  } catch (error) {
+    console.error('Error fetching mutual connections:', error);
     throw error;
   }
 };

@@ -91,34 +91,48 @@ export async function getConnectionStatus(followerProfileId: string, followingPr
 }
 
 /**
- * Get the list of people following a profile
- * GET /api/connections?filters[following][documentId][$eq]=ID&filters[status]=active&populate=follower
+ * Get the list of people following a profile (people who follow this user)
+ * GET /api/connections?filters[following][id]={numericId}&filters[status]=active&populate[follower][fields]=full_name,company_name,profileImageUrl
  */
-export async function getFollowers(profileId: string, options: { verifiedOnly?: boolean } = {}) {
+export async function getFollowers(profileId: string | number, options: { verifiedOnly?: boolean; numericId?: number } = {}) {
   const headers = getAuthHeaders();
-  // Filter for status=active and ensure follower relation exists
-  let url = `${API_URL}/api/connections?filters[following][documentId][$eq]=${profileId}&filters[status][$eq]=active&filters[follower][id][$notNull]=true&populate=*`;
+  
+  // Use numeric ID if provided, otherwise use documentId
+  const filterKey = options.numericId ? `filters[following][id]` : `filters[following][documentId][$eq]`;
+  const filterValue = options.numericId || profileId;
+  
+  const fields = encodeURIComponent('full_name,company_name,profileImageUrl,documentId,verified_badge,business_type,city');
+  let url = `${API_URL}/api/connections?${filterKey}=${filterValue}&filters[status]=active&populate[follower][fields]=${fields}`;
   
   if (options.verifiedOnly) {
     url += `&filters[is_verified_follow][$eq]=true`;
   }
 
+  console.log('Fetching followers with URL:', url);
   const response = await fetch(url, { method: "GET", headers });
   const data = await response.json();
+  console.log('Followers response:', data);
   return data?.data || [];
 }
 
 /**
- * Get the list of people a profile is following
- * GET /api/connections?filters[follower][documentId][$eq]=ID&filters[status]=active&populate=following
+ * Get the list of people a profile is following (who this user follows)
+ * GET /api/connections?filters[follower][id]={numericId}&filters[status]=active&populate[following][fields]=full_name,company_name,profileImageUrl
  */
-export async function getFollowing(profileId: string) {
+export async function getFollowing(profileId: string | number, options: { numericId?: number } = {}) {
   const headers = getAuthHeaders();
-  // Filter for status=active and ensure following relation exists
-  const url = `${API_URL}/api/connections?filters[follower][documentId][$eq]=${profileId}&filters[status][$eq]=active&filters[following][id][$notNull]=true&populate=*`;
   
+  // Use numeric ID if provided, otherwise use documentId
+  const filterKey = options.numericId ? `filters[follower][id]` : `filters[follower][documentId][$eq]`;
+  const filterValue = options.numericId || profileId;
+  
+  const fields = encodeURIComponent('full_name,company_name,profileImageUrl,documentId,verified_badge,business_type,city');
+  const url = `${API_URL}/api/connections?${filterKey}=${filterValue}&filters[status]=active&populate[following][fields]=${fields}`;
+  
+  console.log('Fetching following with URL:', url);
   const response = await fetch(url, { method: "GET", headers });
   const data = await response.json();
+  console.log('Following response:', data);
   return data?.data || [];
 }
 
@@ -138,12 +152,24 @@ export async function checkMutualStatus(followerId: string, followingId: string)
 /**
  * Get real-time accurate counts from the connections collection meta
  */
-export async function getNetworkingCounts(profileId: string) {
+export async function getNetworkingCounts(profileId: string, numericId?: number) {
   const headers = getAuthHeaders();
   
-  // Use fields=[id] and pageSize=1 to get ONLY metadata total with minimal payload
-  const followersUrl = `${API_URL}/api/connections?filters[following][documentId][$eq]=${profileId}&filters[status][$eq]=active&filters[follower][id][$notNull]=true&pagination[pageSize]=1&fields[0]=id`;
-  const followingUrl = `${API_URL}/api/connections?filters[follower][documentId][$eq]=${profileId}&filters[status][$eq]=active&filters[following][id][$notNull]=true&pagination[pageSize]=1&fields[0]=id`;
+  // Use numeric ID if provided for more reliable filtering
+  let followersUrl: string;
+  let followingUrl: string;
+  
+  if (numericId) {
+    // Use numeric ID - more reliable
+    followersUrl = `${API_URL}/api/connections?filters[following][id]=${numericId}&filters[status]=active&pagination[pageSize]=1&fields[0]=id`;
+    followingUrl = `${API_URL}/api/connections?filters[follower][id]=${numericId}&filters[status]=active&pagination[pageSize]=1&fields[0]=id`;
+  } else {
+    // Fallback to documentId
+    followersUrl = `${API_URL}/api/connections?filters[following][documentId][$eq]=${profileId}&filters[status][$eq]=active&filters[follower][id][$notNull]=true&pagination[pageSize]=1&fields[0]=id`;
+    followingUrl = `${API_URL}/api/connections?filters[follower][documentId][$eq]=${profileId}&filters[status][$eq]=active&filters[following][id][$notNull]=true&pagination[pageSize]=1&fields[0]=id`;
+  }
+
+  console.log('Fetching networking counts:', { followersUrl, followingUrl });
 
   try {
     const [followersRes, followingRes] = await Promise.all([
@@ -155,6 +181,8 @@ export async function getNetworkingCounts(profileId: string) {
       followersRes.json(),
       followingRes.json()
     ]);
+
+    console.log('Networking counts response:', { followersData, followingData });
 
     return {
       followers: followersData?.meta?.pagination?.total || 0,
