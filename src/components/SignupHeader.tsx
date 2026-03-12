@@ -64,11 +64,7 @@ export default function SignupHeader({ sticky = true }: { sticky?: boolean }) {
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2">
             <Image
-<<<<<<< HEAD
-              src="/letsb2b_logo2.jpeg"
-=======
               src="/b2bheaderlogo1.png"
->>>>>>> origin/prithvi
               alt="LetsB2B"
               width={120}
               height={32}
