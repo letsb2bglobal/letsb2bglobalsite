@@ -80,6 +80,17 @@ export const uploadKYCWithData = async (
 
   formData.append("data", JSON.stringify(data));
 
+  // Debug logging
+  console.log("=== KYC Upload Debug ===");
+  console.log("API URL:", `${API_URL}/api/kyc-documents/upload`);
+  console.log("Data being sent:", data);
+  console.log("Files:", {
+    company_license: files.company_license?.name,
+    gst_certificate: files.gst_certificate?.name,
+    pan_copy: files.pan_copy?.name,
+    tourism_license: files.tourism_license?.name,
+  });
+
   const response = await fetch(`${API_URL}/api/kyc-documents/upload`, {
     method: "POST",
     headers: {
@@ -89,16 +100,24 @@ export const uploadKYCWithData = async (
     body: formData,
   });
 
+  // Debug response
+  console.log("Response status:", response.status);
+  console.log("Response ok:", response.ok);
+
   if (!response.ok) {
     let message = "Failed to upload KYC documents";
+    let errorDetails = null;
     try {
-      const errorData = await response.json();
-      message = errorData?.error?.message || message;
+      errorDetails = await response.json();
+      console.log("Error response:", errorDetails);
+      message = errorDetails?.error?.message || message;
     } catch {
-      // ignore JSON parse errors, keep default message
+      console.log("Could not parse error response");
     }
     throw new Error(message);
   }
 
-  return response.json();
+  const result = await response.json();
+  console.log("Success response:", result);
+  return result;
 };

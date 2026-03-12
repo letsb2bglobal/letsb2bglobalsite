@@ -887,14 +887,14 @@ export default function CompleteProfileContent() {
                   <h3 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">Business You Are Looking For</h3>
                   <p className="text-gray-600 text-sm mt-1">Select Business you want to collaborate with</p>
                 </div>
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-[39.6px] w-full min-w-0 justify-items-center lg:justify-items-start">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 gap-y-4 sm:gap-6 lg:gap-[39.6px] w-full max-w-[320px] sm:max-w-none mx-auto sm:mx-0 justify-items-center">
                   {BUSINESS_TYPES.map(type => {
                     const isSelected = formData.preferred_collaborations.includes(type);
                     return (
                       <div
                         key={type}
                         onClick={() => togglePreference(type)}
-                        className="w-[140px] h-[150px] sm:w-[160px] sm:h-[170px] lg:w-[172px] lg:h-[181px] rounded-2xl border-2 transition-all cursor-pointer flex flex-col overflow-hidden"
+                        className="w-[145px] h-[155px] sm:w-[160px] sm:h-[170px] lg:w-[172px] lg:h-[181px] rounded-2xl border-2 transition-all cursor-pointer flex flex-col overflow-hidden"
                         style={
                           isSelected
                             ? {
@@ -946,14 +946,14 @@ export default function CompleteProfileContent() {
                     <span className="text-lg">+</span> Add Your Business
                   </button>
                 </div>
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-[39.6px] w-full min-w-0 justify-items-center lg:justify-items-start">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 gap-y-4 sm:gap-6 lg:gap-[39.6px] w-full max-w-[320px] sm:max-w-none mx-auto sm:mx-0 justify-items-center">
                   {BUSINESS_TYPES.map(type => {
                     const isSelected = formData.business_type.includes(type);
                     return (
                       <div 
                         key={type}
                         onClick={() => toggleBusinessType(type)}
-                        className="w-[140px] h-[150px] sm:w-[160px] sm:h-[170px] lg:w-[172px] lg:h-[181px] rounded-2xl border-2 transition-all cursor-pointer flex flex-col overflow-hidden"
+                        className="w-[145px] h-[155px] sm:w-[160px] sm:h-[170px] lg:w-[172px] lg:h-[181px] rounded-2xl border-2 transition-all cursor-pointer flex flex-col overflow-hidden"
                         style={
                           isSelected
                             ? {
@@ -1000,14 +1000,14 @@ export default function CompleteProfileContent() {
                   <h3 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">Business You Are Looking For</h3>
                   <p className="text-gray-600 text-sm mt-1">Select Business you want to collaborate with</p>
                 </div>
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-[39.6px] w-full min-w-0 justify-items-center lg:justify-items-start">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 gap-y-4 sm:gap-6 lg:gap-[39.6px] w-full max-w-[320px] sm:max-w-none mx-auto sm:mx-0 justify-items-center">
                   {BUSINESS_TYPES.map(type => {
                     const isSelected = formData.preferred_collaborations.includes(type);
                     return (
                       <div 
                         key={type}
                         onClick={() => togglePreference(type)}
-                        className="w-[140px] h-[150px] sm:w-[160px] sm:h-[170px] lg:w-[172px] lg:h-[181px] rounded-2xl border-2 transition-all cursor-pointer flex flex-col overflow-hidden"
+                        className="w-[145px] h-[155px] sm:w-[160px] sm:h-[170px] lg:w-[172px] lg:h-[181px] rounded-2xl border-2 transition-all cursor-pointer flex flex-col overflow-hidden"
                         style={
                           isSelected
                             ? {
