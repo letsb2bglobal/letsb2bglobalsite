@@ -203,7 +203,7 @@ function AddAdditionalDetailsContent() {
   }, [user]);
 
   const handleCancel = () => {
-    router.push('/home');
+    router.push('/complete-profile?step=4');
   };
 
   const handleSave = async () => {

@@ -313,16 +313,13 @@ export default function CompleteProfileContent() {
               {errors.company_name && <p className="text-red-500 text-xs font-bold mt-1">{errors.company_name}</p>}
             </div>
             <div>
-              <select
+              <input
+                type="text"
                 value={(details.hotel_type as string) || ""}
                 onChange={(e) => updateDetails("hotel_type", e.target.value)}
-                className={`w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-800 bg-white focus:outline-none focus:border-[#612178] transition-colors ${errors.hotel_type ? "border-red-500" : ""}`}
-              >
-                <option value="">Hotel Type</option>
-                {HOTEL_TYPE_OPTIONS.map((opt) => (
-                  <option key={opt} value={opt}>{opt}</option>
-                ))}
-              </select>
+                placeholder="Hotel Type"
+                className={`w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-800 placeholder-gray-400 bg-white focus:outline-none focus:border-[#612178] transition-colors ${errors.hotel_type ? "border-red-500" : ""}`}
+              />
               {errors.hotel_type && <p className="text-red-500 text-xs font-bold mt-1">{errors.hotel_type}</p>}
             </div>
             <div>
@@ -447,16 +444,13 @@ export default function CompleteProfileContent() {
               {errors.company_name && <p className="text-red-500 text-xs font-bold mt-1">{errors.company_name}</p>}
             </div>
             <div>
-              <select
+              <input
+                type="text"
                 value={(details.location as string) || ""}
                 onChange={(e) => updateDetails("location", e.target.value)}
-                className={`w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-800 bg-white focus:outline-none focus:border-[#612178] transition-colors ${errors.location ? "border-red-500" : ""}`}
-              >
-                <option value="">Location</option>
-                {LOCATION_OPTIONS.map((opt) => (
-                  <option key={opt} value={opt}>{opt}</option>
-                ))}
-              </select>
+                placeholder="Location"
+                className={`w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-800 placeholder-gray-400 bg-white focus:outline-none focus:border-[#612178] transition-colors ${errors.location ? "border-red-500" : ""}`}
+              />
               {errors.location && <p className="text-red-500 text-xs font-bold mt-1">{errors.location}</p>}
             </div>
             <div>
@@ -721,10 +715,20 @@ export default function CompleteProfileContent() {
               showAddBusinessModal ? (
               /* Add Your Unique Business - uses same AuthLayout card as Who Are You (no extra wrapper) */
               <div key="add-business" className="animate-in fade-in slide-in-from-bottom-2 duration-300 space-y-5">
-                  <div>
+                  <div className="flex items-start justify-between">
+                    <div>
                       <h3 className="text-xl sm:text-2xl font-bold text-gray-900">Add Your Unique Business</h3>
                       <p className="text-sm text-gray-600 mt-1">Enter Your Business Detail Below</p>
                     </div>
+                    <button
+                      type="button"
+                      onClick={() => setShowAddBusinessModal(false)}
+                      className="shrink-0 cursor-pointer"
+                      aria-label="Cancel and go back"
+                    >
+                      <img src="/cancle_symbole.svg" alt="Cancel" className="w-7 h-7" />
+                    </button>
+                  </div>
 
                     <div className="space-y-4">
                       <div>
