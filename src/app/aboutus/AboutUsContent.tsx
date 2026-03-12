@@ -61,9 +61,7 @@ function SectionWrapper({ children, className = '' }: { children: React.ReactNod
     <section className={`relative bg-white border-t-[3px] border-[#22c55e] py-16 lg:py-20 ${className}`}>
       <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-[#e91e8c]" aria-hidden="true" />
       <div className="w-full max-w-[1440px] mx-auto px-5 lg:px-10">
-        <div className="pl-6 lg:pl-8">
-          {children}
-        </div>
+        {children}
       </div>
     </section>
   );
@@ -73,9 +71,7 @@ function SectionDark({ children, className = '', id }: { children: React.ReactNo
   return (
     <section id={id} className={`relative bg-[#1a1625] text-white py-16 lg:py-20 scroll-mt-24 ${className}`}>
       <div className="w-full max-w-[1440px] mx-auto px-5 lg:px-10">
-        <div className="pl-6 lg:pl-8">
-          {children}
-        </div>
+        {children}
       </div>
     </section>
   );
@@ -206,32 +202,30 @@ export default function AboutUs() {
       {/* Vision & Mission */}
       <section className="relative bg-gray-50 py-16 lg:py-20">
         <div className="w-full max-w-[1440px] mx-auto px-5 lg:px-10">
-          <div className="pl-6 lg:pl-8">
-            <div className="max-w-5xl mx-auto">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div className="bg-white rounded-2xl p-8 lg:p-10 border border-gray-200 hover:shadow-xl transition-shadow">
-                  <div className="w-12 h-12 bg-[#6B3FA0] rounded-2xl flex items-center justify-center mb-6">
-                    <Star className="w-6 h-6 text-white" />
-                  </div>
-                  <h3 className="text-xl md:text-2xl font-black text-gray-900 mb-4 tracking-tight">Vision</h3>
-                  <p className="text-base text-gray-600 leading-relaxed md:text-lg">
-                    To become the <strong>most trusted global B2B platform</strong> for tourism and hospitality trade.
-                  </p>
+          <div className="max-w-5xl mx-auto">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="bg-white rounded-2xl p-8 lg:p-10 border border-gray-200 hover:shadow-xl transition-shadow">
+                <div className="w-12 h-12 bg-[#6B3FA0] rounded-2xl flex items-center justify-center mb-6">
+                  <Star className="w-6 h-6 text-white" />
                 </div>
-                <div className="bg-[#1a1625] rounded-2xl p-8 lg:p-10 text-white hover:shadow-xl transition-shadow">
-                  <div className="w-12 h-12 bg-[#6B3FA0]/40 rounded-2xl flex items-center justify-center mb-6">
-                    <CheckCircle2 className="w-6 h-6 text-[#22c55e]" />
-                  </div>
-                  <h3 className="text-xl md:text-2xl font-black mb-4 tracking-tight">Mission</h3>
-                  <ul className="space-y-3">
-                    {["A trusted global tourism trade network", "Digital connection for verified businesses", "Ethical B2B partnerships and business growth"].map((m, i) => (
-                      <li key={i} className="flex items-start gap-3 text-base text-white/90 md:text-lg">
-                        <ArrowRight className="w-4 h-4 text-[#22c55e] shrink-0 mt-0.5" />
-                        {m}
-                      </li>
-                    ))}
-                  </ul>
+                <h3 className="text-xl md:text-2xl font-black text-gray-900 mb-4 tracking-tight">Vision</h3>
+                <p className="text-base text-gray-600 leading-relaxed md:text-lg">
+                  To become the <strong>most trusted global B2B platform</strong> for tourism and hospitality trade.
+                </p>
+              </div>
+              <div className="bg-[#1a1625] rounded-2xl p-8 lg:p-10 text-white hover:shadow-xl transition-shadow">
+                <div className="w-12 h-12 bg-[#6B3FA0]/40 rounded-2xl flex items-center justify-center mb-6">
+                  <CheckCircle2 className="w-6 h-6 text-[#22c55e]" />
                 </div>
+                <h3 className="text-xl md:text-2xl font-black mb-4 tracking-tight">Mission</h3>
+                <ul className="space-y-3">
+                  {["A trusted global tourism trade network", "Digital connection for verified businesses", "Ethical B2B partnerships and business growth"].map((m, i) => (
+                    <li key={i} className="flex items-start gap-3 text-base text-white/90 md:text-lg">
+                      <ArrowRight className="w-4 h-4 text-[#22c55e] shrink-0 mt-0.5" />
+                      {m}
+                    </li>
+                  ))}
+                </ul>
               </div>
             </div>
           </div>
@@ -262,41 +256,39 @@ export default function AboutUs() {
       {/* Who Can Join */}
       <section className="relative bg-gray-50 py-16 lg:py-20">
         <div className="w-full max-w-[1440px] mx-auto px-5 lg:px-10">
-          <div className="pl-6 lg:pl-8">
-            <div className="max-w-5xl mx-auto">
-              <div className="text-center mb-12">
-                <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black text-gray-900 mb-4 tracking-tight">Who Can Join</h2>
-                <p className="text-base text-gray-500 max-w-xl mx-auto md:text-lg">Travel & Tourism businesses committed to ethical trade.</p>
+          <div className="max-w-5xl mx-auto">
+            <div className="text-center mb-12">
+              <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black text-gray-900 mb-4 tracking-tight">Who Can Join</h2>
+              <p className="text-base text-gray-500 max-w-xl mx-auto md:text-lg">Travel & Tourism businesses committed to ethical trade.</p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="bg-white rounded-2xl p-8 lg:p-10 border border-gray-200 hover:shadow-xl transition-shadow">
+                <div className="w-12 h-12 bg-[#6B3FA0]/10 rounded-2xl flex items-center justify-center mb-6">
+                  <Users className="w-6 h-6 text-[#6B3FA0]" />
+                </div>
+                <h3 className="font-black text-gray-900 text-xl md:text-2xl mb-3 tracking-tight">Individual Businesses</h3>
+                <p className="text-gray-500 text-base mb-5 leading-relaxed md:text-lg">Tourism and hospitality individual business entities seeking:</p>
+                <ul className="space-y-2">
+                  {["Industry networking", "Career and professional growth", "Business collaboration opportunities"].map((i, k) => (
+                    <li key={k} className="flex items-center gap-2 text-base text-gray-700 md:text-lg">
+                      <ArrowRight className="w-3.5 h-3.5 text-[#6B3FA0]" /> {i}
+                    </li>
+                  ))}
+                </ul>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div className="bg-white rounded-2xl p-8 lg:p-10 border border-gray-200 hover:shadow-xl transition-shadow">
-                  <div className="w-12 h-12 bg-[#6B3FA0]/10 rounded-2xl flex items-center justify-center mb-6">
-                    <Users className="w-6 h-6 text-[#6B3FA0]" />
-                  </div>
-                  <h3 className="font-black text-gray-900 text-xl md:text-2xl mb-3 tracking-tight">Individual Businesses</h3>
-                  <p className="text-gray-500 text-base mb-5 leading-relaxed md:text-lg">Tourism and hospitality individual business entities seeking:</p>
-                  <ul className="space-y-2">
-                    {["Industry networking", "Career and professional growth", "Business collaboration opportunities"].map((i, k) => (
-                      <li key={k} className="flex items-center gap-2 text-base text-gray-700 md:text-lg">
-                        <ArrowRight className="w-3.5 h-3.5 text-[#6B3FA0]" /> {i}
-                      </li>
-                    ))}
-                  </ul>
+              <div className="bg-[#6B3FA0] rounded-2xl p-8 lg:p-10 text-white hover:shadow-xl transition-shadow">
+                <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center mb-6">
+                  <Globe className="w-6 h-6 text-white" />
                 </div>
-                <div className="bg-[#6B3FA0] rounded-2xl p-8 lg:p-10 text-white hover:shadow-xl transition-shadow">
-                  <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center mb-6">
-                    <Globe className="w-6 h-6 text-white" />
-                  </div>
-                  <h3 className="font-black text-xl md:text-2xl mb-3 tracking-tight">Business Entities</h3>
-                  <p className="text-white/90 text-base mb-5 leading-relaxed md:text-lg">Registered tourism and hospitality companies seeking:</p>
-                  <ul className="space-y-2">
-                    {["Trusted B2B partnerships", "Business enquiries and trading opportunities", "Market expansion and global visibility"].map((i, k) => (
-                      <li key={k} className="flex items-center gap-2 text-base text-white/90 md:text-lg">
-                        <ArrowRight className="w-3.5 h-3.5 text-[#22c55e]" /> {i}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+                <h3 className="font-black text-xl md:text-2xl mb-3 tracking-tight">Business Entities</h3>
+                <p className="text-white/90 text-base mb-5 leading-relaxed md:text-lg">Registered tourism and hospitality companies seeking:</p>
+                <ul className="space-y-2">
+                  {["Trusted B2B partnerships", "Business enquiries and trading opportunities", "Market expansion and global visibility"].map((i, k) => (
+                    <li key={k} className="flex items-center gap-2 text-base text-white/90 md:text-lg">
+                      <ArrowRight className="w-3.5 h-3.5 text-[#22c55e]" /> {i}
+                    </li>
+                  ))}
+                </ul>
               </div>
             </div>
           </div>
@@ -372,20 +364,18 @@ export default function AboutUs() {
       {/* FAQ */}
       <section className="py-16 lg:py-20 bg-gray-50 scroll-mt-20" id="faqs">
         <div className="w-full max-w-[1440px] mx-auto px-5 lg:px-10">
-          <div className="pl-6 lg:pl-8">
-            <div className="max-w-3xl mx-auto">
-              <div className="text-center mb-12">
-                <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-[#6B3FA0]/10 text-[#6B3FA0] rounded-full text-xs font-bold uppercase tracking-widest mb-4">
-                  FAQ
-                </div>
-                <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black text-gray-900 mb-4 tracking-tight">Frequently Asked Questions</h2>
-                <p className="text-base text-gray-500 md:text-lg">Everything you need to know about LetsB2B.</p>
+          <div className="max-w-3xl mx-auto">
+            <div className="text-center mb-12">
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-[#6B3FA0]/10 text-[#6B3FA0] rounded-full text-xs font-bold uppercase tracking-widest mb-4">
+                FAQ
               </div>
-              <div className="space-y-4">
-                {faqs.map((faq, i) => (
-                  <FAQItem key={i} q={faq.q} a={faq.a} />
-                ))}
-              </div>
+              <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black text-gray-900 mb-4 tracking-tight">Frequently Asked Questions</h2>
+              <p className="text-base text-gray-500 md:text-lg">Everything you need to know about LetsB2B.</p>
+            </div>
+            <div className="space-y-4">
+              {faqs.map((faq, i) => (
+                <FAQItem key={i} q={faq.q} a={faq.a} />
+              ))}
             </div>
           </div>
         </div>
