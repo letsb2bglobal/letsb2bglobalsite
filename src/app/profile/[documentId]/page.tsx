@@ -33,7 +33,7 @@ import {
 } from "@/lib/profile";
 import EnquiryModal from "@/components/EnquiryModal";
 import ContactInfoModal from "@/components/ContactInfoModal";
-import { deletePost, getPostsByUserId, getTradeWallFeed, getPostByDocumentId, type Post } from "@/lib/posts";
+import { deletePost, getPostsByUserId, getTradeWallFeed, type Post } from "@/lib/posts";
 import { getOrCreateDirectThread } from "@/lib/enquiry";
 import FollowButton from "@/components/FollowButton";
 import ConnectionsModal from "@/components/ConnectionsModal";
@@ -489,65 +489,35 @@ export default function PublicProfilePage() {
     },
   ];
   useEffect(() => {
-    if (!documentId) return;
-
-    const abortController = new AbortController();
-
     const fetchProfile = async () => {
-      setLoading(true);
+      if (!documentId) return;
 
       try {
-        // Try direct profile fetch first (faster path for profile URLs)
         let data = await getProfileByDocumentId(documentId).catch(() => null);
-        if (abortController.signal.aborted) return;
-
-        // If not found, check if it's a post documentId
-        if (!data) {
-          const post = await getPostByDocumentId(documentId);
-          if (abortController.signal.aborted) return;
-
-          if (post?.user_profile?.documentId) {
-            // It's a post, fetch the user's profile
-            data = await getProfileByDocumentId(post.user_profile.documentId).catch(() => null);
-            if (abortController.signal.aborted) return;
-          }
+        // Fallback: when viewing own profile, GET /me may succeed where GET /:documentId fails
+        if (!data && user?.id) {
+          const { ownProfile } = await getMyContexts();
+          if (ownProfile?.documentId === documentId) data = ownProfile;
         }
 
-        // Last fallback: own profile via /me endpoint
-        if (!data) {
-          const contexts = await getMyContexts().catch(() => null);
-          if (abortController.signal.aborted) return;
-          if (contexts?.ownProfile) {
-            data = contexts.ownProfile;
-          }
-        }
+        await fetchNetworkingCounts(documentId);
 
-        if (abortController.signal.aborted) return;
-
-        setProfile(data);
-        
         if (data) {
-          // Run these in parallel - they don't depend on each other
-          Promise.all([
-            fetchNetworkingCounts(data.documentId || documentId),
-            data.userId ? fetchUserPosts(data.userId) : Promise.resolve()
-          ]);
+          setProfile(data);
+
+          if (data.userId) {
+            fetchUserPosts(data.userId);
+          }
         }
       } catch (error) {
         console.error("Error fetching public profile:", error);
       } finally {
-        if (!abortController.signal.aborted) {
-          setLoading(false);
-        }
+        setLoading(false);
       }
     };
 
     fetchProfile();
-
-    return () => {
-      abortController.abort();
-    };
-  }, [documentId]);
+  }, [documentId, user?.id]);
 
   const handleMessageClick = async () => {
     if (!user?.id || !profile?.documentId) {
@@ -567,10 +537,7 @@ export default function PublicProfilePage() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#f3f2ef]">
-        <div className="flex flex-col items-center gap-4">
-          <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-[#6b2c91]" />
-          <p className="text-sm text-gray-500 font-medium">Loading profile...</p>
-        </div>
+        <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-[#6b2c91]" />
       </div>
     );
   }
@@ -580,9 +547,8 @@ export default function PublicProfilePage() {
       <div className="min-h-screen flex items-center justify-center bg-[#f3f2ef] px-4">
         <div className="rounded-3xl border border-[#e2dbe9] bg-white p-8 text-center shadow-sm">
           <h1 className="text-2xl font-bold text-[#21172d]">Profile Not Found</h1>
-          <p className="text-gray-500 mt-2 text-sm">The profile you're looking for doesn't exist or has been removed.</p>
           <button
-            onClick={() => router.push("/home")}
+            onClick={() => router.push("/")}
             className="mt-4 rounded-full bg-[#6b2c91] px-5 py-2 text-sm font-semibold text-white transition hover:bg-[#572377]"
           >
             Back to Feed
@@ -596,7 +562,7 @@ export default function PublicProfilePage() {
     <ProtectedRoute>
       <div className="min-h-screen bg-[#f2f1f6] pb-10">
         <div className="mx-auto max-w-[1320px] px-3 py-4 sm:px-4 lg:px-6">
-          <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_320px] md:mt-[90px] mt-[70px]">
+          <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_320px] md:mt-[90px] mt-[80px]">
             <main className="space-y-4 ">
               <section className="overflow-hidden rounded-[20px] border border-[#ddd6e5] bg-white shadow-[0_8px_28px_rgba(49,27,63,0.06)]">
                 <div
