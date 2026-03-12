@@ -86,40 +86,58 @@ export default function Home() {
       if (!hash) return;
 
       let attempts = 0;
-      let lastPos = -1;
+      let userInteracted = false;
+
+      // Stop polling if user tries to scroll or interact
+      const stopOnInteraction = () => {
+        userInteracted = true;
+        cleanup();
+      };
+
+      const cleanup = () => {
+        window.removeEventListener("wheel", stopOnInteraction);
+        window.removeEventListener("touchstart", stopOnInteraction);
+        window.removeEventListener("mousedown", stopOnInteraction);
+        window.removeEventListener("keydown", stopOnInteraction);
+      };
+
+      window.addEventListener("wheel", stopOnInteraction, { passive: true });
+      window.addEventListener("touchstart", stopOnInteraction, { passive: true });
+      window.addEventListener("mousedown", stopOnInteraction, { passive: true });
+      window.addEventListener("keydown", stopOnInteraction, { passive: true });
       
       const tryScroll = () => {
+        if (userInteracted) return;
+
         const el = document.getElementById(hash);
         if (el) {
-          const headerOffset = 90; // Header height + safety margin
-          const elementPosition = el.getBoundingClientRect().top + window.pageYOffset;
-          const targetPos = elementPosition - headerOffset;
-
-          // Only scroll if the position has meaningfully changed OR it's the first few attempts
-          if (Math.abs(targetPos - lastPos) > 5 || attempts < 3) {
-            window.scrollTo({
-              top: targetPos,
-              behavior: attempts === 0 ? "auto" : "smooth" // Instant jump first, smooth later
-            });
-            lastPos = targetPos;
-          }
+          el.scrollIntoView({ 
+            behavior: attempts === 0 ? "auto" : "smooth", 
+            block: "start" 
+          });
           
-          if (attempts < 25) { // Poll for ~4 seconds total
+          if (attempts < 20) {
             attempts++;
-            setTimeout(tryScroll, 150);
+            setTimeout(tryScroll, 400); 
+          } else {
+            cleanup();
           }
-        } else if (attempts < 40) {
+        } else if (attempts < 60) {
           attempts++;
           setTimeout(tryScroll, 100);
+        } else {
+          cleanup();
         }
       };
 
-      tryScroll();
+      setTimeout(tryScroll, 100);
     };
 
     scrollByHash();
     window.addEventListener("hashchange", scrollByHash);
-    return () => window.removeEventListener("hashchange", scrollByHash);
+    return () => {
+      window.removeEventListener("hashchange", scrollByHash);
+    };
   }, [pathname]);
 
   useEffect(() => {
