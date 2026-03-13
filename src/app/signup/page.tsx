@@ -117,7 +117,7 @@ function SignupContent() {
   };
 
   return (
-    <AuthLayout variant="signup">
+    <AuthLayout variant="signup" hideCardStyle usePageBackground>
       {/* ── STEP 1: Email (new design) ───────────────────────────────────── */}
       {step === 'email' && (
         <form onSubmit={handleEmailStep} className="w-full max-w-full space-y-3 sm:space-y-4">
@@ -162,10 +162,11 @@ function SignupContent() {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full text-white font-bold text-sm flex items-center justify-center transition-all h-11 rounded-xl touch-manipulation disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full text-white font-bold text-sm flex items-center justify-center transition-all h-11 rounded-full touch-manipulation disabled:opacity-50 disabled:cursor-not-allowed"
             style={{
-              background: '#612178',
-              boxShadow: '0px 4px 10px -2px #00000040',
+              background:
+                'linear-gradient(90deg, rgba(255, 247, 0, 0.57715) 0%, rgba(255, 172, 6, 0.623225) 31.21%, rgba(196, 67, 69, 0.646263) 66.1%, rgba(155, 63, 188, 0.6693) 99.27%)',
+              boxShadow: '-1px 1px 8px 3px #B3850896',
             }}
           >
             {isLoading ? (
@@ -286,10 +287,11 @@ function SignupContent() {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full text-white font-bold text-sm flex items-center justify-center transition-all disabled:opacity-50 disabled:cursor-not-allowed h-11 rounded-xl touch-manipulation"
+            className="w-full text-white font-bold text-sm flex items-center justify-center transition-all disabled:opacity-50 disabled:cursor-not-allowed h-11 rounded-full touch-manipulation"
             style={{
-              background: '#612178',
-              boxShadow: '0px 4px 10px -2px #00000040',
+              background:
+                'linear-gradient(90deg, rgba(255, 247, 0, 0.57715) 0%, rgba(255, 172, 6, 0.623225) 31.21%, rgba(196, 67, 69, 0.646263) 66.1%, rgba(155, 63, 188, 0.6693) 99.27%)',
+              boxShadow: '-1px 1px 8px 3px #B3850896',
             }}
           >
             {isLoading ? (
