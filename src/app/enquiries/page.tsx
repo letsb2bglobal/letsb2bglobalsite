@@ -325,15 +325,16 @@ function EnquiriesContent() {
   // ── Render ──────────────────────────────────────────────────────────────────
   return (
     <ProtectedRoute>
-      <div className="bg-[#f1f3f6] overflow-hidden">
-        <div className="max-w-7xl mx-auto md:px-4 flex flex-col pt-[72px]">
-          <div className="mt-0 md:mt-4 flex-1 min-h-0 grid grid-cols-1 md:grid-cols-12 bg-white md:rounded-3xl border border-gray-200 shadow-xl overflow-hidden">
+      <div className="bg-[#f1f3f6] overflow-hidden min-h-screen">
+        <div className="max-w-7xl mx-auto md:px-4 flex flex-col pt-[72px] pb-6 min-h-screen">
+          <div className="mt-0 md:mt-4 flex-1 grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-6">
 
             {/* ── Thread List ─────────────────────────────────────────────── */}
-            <div className={`md:col-span-4 border-r border-gray-100 flex flex-col h-full bg-slate-50 min-h-0 ${activeThread ? 'hidden md:flex' : 'flex'}`}>
-              <div className="bg-white shrink-0">
+            <div className={`md:col-span-4 flex flex-col gap-3 h-full min-h-0 ${activeThread ? 'hidden md:flex' : 'flex'}`}>
+              {/* Top category tabs card */}
+              <div className="bg-white rounded-2xl border border-gray-200 shadow-xl shrink-0">
                 {/* Category tabs */}
-                <div className="flex items-center gap-4 px-6 pt-4 border-b border-slate-100 overflow-x-auto scrollbar-hide">
+                <div className="flex items-center gap-4 px-6 pt-4 pb-2 overflow-x-auto scrollbar-hide">
                   {['All', 'Accommodation', 'Tours', 'Transport', 'MICE', 'Medical Tourism'].map((label) => {
                     const active = activeCategory === label;
                     return (
@@ -341,8 +342,8 @@ function EnquiriesContent() {
                         key={label}
                         type="button"
                         onClick={() => setActiveCategory(label)}
-                        className={`relative pb-3 text-[12px] font-semibold whitespace-nowrap ${
-                          active ? 'text-[#6B3FA0]' : 'text-slate-500 hover:text-slate-800'
+                        className={`relative pb-3 text-[16x] font-semibold whitespace-nowrap ${
+                          active ? 'text-[#000000]' : 'text-[#676767] hover:text-slate-800'
                         }`}
                       >
                         {label}
@@ -353,13 +354,18 @@ function EnquiriesContent() {
                     );
                   })}
                 </div>
+              </div>
 
+              {/* Enquiry list card */}
+              {/* <div className="bg-white rounded-3xl border border-gray-200 shadow-xl flex flex-col min-h-screen"> */}
+              {/* <div className="bg-white rounded-3xl border border-gray-200 shadow-xl flex flex-col h-full min-h-0"> */}
+              <div className="bg-white rounded-3xl border border-gray-200 shadow-xl flex flex-col h-full overflow-hidden">
                 <div className="px-6 pt-3 pb-4 space-y-3">
                   <div className="flex items-center justify-between">
-                    <h2 className="text-[13px] font-bold text-slate-600 uppercase tracking-widest">
+                    <h2 className="text-[15px] font-semibold text-[#000000]">
                       Enquiry
                     </h2>
-                    <span className="text-[11px] text-slate-400 font-semibold">
+                    <span className="text-[12px] text-[#AFAFAF] font-semibold">
                       {threads.length} connections
                     </span>
                   </div>
@@ -382,7 +388,7 @@ function EnquiriesContent() {
                           key={status}
                           type="button"
                           onClick={() => setActiveStatus(status)}
-                          className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${
+                          className={`px-3 py-0.5 rounded-lg text-[10px] uppercase tracking-widest border ${
                             active
                               ? 'bg-[#6B3FA0] text-white border-[#6B3FA0]'
                               : 'bg-slate-50 text-slate-500 border-slate-200 hover:border-[#6B3FA0]/40'
@@ -394,8 +400,6 @@ function EnquiriesContent() {
                     })}
                   </div>
                 </div>
-              </div>
-
                 <div className="flex-1 overflow-y-auto custom-scrollbar">
                 {loading ? (
                   <div className="p-12 text-center text-slate-400">
@@ -418,9 +422,11 @@ function EnquiriesContent() {
                       <div
                         key={thread.documentId}
                         onClick={() => setActiveThread(thread)}
-                          className={`px-4 py-3 border-b border-gray-100/50 cursor-pointer transition-all ${
-                            isActive ? 'bg-white shadow-md z-10' : 'hover:bg-white'
-                          }`}
+                        className={`px-4 py-4 border-b border-gray-100 cursor-pointer transition-all ${
+                          isActive
+                            ? 'bg-[#FCF4FF] border-l-4 border-l-[#6B3FA0]'
+                            : 'bg-white hover:bg-slate-50'
+                        }`}
                       >
                           <div className="flex gap-3">
                             <div className="mt-1">
@@ -439,20 +445,20 @@ function EnquiriesContent() {
                             </div>
                             <div className="flex-1 min-w-0">
                               <div className="flex items-baseline justify-between">
-                                <h4 className="text-[12px] font-semibold text-slate-900 truncate">
+                                <h4 className="text-[14px] font-medium text-[#676767] truncate">
                                   {companyName}
                                 </h4>
-                                <span className="text-[10px] text-slate-400 font-medium shrink-0 ml-2">
+                                <span className="text-[10px] text-[#000000] font-medium shrink-0 ml-2">
                                   {new Date(thread.last_message_at || thread.updatedAt).toLocaleTimeString([], {
                                     hour: '2-digit',
                                     minute: '2-digit',
                                   })}
                                 </span>
                               </div>
-                              <p className="text-[11px] font-semibold text-slate-900 truncate mt-0.5">
+                              <p className="text-[16px] font-semibold text-[#000000] mt-0.5">
                                 {thread.title}
                               </p>
-                              <p className="text-[10px] text-slate-500 truncate mt-0.5">
+                              <p className="text-[13px] text-[#707070] mt-0.5 leading-snug">
                                 {preview}
                               </p>
                             </div>
@@ -464,14 +470,15 @@ function EnquiriesContent() {
                   <EmptyInbox message="No Enquiries Found" />
                 )}
               </div>
+              </div>
             </div>
 
             {/* ── Chat Panel ──────────────────────────────────────────────── */}
-            <div className={`md:col-span-8 flex flex-col h-full bg-white relative min-h-0 ${activeThread ? 'flex' : 'hidden md:flex'}`}>
+            <div className={`md:col-span-8 flex flex-col bg-white rounded-3xl border border-gray-200 shadow-xl relative ${activeThread ? 'flex' : 'hidden md:flex'}`}>
               {activeThread ? (
                 <>
                   {/* Header */}
-                  <div className="p-3 md:p-5 border-b border-gray-100 flex items-center justify-between bg-white/90 backdrop-blur-xl shrink-0 z-50">
+                  <div className="p-3 md:p-5 rounded-3xl border-b border-gray-100 flex items-center justify-between bg-white/90 backdrop-blur-xl shrink-0 z-50">
                     <div className="flex items-center gap-3 md:gap-4 flex-1 min-w-0">
                       <button
                         onClick={() => setActiveThread(null)}
@@ -607,13 +614,13 @@ function EnquiriesContent() {
                         // console.log(`[Msg Align] msg ID: ${msg.id}`, { msgSender: sProfile?.documentId, myDoc: myProfile?.documentId, isMe });
 
                         return (
-                          <div key={msg.documentId} className={`flex ${isMe ? 'justify-end' : 'justify-start'} group mb-2`}>
+                          <div key={msg.documentId} className={`flex ${isMe ? 'justify-end' : 'justify-start'} group mb-3`}>
                             <div className={`flex flex-col ${isMe ? 'items-end' : 'items-start'} max-w-[85%] md:max-w-[70%]`}>
                               <div
-                                className={`px-4 py-3 rounded-2xl shadow-sm text-[13px] font-medium leading-relaxed relative ${
+                                className={`px-4 py-3 rounded-2xl shadow-md text-[13px] font-medium leading-relaxed relative ${
                                   isMe
-                                    ? 'bg-gradient-to-br from-blue-600 to-indigo-700 text-white rounded-tr-none'
-                                    : 'bg-white text-slate-800 border border-slate-100 rounded-tl-none'
+                                    ? 'bg-[#6B3FA0] text-white rounded-br-sm'
+                                    : 'bg-white text-slate-800 border border-slate-100 rounded-bl-sm'
                                 }`}
                               >
                                 <p className="whitespace-pre-wrap">{msg.message_body}</p>
@@ -667,10 +674,10 @@ function EnquiriesContent() {
                                     </div>
                                   );
                                 })()}
+                                <span className="mt-2 block text-[9px] font-semibold opacity-70 text-right">
+                                  {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                </span>
                               </div>
-                              <span className="mt-1.5 px-2 text-[8px] text-slate-400 font-bold uppercase tracking-widest">
-                                {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                              </span>
                             </div>
                           </div>
                         );
@@ -699,19 +706,24 @@ function EnquiriesContent() {
                   </div>
 
                   {/* Input bar */}
-                  <div className="p-4 md:p-8 bg-white/90 backdrop-blur-md border-t border-gray-100 shrink-0 z-40">
+                  <div className="p-4 md:p-6 bg-white border-t border-gray-100 shrink-0 z-40 rounded-b-3xl">
                     <form onSubmit={handleSendMessage} className="space-y-4">
                       {/* File Previews */}
                       {filePreviews.length > 0 && (
                         <div className="flex flex-wrap gap-3 pb-2 max-h-32 overflow-y-auto custom-scrollbar">
                           {filePreviews.map((preview, idx) => (
-                            <div key={idx} className="relative group/preview w-20 h-20 rounded-2xl bg-slate-100 border border-slate-200 overflow-hidden shadow-sm">
+                            <div
+                              key={idx}
+                              className="relative group/preview w-20 h-20 rounded-2xl bg-slate-50 border border-slate-200 overflow-hidden shadow-sm"
+                            >
                               {preview.type === 'image' ? (
                                 <img src={preview.url} alt="upload" className="w-full h-full object-cover" />
                               ) : (
                                 <div className="w-full h-full flex flex-col items-center justify-center p-2 text-center">
                                   <PaperclipIcon className="w-6 h-6 text-slate-400 mb-1" />
-                                  <span className="text-[8px] font-black text-slate-600 truncate w-full uppercase">{preview.name}</span>
+                                  <span className="text-[8px] font-black text-slate-600 truncate w-full uppercase">
+                                    {preview.name}
+                                  </span>
                                 </div>
                               )}
                               <button
@@ -726,46 +738,93 @@ function EnquiriesContent() {
                         </div>
                       )}
 
-                      <div className="flex items-end gap-3 bg-slate-50 border-2 border-slate-100 rounded-3xl p-2 pl-6 pr-2 focus-within:border-blue-400 focus-within:bg-white focus-within:shadow-xl transition-all duration-300">
-                        <textarea
-                          data-msg-input
-                          rows={1}
-                          placeholder="Type your response..."
-                          className="flex-1 bg-transparent border-none outline-none py-3 text-sm text-slate-900 font-medium placeholder:text-slate-400 resize-none max-h-40 overflow-y-auto custom-scrollbar"
-                          value={newMessage}
-                          onChange={handleTextChange}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter' && !e.shiftKey) {
-                              e.preventDefault();
-                              handleSendMessage(e as any);
-                            }
-                          }}
-                          disabled={sending || uploading}
-                        />
-                        <div className="flex items-center gap-1.5 pb-1">
-                          <input type="file" className="hidden" ref={fileInputRef} onChange={handleFileSelect} multiple />
-                          <button
-                            type="button"
-                            onClick={() => fileInputRef.current?.click()}
-                            className="p-3 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-2xl transition-all"
-                            disabled={uploading}
-                          >
-                            <PaperclipIcon className="w-6 h-6" />
-                          </button>
+                      {/* Main input row */}
+                      <div className="bg-slate-50 border border-slate-100 rounded-3xl px-4 py-2 flex flex-col gap-2">
+                        <div className="flex items-center gap-3">
+                          {/* Avatar like the design */}
+                          <div className="w-8 h-8 rounded-full bg-[#f3e9ff] flex items-center justify-center text-[11px] font-bold text-[#6B3FA0] overflow-hidden">
+                            {myProfile?.profileImageUrl ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img
+                                src={myProfile.profileImageUrl as string}
+                                alt={myProfile.company_name || 'Me'}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              (myProfile?.company_name || 'ME').substring(0, 2).toUpperCase()
+                            )}
+                          </div>
+
+                          <textarea
+                            data-msg-input
+                            rows={1}
+                            placeholder="Post on Enquiry"
+                            className="flex-1 bg-white border border-slate-200 rounded-full px-4 py-2 text-sm text-slate-900 font-medium placeholder:text-slate-400 resize-none max-h-32 overflow-y-auto custom-scrollbar outline-none focus:border-[#6B3FA0]/60"
+                            value={newMessage}
+                            onChange={handleTextChange}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' && !e.shiftKey) {
+                                e.preventDefault();
+                                handleSendMessage(e as any);
+                              }
+                            }}
+                            disabled={sending || uploading}
+                          />
+
                           <button
                             type="submit"
                             disabled={(!newMessage.trim() && selectedFiles.length === 0) || sending || uploading}
-                            className={`w-12 h-12 flex items-center justify-center rounded-2xl transition-all ${
+                            className={`px-6 h-9 rounded-full text-[13px] font-semibold transition-all ${
                               (!newMessage.trim() && selectedFiles.length === 0) || sending || uploading
                                 ? 'bg-gray-100 text-gray-300'
-                                : 'bg-blue-600 text-white shadow-lg shadow-blue-100 hover:scale-110 active:scale-95'
+                                : 'bg-[#6B3FA0] text-white shadow-lg hover:bg-[#5a3290]'
                             }`}
                           >
-                            {sending || uploading ? (
-                              <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                            ) : (
-                              <SendIcon className="w-6 h-6" />
-                            )}
+                            {sending || uploading ? 'Sending…' : 'Send'}
+                          </button>
+                        </div>
+
+                        {/* Image / Video options */}
+                        <div className="flex items-center gap-4 pl-11 text-[12px] text-slate-600">
+                          <input
+                            type="file"
+                            className="hidden"
+                            ref={fileInputRef}
+                            onChange={handleFileSelect}
+                            multiple
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (fileInputRef.current) {
+                                fileInputRef.current.accept = 'image/*';
+                                fileInputRef.current.click();
+                              }
+                            }}
+                            className="flex items-center gap-0 hover:text-[#6B3FA0]"
+                            disabled={uploading}
+                          >
+                            <span className="w-6 h-6 mb-1 flex items-center justify-center text-[#434343] text-[13px]">
+                              📷
+                            </span>
+                            <span>Image</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (fileInputRef.current) {
+                                fileInputRef.current.accept = 'video/*';
+                                fileInputRef.current.click();
+                              }
+                            }}
+                            className="flex items-center gap-0 hover:text-[#6B3FA0]"
+                            disabled={uploading}
+                          >
+                            <span className="w-6 h-6 mb-1 flex items-center justify-center text-[#434343] text-[13px]">
+                              🎥
+                            </span>
+                            <span>Video</span>
                           </button>
                         </div>
                       </div>

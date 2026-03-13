@@ -117,7 +117,7 @@ export const getPostByDocumentId = async (documentId: string): Promise<Post | nu
 
   // Second try: trade-wall with small page size
   try {
-    const response = await fetch(`${apiUrl}/api/trade-wall?page=1&pageSize=20`, {
+    const response = await fetch(`${apiUrl}/api/trade-wall?page=1&pageSize=10`, {
       method: 'GET',
       headers: {
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
