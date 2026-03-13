@@ -1,17 +1,11 @@
 'use client';
 
-import React, {
-  useState, useEffect, useCallback, useRef, DragEvent,
-} from 'react';
+import React, { useState, useEffect, useCallback, useRef, DragEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/ProtectedRoute';
 import {
-  saveFullProfile,
-  deleteGalleryPhoto,
-  GalleryImage,
-  UserProfile,
-  getMyProfile,
-  getFullProfile,
+  saveFullProfile, deleteGalleryPhoto, GalleryImage, UserProfile,
+  getMyProfile, getFullProfile, uploadProfileMedia
 } from '@/lib/profile';
 import {
   getProfileSections,
@@ -20,6 +14,7 @@ import {
   updateProfileItem,
   deleteProfileItem,
   uploadProfileItemImage,
+  batchSyncProfileItems,
   CATEGORY_SECTIONS,
   CATEGORY_LABELS,
   ProfileSection,
@@ -550,9 +545,15 @@ function ItemModal({ sectionKey, editItem, onClose, onSave, saving }: {
   );
 }
 
-function SectionCard({ config, category, section, onAdd, onEdit, onDelete }: {
+interface LocalProfileItem extends ProfileItem {
+  _pendingFile?: File | null;
+  _isNew?: boolean;
+}
+
+function SectionCard({ config, category, section, onAdd, onEdit, onDelete, onSave, isDirty, saving }: {
   config: SectionConfig; category: CategoryKey; section?: ProfileSection;
-  onAdd: () => void; onEdit: (item: ProfileItem) => void; onDelete: (item: ProfileItem) => void;
+  onAdd: () => void; onEdit: (item: LocalProfileItem) => void; onDelete: (item: LocalProfileItem) => void;
+  onSave: () => void; isDirty: boolean; saving: boolean;
 }) {
   const items     = section?.profile_items || [];
   const isTA      = TEXTAREA_SECTIONS.has(config.key);
@@ -568,19 +569,22 @@ function SectionCard({ config, category, section, onAdd, onEdit, onDelete }: {
           <h3 className="font-bold text-gray-900 text-sm">{config.label}</h3>
           {items.length > 0 && <span className="text-[11px] bg-purple-100 text-[#612178] font-semibold px-2 py-0.5 rounded-full">{items.length}</span>}
         </div>
-        {((!isTA && !isMetrics) || items.length === 0) ? (
+        <div className="flex items-center gap-2">
+          {isDirty && (
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); onSave(); }}
+              disabled={saving}
+              className="flex items-center gap-1.5 text-[10px] font-bold bg-[#612178] text-white px-3 py-1.5 rounded-lg shadow-md hover:bg-[#4d1860] transition-all animate-in fade-in zoom-in duration-300"
+            >
+              {saving ? <Loader2 size={12} className="animate-spin" /> : <Check size={12} />}
+              SAVE CHANGES
+            </button>
+          )}
           <button type="button" onClick={onAdd} className="flex items-center gap-1.5 text-xs font-semibold text-[#612178] hover:bg-purple-50 px-3 py-1.5 rounded-lg">
             <Plus size={13} />{isTA || isMetrics ? 'Set' : 'Add'}
           </button>
-        ) : (isTA || isMetrics) ? (
-          <button type="button" onClick={() => onEdit(items[0])} className="flex items-center gap-1.5 text-xs font-semibold text-gray-500 hover:text-[#612178] hover:bg-purple-50 px-3 py-1.5 rounded-lg">
-            <Pencil size={12} />Edit
-          </button>
-        ) : (
-          <button type="button" onClick={onAdd} className="flex items-center gap-1.5 text-xs font-semibold text-[#612178] hover:bg-purple-50 px-3 py-1.5 rounded-lg">
-            <Plus size={13} />Add
-          </button>
-        )}
+        </div>
       </div>
       <div className="p-4">
         {items.length === 0 ? (
@@ -614,9 +618,16 @@ function SectionCard({ config, category, section, onAdd, onEdit, onDelete }: {
           </div>
         ) : (
           <div className="space-y-3">
-            {items.map((item) => (
-              <div key={item.documentId} className="bg-white border border-gray-100 rounded-2xl shadow-sm p-4 flex gap-3 hover:shadow-md transition-shadow">
-                {item.image_url && <img src={item.image_url} alt="" className="w-14 h-14 rounded-xl object-cover shrink-0 border border-gray-100" />}
+            {items.map((item: LocalProfileItem) => (
+              <div key={item.documentId || `new-${item.title}-${item.order}`} className="bg-white border border-gray-100 rounded-2xl shadow-sm p-4 flex gap-3 hover:shadow-md transition-shadow relative overflow-hidden">
+                {item._isNew && <div className="absolute top-0 right-0 px-2 py-0.5 bg-purple-100 text-[#612178] text-[8px] font-bold rounded-bl-lg">NEW</div>}
+                {(item.image_url || item._pendingFile) && (
+                  <img 
+                    src={item._pendingFile ? URL.createObjectURL(item._pendingFile) : item.image_url} 
+                    alt="" 
+                    className="w-14 h-14 rounded-xl object-cover shrink-0 border border-gray-100" 
+                  />
+                )}
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold text-gray-900 text-sm truncate">{item.title}</p>
                   {item.description && <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{item.description}</p>}
@@ -646,9 +657,10 @@ function Step2CategorySections({ profileDocId, initialCategory }: { profileDocId
   const [sections,  setSections]  = useState<ProfileSection[]>([]);
   const [loading,   setLoading]   = useState(true);
   const [modalCfg,  setModalCfg]  = useState<SectionConfig | null>(null);
-  const [editItem,  setEditItem]  = useState<ProfileItem | undefined>();
-  const [saving,    setSaving]    = useState(false);
-  const [delTarget, setDelTarget] = useState<ProfileItem | null>(null);
+  const [editItem,  setEditItem]  = useState<LocalProfileItem | undefined>();
+  const [saving,    setSaving]    = useState<string | null>(null); // section key being saved
+  const [delTarget, setDelTarget] = useState<LocalProfileItem | null>(null);
+  const [dirtyKeys, setDirtyKeys] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     (async () => {
@@ -671,34 +683,119 @@ function Step2CategorySections({ profileDocId, initialCategory }: { profileDocId
     return null;
   }, [profileDocId, sections, category]);
 
-  const handleSave = async (formData: ItemFormData) => {
+  const handleSaveItemLocally = async (formData: ItemFormData) => {
     if (!modalCfg) return;
-    setSaving(true);
-    try {
-      const titleVal = (TEXTAREA_SECTIONS.has(modalCfg.key) ? formData.description.slice(0, 60) : formData.title) || 'Item';
-      const payload = { title: titleVal, description: formData.description || undefined, extra_data: Object.keys(formData.extra_data).length ? formData.extra_data : undefined };
+    
+    const titleVal = (TEXTAREA_SECTIONS.has(modalCfg.key) ? formData.description.slice(0, 60) : formData.title) || 'Item';
+    const itemData: LocalProfileItem = {
+      documentId: editItem?.documentId || `temp-${Math.random()}`,
+      title: titleVal,
+      description: formData.description || undefined,
+      extra_data: Object.keys(formData.extra_data).length ? formData.extra_data : undefined,
+      order: editItem?.order || 0,
+      _pendingFile: formData.image,
+      _isNew: !editItem?.documentId || editItem.documentId.startsWith('temp-'),
+      image_url: editItem?.image_url || '',
+    };
 
-      if (editItem) {
-        const updated = await updateProfileItem(editItem.documentId, payload);
-        let imgUrl = editItem.image_url;
-        if (updated && formData.image) {
-          const u = await uploadProfileItemImage(editItem.documentId, formData.image);
-          if (u) imgUrl = u;
-        }
-        if (updated) setSections((prev) => prev.map((s) => ({ ...s, profile_items: s.profile_items.map((i) => i.documentId === editItem.documentId ? { ...updated, image_url: imgUrl } : i) })));
+    setSections(prev => {
+      const existingSection = prev.find(s => s.section_key === modalCfg.key);
+      if (existingSection) {
+        const newItems = editItem 
+          ? existingSection.profile_items.map(i => i.documentId === editItem.documentId ? itemData : i)
+          : [...(existingSection.profile_items || []), { ...itemData, order: (existingSection.profile_items?.length || 0) + 1 }];
+        
+        return prev.map(s => s.section_key === modalCfg.key ? { ...s, profile_items: newItems as ProfileItem[] } : s);
       } else {
-        const sec = await getOrUpsert(modalCfg);
-        if (!sec) return;
-        const created = await createProfileItem(sec.documentId, { ...payload, order: (sec.profile_items?.length || 0) + 1 }, formData.image || undefined);
-        if (created) setSections((prev) => prev.map((s) => s.documentId === sec.documentId ? { ...s, profile_items: [...(s.profile_items || []), created] } : s));
+        // Section doesn't exist yet in state - this shouldn't happen usually because we upsert,
+        // but let's handle it by adding a skeleton section
+        return [...prev, { 
+          documentId: '', 
+          section_key: modalCfg.key, 
+          category, 
+          order: modalCfg.order, 
+          profile_items: [itemData as ProfileItem] 
+        }];
       }
-      setModalCfg(null); setEditItem(undefined);
-    } finally { setSaving(false); }
+    });
+
+    setDirtyKeys(prev => new Set(prev).add(modalCfg.key));
+    setModalCfg(null); 
+    setEditItem(undefined);
   };
 
-  const handleDelete = async (item: ProfileItem) => {
-    await deleteProfileItem(item.documentId);
-    setSections((prev) => prev.map((s) => ({ ...s, profile_items: s.profile_items.filter((i) => i.documentId !== item.documentId) })));
+  const syncSection = async (sectionKey: string) => {
+    const section = sections.find(s => s.section_key === sectionKey);
+    if (!section) return;
+
+    setSaving(sectionKey);
+    try {
+      // 1. Ensure section exists on backend
+      let secDocId = section.documentId;
+      if (!secDocId) {
+        const cfg = CATEGORY_SECTIONS[category].find(c => c.key === sectionKey);
+        if (cfg) {
+          const created = await upsertProfileSection(profileDocId, { section_key: sectionKey, category, order: cfg.order });
+          if (created) secDocId = created.documentId;
+        }
+      }
+
+      if (!secDocId) throw new Error("Could not create/find section");
+
+      // 2. Handle images for items that have pending files
+      const itemsToSync = await Promise.all(section.profile_items.map(async (item: any) => {
+        const localItem = item as LocalProfileItem;
+        let finalImageUrl = localItem.image_url;
+
+        if (localItem._pendingFile) {
+          try {
+            const uploadRes = await uploadProfileMedia([localItem._pendingFile]);
+            if (uploadRes && uploadRes[0]?.url) {
+              finalImageUrl = uploadRes[0].url;
+            }
+          } catch (err) {
+            console.error("Image upload failed for item:", localItem.title, err);
+          }
+        }
+
+        // Prepare for batch sync (remove temp ID if it's new)
+        const isTemp = !localItem.documentId || localItem.documentId.startsWith('temp-');
+        return {
+          documentId: isTemp ? undefined : localItem.documentId,
+          title: localItem.title,
+          description: localItem.description,
+          order: localItem.order,
+          extra_data: localItem.extra_data,
+          image_url: finalImageUrl,
+        };
+      }));
+
+      // 3. Call Batch Sync API
+      const result = await batchSyncProfileItems(secDocId, itemsToSync);
+      if (result.success) {
+        setSections(prev => prev.map(s => s.section_key === sectionKey ? { ...s, documentId: secDocId, profile_items: result.data } : s));
+        setDirtyKeys(prev => {
+          const next = new Set(prev);
+          next.delete(sectionKey);
+          return next;
+        });
+      }
+    } catch (error) {
+      console.error("Sync failed:", error);
+    } finally {
+      setSaving(null);
+    }
+  };
+
+  const handleDeleteLocally = (item: LocalProfileItem) => {
+    const section = sections.find(s => s.profile_items.some(i => i.documentId === item.documentId));
+    if (!section) return;
+
+    setSections(prev => prev.map(s => s.documentId === section.documentId || s.section_key === section.section_key 
+      ? { ...s, profile_items: s.profile_items.filter(i => i.documentId !== item.documentId) } 
+      : s
+    ));
+    setDirtyKeys(prev => new Set(prev).add(section.section_key));
     setDelTarget(null);
   };
 
@@ -743,6 +840,9 @@ function Step2CategorySections({ profileDocId, initialCategory }: { profileDocId
             onAdd={() => { setModalCfg(cfg); setEditItem(undefined); }}
             onEdit={(item) => { setModalCfg(cfg); setEditItem(item); }}
             onDelete={(item) => setDelTarget(item)}
+            onSave={() => syncSection(cfg.key)}
+            isDirty={dirtyKeys.has(cfg.key)}
+            saving={saving === cfg.key}
           />
         ))
       )}
@@ -750,7 +850,7 @@ function Step2CategorySections({ profileDocId, initialCategory }: { profileDocId
       {modalCfg && (
         <ItemModal sectionKey={modalCfg.key} editItem={editItem}
           onClose={() => { setModalCfg(null); setEditItem(undefined); }}
-          onSave={handleSave} saving={saving}
+          onSave={handleSaveItemLocally} saving={false}
         />
       )}
       {delTarget && (
@@ -761,7 +861,7 @@ function Step2CategorySections({ profileDocId, initialCategory }: { profileDocId
             <p className="text-sm text-gray-500 mb-5">Are you sure you want to delete <strong>{delTarget.title}</strong>?</p>
             <div className="flex gap-3">
               <button onClick={() => setDelTarget(null)} className="flex-1 h-11 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50">Cancel</button>
-              <button onClick={() => handleDelete(delTarget)} className="flex-1 h-11 rounded-xl bg-red-500 text-white text-sm font-semibold hover:bg-red-600">Delete</button>
+              <button onClick={() => handleDeleteLocally(delTarget)} className="flex-1 h-11 rounded-xl bg-red-500 text-white text-sm font-semibold hover:bg-red-600">Remove</button>
             </div>
           </div>
         </div>

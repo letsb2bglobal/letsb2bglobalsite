@@ -132,6 +132,30 @@ export const deleteProfileSection = async (sectionDocumentId: string): Promise<b
   }
 };
 
+/**
+ * PUT /api/profile-sections/:sectionId
+ * Updates meta-data like order or data using the Section's ID.
+ */
+export const updateProfileSection = async (
+  sectionId: string,
+  payload: { order?: number; data?: Record<string, any> }
+): Promise<ProfileSection | null> => {
+  const token = getToken();
+  if (!token) return null;
+  try {
+    const res = await fetch(`${API_URL}/api/profile-sections/${sectionId}`, {
+      method: 'PUT',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) return null;
+    const json = await res.json();
+    return json.data || null;
+  } catch {
+    return null;
+  }
+};
+
 // ── Item APIs ──────────────────────────────────────────────────────────────
 
 /**
@@ -243,5 +267,29 @@ export const deleteProfileItem = async (itemDocumentId: string): Promise<boolean
     return res.ok;
   } catch {
     return false;
+  }
+};
+
+/**
+ * POST /api/profile-items/section/:sectionId/batch
+ * Updates many items at once. Automatically Creates, Updates, and Deletes.
+ */
+export const batchSyncProfileItems = async (
+  sectionId: string,
+  items: Array<{ documentId?: string; title: string; description?: string; order: number; extra_data?: Record<string, any> }>
+): Promise<{ success: boolean; data: ProfileItem[] }> => {
+  const token = getToken();
+  if (!token) return { success: false, data: [] };
+  try {
+    const res = await fetch(`${API_URL}/api/profile-items/section/${sectionId}/batch`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ items }),
+    });
+    if (!res.ok) return { success: false, data: [] };
+    const json = await res.json();
+    return { success: true, data: json.data || [] };
+  } catch {
+    return { success: false, data: [] };
   }
 };

@@ -1,9 +1,5 @@
-import { redirect } from 'next/navigation';
+'use client';
 
-<<<<<<< HEAD
-export default function Page() {
-  redirect('/add-additional-details/company');
-=======
 import React, { useState, useEffect, useRef, Suspense } from 'react';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -115,6 +111,7 @@ function AddAdditionalDetailsContent() {
   const [additionalPhones, setAdditionalPhones] = useState<{ countryCode: string; phone: string }[]>([]);
   const [showTourismLicense, setShowTourismLicense] = useState(false);
   const [socialMediaProfiles, setSocialMediaProfiles] = useState<{ platform: string; value: string }[]>([]);
+  const [profileDocId, setProfileDocId] = useState<string>('');
   
   // Cover and Profile photo state - synced with localStorage
   const [coverPhotoPreview, setCoverPhotoPreview] = useState<string | null>(() => {
@@ -252,6 +249,7 @@ function AddAdditionalDetailsContent() {
         email: p.email || user?.email || prev.email,
         phone: p.phone || phoneFirst || prev.phone,
       }));
+      if (p.documentId) setProfileDocId(p.documentId);
     };
     (async () => {
       if (typeof window !== 'undefined') {
@@ -303,8 +301,9 @@ function AddAdditionalDetailsContent() {
           kycFiles.pan_copy instanceof File ||
           kycFiles.tourism_license instanceof File;
 
-        if (hasCoreData) {
+        if (hasCoreData && profileDocId) {
           await uploadKYCWithData(
+            profileDocId,
             {
               company_license: kycFiles.company_license ?? null,
               gst_certificate: kycFiles.gst_certificate ?? null,
@@ -315,7 +314,6 @@ function AddAdditionalDetailsContent() {
               year_of_establishment: year,
               gst_number: formData.gstNumber || undefined,
               pan_number: formData.panNumber || undefined,
-              user_profile: user.id,
             }
           );
         }
@@ -1271,5 +1269,4 @@ export default function AddAdditionalDetailsPage() {
       </Suspense>
     </ProtectedRoute>
   );
->>>>>>> c407df70dbbed6ec4e058da63f47e84b53696942
 }
