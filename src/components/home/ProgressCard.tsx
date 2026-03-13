@@ -87,6 +87,7 @@ const ProgressCard: React.FC<ProgressCardProps> = ({ profile }) => {
           }
           label="Update General Info"
           isCompleted={!!profile?.company_name}
+          href="/add-additional-details/company"
         />
 
         <PendingItem
@@ -104,6 +105,7 @@ const ProgressCard: React.FC<ProgressCardProps> = ({ profile }) => {
           }
           label="Update Business Info"
           isCompleted={!!profile?.business_type?.length}
+          href="/add-additional-details/business"
         />
 
         <PendingItem
@@ -121,9 +123,21 @@ const ProgressCard: React.FC<ProgressCardProps> = ({ profile }) => {
           }
           label="Update KYC Registration"
           isCompleted={false}
+          href="/add-additional-details/kyc"
         />
       </div>
-      <div className="border-t border-gray-200 mt-5"></div>
+
+      {/* Enhance Profile CTA */}
+      <Link
+        href="/enhance-profile"
+        className="mt-2 flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-xs font-bold text-white transition-all hover:opacity-90 active:scale-[0.98]"
+        style={{ background: 'linear-gradient(135deg, #612178 0%, #a044c0 100%)' }}
+      >
+        <ChevronsRight size={15} />
+        Enhance Profile
+      </Link>
+
+      <div className="border-t border-gray-200 mt-3"></div>
       <div className="flex flex-col gap-0">
         {[
           { icon: ChevronsRight, label: "Industry", href: "/home" },
@@ -159,12 +173,15 @@ const PendingItem = ({
   icon,
   label,
   isCompleted,
+  href,
 }: {
   icon: React.ReactNode;
   label: string;
   isCompleted: boolean;
+  href: string;
 }) => (
-<div
+<Link
+  href={href}
   className={`flex items-center justify-between group cursor-pointer p-2 rounded-lg transition-all hover:bg-gray-50 ${
     isCompleted ? "" : ""
   }`}
@@ -197,7 +214,7 @@ const PendingItem = ({
       className="text-gray-300 group-hover:text-gray-500"
     />
   )} */}
-</div>  
+</Link>  
 );
 
 export default ProgressCard;

@@ -13,6 +13,12 @@ export interface RichTextBlock {
   children?: RichTextChild[];
 }
 
+export interface GalleryImage {
+  url: string;
+  name?: string;
+  id?: number | string;
+}
+
 export interface CategoryItem {
   category: string;
   sub_categories: string[];
@@ -82,6 +88,9 @@ export interface UserProfile {
   // Networking attributes (counter caching)
   followers_count?: number;
   following_count?: number;
+
+  gallery_images?: GalleryImage[];
+  profile_sections?: any[];
 }
 
 export interface ImageSection {
@@ -1100,5 +1109,124 @@ export const getProfileByDocumentIdCustom = async (
   } catch (error) {
     console.error("Error fetching user profile by document ID:", error);
     throw error;
+  }
+};
+
+/**
+ * Single Endpoint for Everything (Update)
+ * POST /api/user-profiles/:profileId/update-profile
+ */
+export const saveFullProfile = async (
+  profileId: string,
+  textData: {
+    company_name?: string;
+    about?: string;
+    category?: { main: string; sub: string[] };
+    sub_categories?: string[];
+    social_links?: Record<string, string>;
+    country?: string;
+    state?: string;
+    city?: string;
+    contact_person_name?: string;
+    mobile_number?: string;
+    email?: string;
+    website?: string;
+  },
+  profileImageFile?: File,
+  galleryFiles?: File[]
+): Promise<any> => {
+  const token = getToken();
+  if (!token) return { success: false, error: 'No token' };
+
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://api.letsb2b.com";
+  const formData = new FormData();
+
+  // 1. All text fields as JSON string
+  formData.append('data', JSON.stringify(textData));
+
+  // 2. Profile image (optional)
+  if (profileImageFile) {
+    formData.append('profile_image', profileImageFile);
+  }
+
+  // 3. Gallery photos (optional, multiple)
+  if (galleryFiles?.length) {
+    galleryFiles.forEach(file => formData.append('photos', file));
+  }
+
+  try {
+    const res = await fetch(`${apiUrl}/api/user-profiles/${profileId}/update-profile`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`
+      },
+      body: formData
+    });
+    return await res.json();
+  } catch (error) {
+    console.error("Error saving full profile:", error);
+    return { success: false, error };
+  }
+};
+
+/**
+ * Delete a Gallery Photo
+ * DELETE /api/user-profiles/:profileId/gallery
+ */
+export const deleteGalleryPhoto = async (profileId: string, imageUrl: string): Promise<any> => {
+  const token = getToken();
+  if (!token) return { success: false };
+
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://api.letsb2b.com";
+  try {
+    const res = await fetch(`${apiUrl}/api/user-profiles/${profileId}/gallery`, {
+      method: 'DELETE',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ url: imageUrl })
+    });
+    return await res.json();
+  } catch (error) {
+    console.error("Error deleting gallery photo:", error);
+    return { success: false };
+  }
+};
+
+/**
+ * Fetch Full Profile (Everything in One Call)
+ * GET /api/user-profiles/:profileId?populate[profile_sections][populate][profile_items]=*&populate[gallery_images]=*
+ */
+export const getFullProfile = async (profileId: string): Promise<UserProfile | null> => {
+  const token = getToken();
+  if (!token) return null;
+
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://api.letsb2b.com";
+  try {
+    const params = new URLSearchParams({
+      "populate[profile_sections][populate][profile_items]": "*",
+      "populate[gallery_images]": "*",
+      "populate[profile_image]": "*", 
+    });
+    
+    const response = await fetch(`${apiUrl}/api/user-profiles/${profileId}?${params.toString()}`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (!response.ok) {
+      if (response.status === 404) return null;
+      throw new Error(`Failed to fetch full profile: ${response.status}`);
+    }
+
+    const result = await response.json();
+    return result.data || result;
+  } catch (error) {
+    console.error("Error fetching full profile:", error);
+    return null;
   }
 };

@@ -44,19 +44,30 @@ export interface KYCUploadData {
   year_of_establishment?: number;
   gst_number?: string;
   pan_number?: string;
-  user_profile: number;
+  notes?: string;
 }
+
+export const getKycInfo = async (profileId: string) => {
+  const token = getToken();
+  if (!token) return null;
+
+  try {
+    const res = await fetch(`${API_URL}/api/kyc-documents/profile/${profileId}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    if (!res.ok) return null;
+    const json = await res.json();
+    return json.success ? json.data : null;
+  } catch {
+    return null;
+  }
+};
 
 /**
  * Upload KYC documents + metadata using multipart/form-data.
- * - Files are sent as fields:
- *   - files.company_license
- *   - files.gst_certificate
- *   - files.pan_copy
- *   - files.tourism_license
- * - Data object is stringified into a single "data" field.
  */
 export const uploadKYCWithData = async (
+  profileId: string,
   files: KYCDocumentFiles,
   data: KYCUploadData
 ): Promise<any> => {
@@ -66,21 +77,21 @@ export const uploadKYCWithData = async (
   const formData = new FormData();
 
   if (files.company_license instanceof File) {
-    formData.append("files.company_license", files.company_license);
+    formData.append("company_license", files.company_license);
   }
   if (files.gst_certificate instanceof File) {
-    formData.append("files.gst_certificate", files.gst_certificate);
+    formData.append("gst_certificate", files.gst_certificate);
   }
   if (files.pan_copy instanceof File) {
-    formData.append("files.pan_copy", files.pan_copy);
+    formData.append("pan_copy", files.pan_copy);
   }
   if (files.tourism_license instanceof File) {
-    formData.append("files.tourism_license", files.tourism_license);
+    formData.append("tourism_license", files.tourism_license);
   }
 
   formData.append("data", JSON.stringify(data));
 
-  const response = await fetch(`${API_URL}/api/kyc-documents/upload`, {
+  const response = await fetch(`${API_URL}/api/kyc-documents/profile/${profileId}`, {
     method: "POST",
     headers: {
       // Let the browser set Content-Type with the proper boundary
@@ -98,6 +109,26 @@ export const uploadKYCWithData = async (
       // ignore JSON parse errors, keep default message
     }
     throw new Error(message);
+  }
+
+  return response.json();
+};
+
+export const updateKycMetadata = async (profileId: string, data: KYCUploadData) => {
+  const token = getToken();
+  if (!token) throw new Error("No authentication token found");
+
+  const response = await fetch(`${API_URL}/api/kyc-documents/profile/${profileId}`, {
+    method: "PUT",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ data })
+  });
+  
+  if (!response.ok) {
+    throw new Error("Failed to update KYC metadata");
   }
 
   return response.json();
