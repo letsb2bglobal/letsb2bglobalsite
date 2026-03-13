@@ -52,6 +52,7 @@ interface PostCardProps {
     isFollowing: boolean,
     connectionDocId?: string,
   ) => void;
+  hideFooterActions?: boolean;
 }
 
 // Helper to get avatar background color
@@ -88,6 +89,7 @@ const PostCard: React.FC<PostCardProps> = ({
   currentUserProfileId,
   connectionDocumentId,
   onFollowChange,
+  hideFooterActions,
 }) => {
   const router = useRouter();
   const { showToast } = useToast();
@@ -112,7 +114,12 @@ const PostCard: React.FC<PostCardProps> = ({
         "enquiry",
       );
       if (thread && thread.documentId) {
-        router.push(`/enquiries?threadId=${thread.documentId}`);
+        const params = new URLSearchParams();
+        params.set("threadId", thread.documentId);
+        if (postDocumentId) {
+          params.set("postId", postDocumentId);
+        }
+        router.push(`/enquiries?${params.toString()}`);
       }
     } catch (error: any) {
       console.error("Error creating thread:", error);
@@ -793,26 +800,28 @@ const PostCard: React.FC<PostCardProps> = ({
           )}
         </div>
 
-        <div className="flex items-center gap-2 md:gap-3">
-          <button
-            onClick={(e) => e.stopPropagation()}
-            className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
-          >
-            <Share2 size={18} />
-          </button>
-          <button
-            onClick={handleRespond}
-            disabled={responding}
-            className="flex items-center gap-1.5 bg-[#6B3FA0] text-white px-4 md:px-5 py-1 md:py-1 rounded-lg text-[12px] md:text-[14px] hover:bg-[#5a3590] transition-colors disabled:opacity-70"
-          >
-            {responding ? (
-              <Loader2 size={14} className="animate-spin" />
-            ) : (
-              <MessageCircle size={14} />
-            )}
-            <span>{responding ? "..." : "Respond"}</span>
-          </button>
-        </div>
+        {!hideFooterActions && (
+          <div className="flex items-center gap-2 md:gap-3">
+            <button
+              onClick={(e) => e.stopPropagation()}
+              className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              <Share2 size={18} />
+            </button>
+            <button
+              onClick={handleRespond}
+              disabled={responding}
+              className="flex items-center gap-1.5 bg-[#6B3FA0] text-white px-4 md:px-5 py-1 md:py-1 rounded-lg text-[12px] md:text-[14px] hover:bg-[#5a3590] transition-colors disabled:opacity-70"
+            >
+              {responding ? (
+                <Loader2 size={14} className="animate-spin" />
+              ) : (
+                <MessageCircle size={14} />
+              )}
+              <span>{responding ? "..." : "Respond"}</span>
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef, useCallback, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import ProtectedRoute, { useAuth } from '@/components/ProtectedRoute';
+import PostCard from '@/components/home/PostCard';
 import { getToken } from '@/lib/auth';
 import {
   fetchEnquiryThreads,
@@ -13,6 +14,7 @@ import {
   type EnquiryThread,
   type EnquiryMessage,
 } from '@/lib/enquiry';
+import { getPostByDocumentId, type Post } from '@/lib/posts';
 import { useEnquirySocket } from '@/hooks/useEnquirySocket';
 import { useToast } from '@/components/Toast';
 
@@ -38,6 +40,9 @@ function EnquiriesContent() {
   // ── Socket state ────────────────────────────────────────────────────────────
   const [socketConnected, setSocketConnected] = useState(false);
   const [typingUsers, setTypingUsers] = useState<string[]>([]);
+  const [selectedPost, setSelectedPost] = useState<Post | null>(null);
+  const [activeCategory, setActiveCategory] = useState<string>('All');
+  const [activeStatus, setActiveStatus] = useState<string>('All');
 
   // ── Refs ────────────────────────────────────────────────────────────────────
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -111,6 +116,7 @@ function EnquiriesContent() {
 
   // ── Initial Data Fetch ──────────────────────────────────────────────────────
   const threadIdParam = searchParams.get('threadId');
+  const postIdParam = searchParams.get('postId');
 
   useEffect(() => {
     const loadStaticData = async () => {
@@ -139,6 +145,19 @@ function EnquiriesContent() {
             }
           }
         }
+
+        // Load TradeWall post context when coming from a Respond action
+        if (postIdParam) {
+          try {
+            const post = await getPostByDocumentId(postIdParam);
+            setSelectedPost(post);
+          } catch (err) {
+            console.error('Failed to load post for enquiry context:', err);
+            setSelectedPost(null);
+          }
+        } else {
+          setSelectedPost(null);
+        }
       } catch (error) {
         console.error('Enquiry sync failed:', error);
       } finally {
@@ -146,7 +165,7 @@ function EnquiriesContent() {
       }
     };
     loadStaticData();
-  }, [user?.id, threadIdParam]);
+  }, [user?.id, threadIdParam, postIdParam]);
 
 
   // ── Load messages + join/leave socket room when active thread changes ───────
@@ -307,77 +326,137 @@ function EnquiriesContent() {
   return (
     <ProtectedRoute>
       <div className="bg-[#f1f3f6] overflow-hidden">
-        <div className="max-w-7xl mx-auto md:px-4 h-[calc(100dvh-64px)] flex flex-col">
+        <div className="max-w-7xl mx-auto md:px-4 flex flex-col pt-[72px]">
           <div className="mt-0 md:mt-4 flex-1 min-h-0 grid grid-cols-1 md:grid-cols-12 bg-white md:rounded-3xl border border-gray-200 shadow-xl overflow-hidden">
 
             {/* ── Thread List ─────────────────────────────────────────────── */}
             <div className={`md:col-span-4 border-r border-gray-100 flex flex-col h-full bg-slate-50 min-h-0 ${activeThread ? 'hidden md:flex' : 'flex'}`}>
-              <div className="p-8 pb-4 bg-white shrink-0">
-                <div className="flex items-center justify-between mb-6">
-                  <h1 className="text-xl font-black text-slate-900 tracking-tight uppercase">Enquiries</h1>
-                  {/* ── Live connection badge ── */}
-                  <span className="flex items-center gap-1.5">
-                    <span className={`h-2 w-2 rounded-full transition-colors ${socketConnected ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`} />
-                    <span className={`text-[9px] font-black uppercase tracking-widest ${socketConnected ? 'text-emerald-500' : 'text-amber-500'}`}>
-                      {socketConnected ? 'Live' : 'Connecting…'}
-                    </span>
-                  </span>
+              <div className="bg-white shrink-0">
+                {/* Category tabs */}
+                <div className="flex items-center gap-4 px-6 pt-4 border-b border-slate-100 overflow-x-auto scrollbar-hide">
+                  {['All', 'Accommodation', 'Tours', 'Transport', 'MICE', 'Medical Tourism'].map((label) => {
+                    const active = activeCategory === label;
+                    return (
+                      <button
+                        key={label}
+                        type="button"
+                        onClick={() => setActiveCategory(label)}
+                        className={`relative pb-3 text-[12px] font-semibold whitespace-nowrap ${
+                          active ? 'text-[#6B3FA0]' : 'text-slate-500 hover:text-slate-800'
+                        }`}
+                      >
+                        {label}
+                        {active && (
+                          <span className="absolute left-0 right-0 -bottom-[1px] h-[2px] bg-[#6B3FA0] rounded-full" />
+                        )}
+                      </button>
+                    );
+                  })}
                 </div>
-                <div className="relative">
-                  <SearchIcon className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                  <input
-                    type="text"
-                    placeholder="Search enquiries..."
-                    className="w-full pl-9 pr-4 py-2 bg-gray-100 border-none rounded-xl text-sm outline-none"
-                  />
+
+                <div className="px-6 pt-3 pb-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-[13px] font-bold text-slate-600 uppercase tracking-widest">
+                      Enquiry
+                    </h2>
+                    <span className="text-[11px] text-slate-400 font-semibold">
+                      {threads.length} connections
+                    </span>
+                  </div>
+
+                  <div className="relative">
+                    <SearchIcon className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                    <input
+                      type="text"
+                      placeholder="Search by name"
+                      className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-[12px] outline-none placeholder:text-slate-400"
+                    />
+                  </div>
+
+                  {/* Status filters */}
+                  <div className="flex flex-wrap items-center gap-2">
+                    {['All', 'Open', 'Accepted', 'Rejected', 'Draft'].map((status) => {
+                      const active = activeStatus === status;
+                      return (
+                        <button
+                          key={status}
+                          type="button"
+                          onClick={() => setActiveStatus(status)}
+                          className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${
+                            active
+                              ? 'bg-[#6B3FA0] text-white border-[#6B3FA0]'
+                              : 'bg-slate-50 text-slate-500 border-slate-200 hover:border-[#6B3FA0]/40'
+                          }`}
+                        >
+                          {status}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
 
-              <div className="flex-1 overflow-y-auto custom-scrollbar">
+                <div className="flex-1 overflow-y-auto custom-scrollbar">
                 {loading ? (
                   <div className="p-12 text-center text-slate-400">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto" />
                   </div>
                 ) : threads.length > 0 ? (
-                  threads.map((thread) => {
+                    threads.map((thread) => {
                     const isActive = activeThread?.documentId === thread.documentId;
                     const otherCompany = getOtherParticipant(thread);
+                      // Prefer actual company name; if missing, derive from thread title (strip "Enquiry:" prefix)
+                      const derivedNameFromTitle =
+                        thread.title?.replace(/^Enquiry:/i, "").trim() || undefined;
+                      const companyName =
+                        otherCompany?.company_name || derivedNameFromTitle || "Enquiry";
+                      const initial = companyName.substring(0, 2).toUpperCase();
+                      const preview =
+                        thread.last_message_preview ||
+                        "A private tourist vehicle with an experienced local driver is required for a family leisure trip in Kerala";
                     return (
                       <div
                         key={thread.documentId}
                         onClick={() => setActiveThread(thread)}
-                        className={`p-6 border-b border-gray-100/50 cursor-pointer transition-all flex gap-4 ${
-                          isActive
-                            ? 'bg-white shadow-2xl z-10 border-l-4 border-l-blue-600 scale-[1.02]'
-                            : 'hover:bg-white/80'
-                        }`}
+                          className={`px-4 py-3 border-b border-gray-100/50 cursor-pointer transition-all ${
+                            isActive ? 'bg-white shadow-md z-10' : 'hover:bg-white'
+                          }`}
                       >
-                        <div
-                          className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${
-                            isActive ? 'from-blue-600 to-indigo-700' : 'from-slate-700 to-slate-900'
-                          } flex items-center justify-center text-white font-black shrink-0 shadow-xl text-xl`}
-                        >
-                          {otherCompany?.company_name?.substring(0, 1).toUpperCase() || 'E'}
-                        </div>
-                        <div className="flex-1 min-w-0 flex flex-col justify-center">
-                          <div className="flex justify-between items-baseline mb-1">
-                            <h4 className={`text-[12px] font-black uppercase tracking-tight truncate ${isActive ? 'text-blue-600' : 'text-slate-900'}`}>
-                              {otherCompany?.company_name || 'ENQUIRY'}
-                            </h4>
-                            <span className="text-[9px] text-slate-400 font-bold tabular-nums">
-                              {new Date(thread.last_message_at || thread.updatedAt).toLocaleTimeString([], {
-                                hour: '2-digit',
-                                minute: '2-digit',
-                              })}
-                            </span>
+                          <div className="flex gap-3">
+                            <div className="mt-1">
+                              <div className="w-9 h-9 rounded-full bg-[#f3e9ff] flex items-center justify-center text-[11px] font-bold text-[#6B3FA0] overflow-hidden">
+                                {otherCompany?.profileImageUrl ? (
+                                  // eslint-disable-next-line @next/next/no-img-element
+                                  <img
+                                    src={otherCompany.profileImageUrl as string}
+                                    alt={companyName}
+                                    className="w-full h-full object-cover"
+                                  />
+                                ) : (
+                                  initial
+                                )}
+                              </div>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-baseline justify-between">
+                                <h4 className="text-[12px] font-semibold text-slate-900 truncate">
+                                  {companyName}
+                                </h4>
+                                <span className="text-[10px] text-slate-400 font-medium shrink-0 ml-2">
+                                  {new Date(thread.last_message_at || thread.updatedAt).toLocaleTimeString([], {
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                  })}
+                                </span>
+                              </div>
+                              <p className="text-[11px] font-semibold text-slate-900 truncate mt-0.5">
+                                {thread.title}
+                              </p>
+                              <p className="text-[10px] text-slate-500 truncate mt-0.5">
+                                {preview}
+                              </p>
+                            </div>
                           </div>
-                          <p className="text-[11px] text-slate-800 font-black truncate mb-1 uppercase tracking-tighter">
-                            {thread.title}
-                          </p>
-                          <p className={`text-[10px] truncate uppercase tracking-widest font-bold ${isActive ? 'text-blue-600' : 'text-slate-400'}`}>
-                            {isActive ? 'Active Now' : 'Tap to view'}
-                          </p>
-                        </div>
                       </div>
                     );
                   })
@@ -400,22 +479,110 @@ function EnquiriesContent() {
                       >
                         <ChevronLeftIcon className="w-6 h-6" />
                       </button>
-                      <div className="w-10 h-10 md:w-12 md:h-12 rounded-2xl flex items-center justify-center text-white font-black shadow-lg bg-blue-600 ring-4 ring-blue-50 shrink-0">
-                        {getOtherParticipant(activeThread)?.company_name?.substring(0, 1).toUpperCase() || 'E'}
+                      <div className="w-9 h-9 md:w-10 md:h-10 rounded-full flex items-center justify-center text-white font-black shadow-md bg-[#6B3FA0] shrink-0 overflow-hidden">
+                        {getOtherParticipant(activeThread)?.profileImageUrl ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={getOtherParticipant(activeThread)?.profileImageUrl as string}
+                            alt={getOtherParticipant(activeThread)?.company_name || "Partner"}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          (getOtherParticipant(activeThread)?.company_name || "EN")
+                            .substring(0, 2)
+                            .toUpperCase()
+                        )}
                       </div>
                       <div className="truncate">
-                        <h3 className="font-black text-slate-900 text-xs md:text-sm tracking-tighter uppercase italic truncate">
-                          {getOtherParticipant(activeThread)?.company_name || 'ENQUIRY'}
+                        <h3 className="font-semibold text-slate-900 text-xs md:text-sm truncate">
+                          {getOtherParticipant(activeThread)?.company_name || 'Holiday Inn'}
                         </h3>
                         <div className="flex items-center gap-2">
-                          <span className={`flex h-2 w-2 rounded-full ${socketConnected ? 'bg-emerald-500 animate-pulse' : 'bg-amber-400'}`} />
-                          <span className={`text-[9px] font-black uppercase tracking-widest truncate ${socketConnected ? 'text-emerald-500' : 'text-amber-500'}`}>
-                            {socketConnected ? activeThread.title : 'Connecting…'}
+                          <span className={`flex h-1.5 w-1.5 rounded-full ${socketConnected ? 'bg-emerald-500 animate-pulse' : 'bg-amber-400'}`} />
+                          <span className="text-[9px] text-slate-400 font-medium">
+                            {socketConnected ? 'Live enquiry' : 'Connecting…'}
                           </span>
                         </div>
                       </div>
                     </div>
                   </div>
+
+                  {/* Selected TradeWall post context */}
+                  {selectedPost && (
+                    <div className="px-4 md:px-8 pt-4 pb-2 border-b border-gray-100 bg-slate-50/60">
+                      {/* Top header: logo + name + actions */}
+                      {/* <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-3">
+                          <div className="w-9 h-9 rounded-full bg-[#f3e9ff] flex items-center justify-center overflow-hidden text-[12px] font-bold text-[#6B3FA0]">
+                            {selectedPost.user_profile?.profileImageUrl ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img
+                                src={selectedPost.user_profile.profileImageUrl}
+                                alt={selectedPost.user_profile.company_name || "Company"}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              (selectedPost.user_profile?.company_name || "EN")
+                                .substring(0, 2)
+                                .toUpperCase()
+                            )}
+                          </div>
+                          <span className="text-[13px] font-semibold text-slate-900">
+                            {selectedPost.user_profile?.company_name || "Holiday Inn"}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            className="px-3 py-1.5 rounded-full text-[11px] font-semibold border border-red-500 text-red-500 hover:bg-red-50"
+                          >
+                            Reject
+                          </button>
+                          <button
+                            type="button"
+                            className="px-3 py-1.5 rounded-full text-[11px] font-semibold border border-emerald-500 text-white bg-emerald-500 hover:bg-emerald-600"
+                          >
+                            Accept
+                          </button>
+                        </div>
+                      </div> */}
+
+                      {/* Reuse PostCard UI for the selected TradeWall post */}
+                      <PostCard
+                        author={{
+                          name:
+                            selectedPost.user_profile?.company_name ||
+                            selectedPost.title ||
+                            "B2B Partner",
+                          avatar: "",
+                          isFollowing: false,
+                        }}
+                        time={new Date(selectedPost.createdAt).toLocaleDateString()}
+                        title={selectedPost.title || "B2B Opportunity"}
+                        description={selectedPost.description || ""}
+                        type={selectedPost.type}
+                        details={selectedPost.enquiry_details?.[0] || {}}
+                        location={selectedPost.destination || ""}
+                        date=""
+                        // guests={selectedPost.guests || ""}
+                        tags={selectedPost.tags || []}
+                        imageUrl={
+                          selectedPost.media_items?.[0]?.url ||
+                          selectedPost.media?.[0]?.url ||
+                          selectedPost.custom_attachments?.[0]?.url
+                        }
+                        budget={selectedPost.budget}
+                        mediaItems={selectedPost.media_items}
+                        postDocumentId={selectedPost.documentId}
+                        authorProfileId={selectedPost.user_profile?.documentId}
+                        authorProfileNumericId={selectedPost.user_profile?.id}
+                        currentUserProfileId={undefined}
+                        connectionDocumentId={undefined}
+                        onFollowChange={undefined}
+                        hideFooterActions
+                      />
+                    </div>
+                  )}
 
                   {/* Messages */}
                   <div
