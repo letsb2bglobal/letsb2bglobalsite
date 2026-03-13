@@ -1237,8 +1237,10 @@ export const saveOnboardingStep = async (step: number, data: any): Promise<any> 
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        step,
-        data
+        data: {
+          step,
+          ...data
+        }
       })
     });
 

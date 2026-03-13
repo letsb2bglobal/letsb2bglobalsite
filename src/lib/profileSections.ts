@@ -300,3 +300,29 @@ export const batchSyncProfileItems = async (
     return { success: false, data: [] };
   }
 };
+
+/**
+ * Convenience wrapper to batch sync items using a section KEY (e.g. 'fleet') 
+ * instead of a documentId. It fetches sections first to find the ID.
+ */
+export const batchSyncProfileItemsByKey = async (
+  profileId: string,
+  sectionKey: string,
+  items: Array<{ documentId?: string; title: string; description?: string; order: number; extra_data?: Record<string, any> }>,
+  files?: File[]
+): Promise<{ success: boolean; data: ProfileItem[] }> => {
+  try {
+    const sections = await getProfileSections(profileId);
+    const section = sections.find(s => s.section_key === sectionKey);
+    
+    if (!section) {
+      console.error(`Section with key "${sectionKey}" not found for profile ${profileId}`);
+      return { success: false, data: [] };
+    }
+    
+    return batchSyncProfileItems(section.documentId, items, files);
+  } catch (error) {
+    console.error("Error in batchSyncProfileItemsByKey:", error);
+    return { success: false, data: [] };
+  }
+};
