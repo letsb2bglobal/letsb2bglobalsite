@@ -219,8 +219,10 @@ function Step1CommonProfile({
     setGalleryQueue((prev) => prev.filter((_, idx) => idx !== i));
 
   const handleDeleteGallery = async (url: string) => {
-    const updated = await deleteGalleryPhoto(profileDocId, url);
-    setGallery(updated);
+    const res = await deleteGalleryPhoto(profileDocId, url);
+    if (res.success && res.data?.gallery_images) {
+      setGallery(res.data.gallery_images);
+    }
   };
 
   return (
@@ -449,95 +451,142 @@ function Step1CommonProfile({
 
 // ─── Step 2: Category Sections ────────────────────────────────────────────────
 
-type ItemFormData = { title: string; description: string; image: File | null; extra_data: Record<string, string>; };
-const emptyForm = (): ItemFormData => ({ title: '', description: '', image: null, extra_data: {} });
+type ItemEntry = { title: string; description: string; image: File | null; extra_data: Record<string, string>; };
+type ItemFormData = { items: ItemEntry[] };
+const emptyEntry = (): ItemEntry => ({ title: '', description: '', image: null, extra_data: {} });
 
 function ItemModal({ sectionKey, editItem, onClose, onSave, saving }: {
-  sectionKey: string; editItem?: ProfileItem; onClose: () => void;
+  sectionKey: string; editItem?: LocalProfileItem; onClose: () => void;
   onSave: (d: ItemFormData) => void; saving: boolean;
 }) {
-  const [form, setForm] = useState<ItemFormData>(() =>
-    editItem ? { title: editItem.title || '', description: editItem.description || '', image: null,
+  const [items, setItems] = useState<ItemEntry[]>(() =>
+    editItem ? [{ 
+      title: editItem.title || '', 
+      description: editItem.description || '', 
+      image: null,
       extra_data: Object.fromEntries(Object.entries(editItem.extra_data || {}).map(([k, v]) => [k, String(v ?? '')])),
-    } : emptyForm()
+    }] : [emptyEntry()]
   );
-  const imgRef = useRef<HTMLInputElement>(null);
+  
+  const imgRefs = useRef<Array<HTMLInputElement | null>>([]);
   const isTextarea = TEXTAREA_SECTIONS.has(sectionKey);
   const isMetrics  = METRICS_SECTIONS.has(sectionKey);
   const isTag      = TAG_SECTIONS.has(sectionKey);
   const hasImage   = IMAGE_SECTIONS.has(sectionKey);
   const fields     = METRICS_FIELDS[sectionKey] || [];
-  const setExtra   = (k: string, v: string) => setForm((f) => ({ ...f, extra_data: { ...f.extra_data, [k]: v } }));
-  const preview    = form.image ? URL.createObjectURL(form.image) : null;
+
+  const updateEntry = (idx: number, patch: Partial<ItemEntry>) => {
+    setItems(prev => prev.map((it, i) => i === idx ? { ...it, ...patch } : it));
+  };
+
+  const updateExtra = (idx: number, k: string, v: string) => {
+    setItems(prev => prev.map((it, i) => i === idx ? { ...it, extra_data: { ...it.extra_data, [k]: v } } : it));
+  };
+
+  const addRow = () => setItems(prev => [...prev, emptyEntry()]);
+  const removeRow = (idx: number) => setItems(prev => prev.filter((_, i) => i !== idx));
 
   return (
     <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg max-h-[88vh] flex flex-col">
+      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col">
         <div className="flex items-center justify-between px-6 pt-5 pb-3 border-b border-gray-100 shrink-0">
-          <h3 className="font-bold text-gray-900">{editItem ? 'Edit Item' : 'Add Item'}</h3>
+          <h3 className="font-bold text-gray-900">{editItem ? 'Edit Item' : 'Add Multiple Items'}</h3>
           <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-400"><X size={16} /></button>
         </div>
-        <div className="overflow-y-auto flex-1 px-6 py-4 space-y-4">
-          {isTextarea && (
-            <Field label="Content">
-              <textarea rows={7} value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} placeholder="Enter details…" className={inputCls + ' resize-none'} />
-            </Field>
-          )}
-          {isMetrics && fields.map((f) => (
-            <Field key={f.key} label={f.label}>
-              <input type="text" value={form.extra_data[f.key] || ''} onChange={(e) => setExtra(f.key, e.target.value)} placeholder={`Enter ${f.label.toLowerCase()}`} className={inputCls} />
-            </Field>
-          ))}
-          {!isTextarea && !isMetrics && (
-            <>
-              <Field label={isTag ? 'Item Name *' : 'Title *'}>
-                <input type="text" value={form.title} onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))} placeholder="e.g. Sedan Fleet, Delhi, Cultural Tourism" className={inputCls} />
-              </Field>
-              {!isTag && (
-                <Field label="Description">
-                  <textarea rows={3} value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} placeholder="Optional…" className={inputCls + ' resize-none'} />
-                </Field>
-              )}
-              {sectionKey === 'fleet' && (
-                <>
-                  <Field label="Vehicle Models"><input className={inputCls} value={form.extra_data.models || ''} onChange={(e) => setExtra('models', e.target.value)} placeholder="e.g. Toyota Etios, Honda City" /></Field>
-                  <Field label="Count"><input className={inputCls} value={form.extra_data.count || ''} onChange={(e) => setExtra('count', e.target.value)} placeholder="e.g. 20" /></Field>
-                </>
-              )}
-              {sectionKey === 'certifications' && (
-                <Field label="Issued Date"><input className={inputCls} value={form.extra_data.issued_date || ''} onChange={(e) => setExtra('issued_date', e.target.value)} placeholder="e.g. Jan 2022" /></Field>
-              )}
-              {['product_portfolio', 'tourism_products', 'packages'].includes(sectionKey) && (
-                <Field label="Location"><input className={inputCls} value={form.extra_data.location || ''} onChange={(e) => setExtra('location', e.target.value)} placeholder="e.g. Jaipur, India" /></Field>
-              )}
-              {(hasImage || editItem?.image_url) && (
-                <Field label="Image">
-                  <input ref={imgRef} type="file" accept="image/*" className="hidden" onChange={(e) => setForm((f) => ({ ...f, image: e.target.files?.[0] || null }))} />
-                  {preview ? (
-                    <div className="flex items-center gap-3 p-3 border border-gray-200 rounded-xl bg-gray-50">
-                      <img src={preview} alt="" className="w-14 h-14 rounded-lg object-cover shrink-0" />
-                      <div className="flex-1 min-w-0"><p className="text-xs font-medium text-gray-800 truncate">{form.image?.name}</p></div>
-                      <button type="button" onClick={() => setForm((f) => ({ ...f, image: null }))} className="w-7 h-7 rounded-full bg-red-100 text-red-500 flex items-center justify-center"><X size={12} /></button>
-                    </div>
-                  ) : editItem?.image_url ? (
-                    <div className="flex items-center gap-3 p-3 border border-gray-200 rounded-xl bg-gray-50">
-                      <img src={editItem.image_url} alt="" className="w-14 h-14 rounded-lg object-cover shrink-0" />
-                      <button type="button" onClick={() => imgRef.current?.click()} className="text-xs font-semibold text-[#612178]">Replace image</button>
-                    </div>
-                  ) : (
-                    <button type="button" onClick={() => imgRef.current?.click()} className="w-full h-20 border-2 border-dashed border-gray-300 rounded-xl flex flex-col items-center justify-center gap-1 text-gray-400 hover:border-[#612178] hover:text-[#612178] transition-colors">
-                      <ImagePlus size={18} /><span className="text-xs font-medium">Upload image</span>
-                    </button>
+
+        <div className="overflow-y-auto flex-1 px-6 py-4 space-y-6">
+          {items.map((form, idx) => {
+            const preview = form.image ? URL.createObjectURL(form.image) : null;
+            return (
+              <div key={idx} className={`relative p-5 rounded-2xl border-2 ${items.length > 1 ? 'border-purple-100 bg-purple-50/20' : 'border-gray-50'}`}>
+                {items.length > 1 && (
+                  <button 
+                    type="button" 
+                    onClick={() => removeRow(idx)}
+                    className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-red-100 text-red-500 flex items-center justify-center hover:bg-red-200 transition-colors shadow-sm"
+                  >
+                    <X size={12} />
+                  </button>
+                )}
+
+                <div className="space-y-4">
+                  {isTextarea && (
+                    <Field label="Content">
+                      <textarea rows={5} value={form.description} onChange={(e) => updateEntry(idx, { description: e.target.value })} placeholder="Enter details…" className={inputCls + ' resize-none'} />
+                    </Field>
                   )}
-                </Field>
-              )}
-            </>
+                  {isMetrics && fields.map((f) => (
+                    <Field key={f.key} label={f.label}>
+                      <input type="text" value={form.extra_data[f.key] || ''} onChange={(e) => updateExtra(idx, f.key, e.target.value)} placeholder={`Enter ${f.label.toLowerCase()}`} className={inputCls} />
+                    </Field>
+                  ))}
+                  {!isTextarea && !isMetrics && (
+                    <>
+                      <Field label="Item Name *">
+                        <input type="text" value={form.title} onChange={(e) => updateEntry(idx, { title: e.target.value })} placeholder="e.g. Sedan Fleet, Delhi, Cultural Tourism" className={inputCls} />
+                      </Field>
+                      {!isTag && (
+                        <Field label="Description">
+                          <textarea rows={2} value={form.description} onChange={(e) => updateEntry(idx, { description: e.target.value })} placeholder="Optional details…" className={inputCls + ' resize-none'} />
+                        </Field>
+                      )}
+                      {sectionKey === 'fleet' && (
+                        <div className="grid grid-cols-2 gap-3">
+                          <Field label="Vehicle Models"><input className={inputCls} value={form.extra_data.models || ''} onChange={(e) => updateExtra(idx, 'models', e.target.value)} placeholder="e.g. Innova, Swift" /></Field>
+                          <Field label="Count"><input className={inputCls} value={form.extra_data.count || ''} onChange={(e) => updateExtra(idx, 'count', e.target.value)} placeholder="e.g. 5" /></Field>
+                        </div>
+                      )}
+                      {(hasImage || (editItem && idx === 0 && editItem.image_url)) && (
+                        <Field label="Image">
+                          <input ref={el => { imgRefs.current[idx] = el; }} type="file" accept="image/*" className="hidden" onChange={(e) => updateEntry(idx, { image: e.target.files?.[0] || null })} />
+                          {preview ? (
+                            <div className="flex items-center gap-3 p-3 border border-gray-200 rounded-xl bg-white">
+                              <img src={preview} alt="" className="w-12 h-12 rounded-lg object-cover" />
+                              <div className="flex-1 min-w-0"><p className="text-[10px] font-medium text-gray-500 truncate">{form.image?.name}</p></div>
+                              <button type="button" onClick={() => updateEntry(idx, { image: null })} className="text-red-500"><X size={14} /></button>
+                            </div>
+                          ) : (editItem && idx === 0 && editItem.image_url) ? (
+                            <div className="flex items-center gap-3 p-3 border border-gray-200 rounded-xl bg-white">
+                              <img src={editItem.image_url} alt="" className="w-12 h-12 rounded-lg object-cover" />
+                              <button type="button" onClick={() => imgRefs.current[idx]?.click()} className="text-xs font-bold text-[#612178]">Replace</button>
+                            </div>
+                          ) : (
+                            <button type="button" onClick={() => imgRefs.current[idx]?.click()} className="w-full py-4 border-2 border-dashed border-gray-200 rounded-xl flex items-center justify-center gap-2 text-gray-400 hover:border-[#612178] hover:text-[#612178] transition-all">
+                              <Plus size={14} /><span className="text-xs font-semibold">Upload Image</span>
+                            </button>
+                          )}
+                        </Field>
+                      )}
+                    </>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+
+          {!isTextarea && !isMetrics && !editItem && (
+            <button 
+              type="button" 
+              onClick={addRow} 
+              className="w-full py-4 border-2 border-dashed border-purple-200 rounded-2xl flex items-center justify-center gap-2 text-[#612178] bg-purple-50/50 hover:bg-purple-50 transition-all font-bold text-sm"
+            >
+              <Plus size={18} /> Add Another Item Row
+            </button>
           )}
         </div>
-        <div className="px-6 pb-5 pt-3 border-t border-gray-100 flex gap-3 shrink-0">
-          <button type="button" onClick={onClose} className="flex-1 h-11 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50">Cancel</button>
-          <button type="button" onClick={() => onSave(form)} disabled={saving} className="flex-1 h-11 rounded-xl bg-[#612178] text-white text-sm font-semibold hover:bg-[#4d1860] flex items-center justify-center gap-2 disabled:opacity-60">
-            {saving && <Loader2 size={14} className="animate-spin" />}{editItem ? 'Save Changes' : 'Add Item'}
+
+        <div className="px-6 pb-6 pt-4 border-t border-gray-100 flex gap-3 shrink-0">
+          <button type="button" onClick={onClose} className="flex-1 h-12 rounded-2xl border border-gray-200 text-sm font-bold text-gray-500 hover:bg-gray-50 transition-colors">Cancel</button>
+          <button 
+            type="button" 
+            onClick={() => {
+              const validItems = items.filter(it => isTextarea ? it.description.trim() : (isMetrics ? true : it.title.trim()));
+              if (validItems.length > 0) onSave({ items: validItems });
+            }} 
+            disabled={saving || !items.some(it => isTextarea ? it.description.trim() : (isMetrics ? true : it.title.trim()))} 
+            className="flex-1 h-12 rounded-2xl bg-[#612178] text-white text-sm font-bold hover:bg-[#4d1860] transition-all disabled:opacity-50 shadow-lg shadow-purple-100"
+          >
+            {editItem ? 'Update Item' : `Add to List`}
           </button>
         </div>
       </div>
@@ -571,19 +620,28 @@ function SectionCard({ config, category, section, onAdd, onEdit, onDelete, onSav
         </div>
         <div className="flex items-center gap-2">
           {isDirty && (
-            <button
-              type="button"
-              onClick={(e) => { e.stopPropagation(); onSave(); }}
-              disabled={saving}
-              className="flex items-center gap-1.5 text-[10px] font-bold bg-[#612178] text-white px-3 py-1.5 rounded-lg shadow-md hover:bg-[#4d1860] transition-all animate-in fade-in zoom-in duration-300"
-            >
-              {saving ? <Loader2 size={12} className="animate-spin" /> : <Check size={12} />}
-              SAVE CHANGES
+            <div className="flex items-center gap-2 animate-in fade-in slide-in-from-right-2 duration-300">
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); onSave(); }}
+                disabled={saving}
+                className="flex items-center gap-1.5 text-[10px] font-bold bg-[#612178] text-white px-3 py-1.5 rounded-lg shadow-md hover:shadow-purple-200 hover:bg-[#4d1860] transition-all"
+              >
+                {saving ? <Loader2 size={12} className="animate-spin" /> : <Check size={12} />}
+                SAVE CHANGES
+              </button>
+            </div>
+          )}
+          
+          {(isTA || isMetrics) && items.length > 0 ? (
+            <button type="button" onClick={() => onEdit(items[0])} className="flex items-center gap-1.5 text-xs font-semibold text-gray-500 hover:text-[#612178] hover:bg-purple-50 px-3 py-1.5 rounded-lg transition-colors">
+              <Pencil size={12} />Edit
+            </button>
+          ) : (
+            <button type="button" onClick={onAdd} className="flex items-center gap-1.5 text-xs font-semibold text-[#612178] hover:bg-purple-50 px-3 py-1.5 rounded-lg transition-colors">
+              <Plus size={13} />{isTA || isMetrics ? 'Set' : 'Add'}
             </button>
           )}
-          <button type="button" onClick={onAdd} className="flex items-center gap-1.5 text-xs font-semibold text-[#612178] hover:bg-purple-50 px-3 py-1.5 rounded-lg">
-            <Plus size={13} />{isTA || isMetrics ? 'Set' : 'Add'}
-          </button>
         </div>
       </div>
       <div className="p-4">
@@ -640,8 +698,8 @@ function SectionCard({ config, category, section, onAdd, onEdit, onDelete, onSav
                   )}
                 </div>
                 <div className="flex flex-col gap-2 shrink-0">
-                  <button type="button" onClick={() => onEdit(item)} className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:bg-purple-100 hover:text-[#612178] transition-colors"><Pencil size={13} /></button>
-                  <button type="button" onClick={() => onDelete(item)} className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:bg-red-100 hover:text-red-600 transition-colors"><Trash2 size={13} /></button>
+                  <button type="button" onClick={() => onEdit(item)} className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-500 hover:bg-purple-100 hover:text-[#612178] transition-colors" title="Edit Item"><Pencil size={13} /></button>
+                  <button type="button" onClick={() => onDelete(item)} className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-500 hover:bg-red-100 hover:text-red-600 transition-colors" title="Remove Locally"><Trash2 size={13} /></button>
                 </div>
               </div>
             ))}
@@ -685,36 +743,58 @@ function Step2CategorySections({ profileDocId, initialCategory }: { profileDocId
 
   const handleSaveItemLocally = async (formData: ItemFormData) => {
     if (!modalCfg) return;
-    
-    const titleVal = (TEXTAREA_SECTIONS.has(modalCfg.key) ? formData.description.slice(0, 60) : formData.title) || 'Item';
-    const itemData: LocalProfileItem = {
-      documentId: editItem?.documentId || `temp-${Math.random()}`,
-      title: titleVal,
-      description: formData.description || undefined,
-      extra_data: Object.keys(formData.extra_data).length ? formData.extra_data : undefined,
-      order: editItem?.order || 0,
-      _pendingFile: formData.image,
-      _isNew: !editItem?.documentId || editItem.documentId.startsWith('temp-'),
-      image_url: editItem?.image_url || '',
-    };
+    const isTextarea = TEXTAREA_SECTIONS.has(modalCfg.key);
+    const isMetrics = METRICS_SECTIONS.has(modalCfg.key);
+
+    const filterEmpty = formData.items.filter(it => {
+      if (isTextarea) return it.description.trim();
+      if (isMetrics) return true;
+      return it.title.trim();
+    });
+
+    if (filterEmpty.length === 0) {
+      setModalCfg(null);
+      setEditItem(undefined);
+      return;
+    }
+
+    const newItemsData: LocalProfileItem[] = filterEmpty.map((it, idx) => {
+      const titleVal = (isTextarea ? it.description.slice(0, 60) : it.title) || 'Item';
+      return {
+        documentId: editItem && idx === 0 ? editItem.documentId : `temp-${Math.random()}-${idx}`,
+        title: titleVal,
+        description: it.description || undefined,
+        extra_data: Object.keys(it.extra_data).length ? it.extra_data : undefined,
+        order: editItem && idx === 0 ? editItem.order : 0,
+        _pendingFile: it.image,
+        _isNew: !editItem || (idx > 0),
+        image_url: editItem && idx === 0 ? editItem.image_url : '',
+      };
+    });
 
     setSections(prev => {
       const existingSection = prev.find(s => s.section_key === modalCfg.key);
       if (existingSection) {
-        const newItems = editItem 
-          ? existingSection.profile_items.map(i => i.documentId === editItem.documentId ? itemData : i)
-          : [...(existingSection.profile_items || []), { ...itemData, order: (existingSection.profile_items?.length || 0) + 1 }];
+        let updatedItems: ProfileItem[];
+        if (editItem) {
+          // Edit mode: replace the one being edited, ignore others if any (modal only shows 1 during edit)
+          updatedItems = existingSection.profile_items.map(i => i.documentId === editItem.documentId ? newItemsData[0] : i);
+        } else {
+          // Add mode: append all new items with correct order
+          const startOrder = existingSection.profile_items?.length || 0;
+          const itemsWithOrder = newItemsData.map((it, i) => ({ ...it, order: startOrder + i + 1 }));
+          updatedItems = [...(existingSection.profile_items || []), ...itemsWithOrder];
+        }
         
-        return prev.map(s => s.section_key === modalCfg.key ? { ...s, profile_items: newItems as ProfileItem[] } : s);
+        return prev.map(s => s.section_key === modalCfg.key ? { ...s, profile_items: updatedItems as ProfileItem[] } : s);
       } else {
-        // Section doesn't exist yet in state - this shouldn't happen usually because we upsert,
-        // but let's handle it by adding a skeleton section
+        const itemsWithOrder = newItemsData.map((it, i) => ({ ...it, order: i + 1 }));
         return [...prev, { 
           documentId: '', 
           section_key: modalCfg.key, 
           category, 
           order: modalCfg.order, 
-          profile_items: [itemData as ProfileItem] 
+          profile_items: itemsWithOrder as ProfileItem[] 
         }];
       }
     });
@@ -742,36 +822,29 @@ function Step2CategorySections({ profileDocId, initialCategory }: { profileDocId
 
       if (!secDocId) throw new Error("Could not create/find section");
 
-      // 2. Handle images for items that have pending files
-      const itemsToSync = await Promise.all(section.profile_items.map(async (item: any) => {
+      // 2. Prepare items and collect binary files
+      const pendingFiles: File[] = [];
+      const itemsToSync = section.profile_items.map((item: any) => {
         const localItem = item as LocalProfileItem;
-        let finalImageUrl = localItem.image_url;
-
-        if (localItem._pendingFile) {
-          try {
-            const uploadRes = await uploadProfileMedia([localItem._pendingFile]);
-            if (uploadRes && uploadRes[0]?.url) {
-              finalImageUrl = uploadRes[0].url;
-            }
-          } catch (err) {
-            console.error("Image upload failed for item:", localItem.title, err);
-          }
-        }
-
-        // Prepare for batch sync (remove temp ID if it's new)
         const isTemp = !localItem.documentId || localItem.documentId.startsWith('temp-');
-        return {
+        const syncData: any = {
           documentId: isTemp ? undefined : localItem.documentId,
           title: localItem.title,
           description: localItem.description,
           order: localItem.order,
           extra_data: localItem.extra_data,
-          image_url: finalImageUrl,
+          image_url: localItem.image_url,
         };
-      }));
 
-      // 3. Call Batch Sync API
-      const result = await batchSyncProfileItems(secDocId, itemsToSync);
+        if (localItem._pendingFile) {
+          pendingFiles.push(localItem._pendingFile);
+          syncData._image_index = pendingFiles.length - 1; // 0-based index of the file
+        }
+        return syncData;
+      });
+
+      // 3. Call Batch Sync API with binary files
+      const result = await batchSyncProfileItems(secDocId, itemsToSync, pendingFiles);
       if (result.success) {
         setSections(prev => prev.map(s => s.section_key === sectionKey ? { ...s, documentId: secDocId, profile_items: result.data } : s));
         setDirtyKeys(prev => {
@@ -900,15 +973,20 @@ export default function EnhanceProfilePage() {
     if (!user?.id) return;
     (async () => {
       const { exists, profile: p } = await getMyProfile(user.id);
-      if (exists && p?.documentId) {
-        // Fetch full profile with sections and items for Step 2
-        const fullProf = await getFullProfile(p.documentId);
-        const activeProfile = fullProf || p;
+      if (exists && p) {
+        // Use documentId if available, fallback to numeric id stringified
+        const id = p.documentId || (p as any).id?.toString();
         
-        setProfile(activeProfile as any);
-        setProfileDocId(activeProfile.documentId || '');
-        if ((activeProfile as any).category?.main) {
-          setInitCategory((activeProfile as any).category.main);
+        if (id) {
+          // Fetch full profile with sections and items for Step 2
+          const fullProf = await getFullProfile(id);
+          const activeProfile = fullProf || p;
+          
+          setProfile(activeProfile as any);
+          setProfileDocId(activeProfile.documentId || (activeProfile as any).id?.toString() || '');
+          if ((activeProfile as any).category?.main) {
+            setInitCategory((activeProfile as any).category.main);
+          }
         }
       }
       setLoading(false);
@@ -977,6 +1055,7 @@ export default function EnhanceProfilePage() {
             userId={user?.id || 0}
             onComplete={(updated) => {
               setProfile(updated as any);
+              if (updated.documentId) setProfileDocId(updated.documentId);
               setStep(2);
               window.scrollTo({ top: 0, behavior: 'smooth' });
             }}

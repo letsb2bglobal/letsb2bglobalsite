@@ -394,8 +394,14 @@ export const getMyProfile = async (
     }
 
     const result = await response.json();
-    const profile = result.data || result;
-    return { exists: !!profile, profile };
+    let profile = result.data || result;
+    
+    // If it's a standard Strapi find response (array), take the first item
+    if (Array.isArray(profile)) {
+      profile = profile[0] || null;
+    }
+    
+    return { exists: !!profile, profile: profile || undefined };
   } catch (error) {
     // Network errors (e.g. "Failed to fetch") - return safe fallback
     const isNetworkError = error instanceof TypeError && String((error as Error).message || "").includes("fetch");
@@ -450,36 +456,35 @@ export const getMyProfile = async (
 // };
 
 export const createUserProfile = async (
-  profileData: CreateProfileData
+  profileData: CreateProfileData,
+  files?: { profile_image?: File; header_image?: File; gallery_images?: File[] }
 ): Promise<UserProfile> => {
   const token = getToken();
-
-  if (!token) {
-    throw new Error("No authentication token found");
-  }
+  if (!token) throw new Error("No authentication token found");
 
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://api.letsb2b.com";
+  const formData = new FormData();
+  formData.append("data", JSON.stringify(profileData));
+
+  if (files?.profile_image) formData.append("profile_image", files.profile_image);
+  if (files?.header_image) formData.append("header_image", files.header_image);
+  if (files?.gallery_images?.length) {
+    files.gallery_images.forEach(f => formData.append("photos", f));
+  }
 
   try {
     const response = await fetch(
       `${apiUrl}/api/user-profiles?populate=image_sections`,
       {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          data: profileData,
-        }),
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
       }
     );
 
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(
-        errorData?.error?.message || "Failed to create user profile"
-      );
+      throw new Error(errorData?.error?.message || "Failed to create user profile");
     }
 
     const data = await response.json();
@@ -495,58 +500,41 @@ export const createUserProfile = async (
  */
 export const updateUserProfile = async (
   documentId: string,
-  profileData: Partial<CreateProfileData>
+  profileData: Partial<CreateProfileData>,
+  files?: { profile_image?: File; header_image?: File; gallery_images?: File[] }
 ): Promise<UserProfile> => {
   const token = getToken();
-
-  if (!token) {
-    throw new Error("No authentication token found");
-  }
+  if (!token) throw new Error("No authentication token found");
 
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://api.letsb2b.com";
-
-  // Sanitize profileData to remove invalid fields for Strapi update
-  const sanitizedData: any = {};
   
-  // Only include defined and non-null values to avoid ValidationError for required fields
+  // Sanitize profileData
+  const sanitizedData: any = {};
   Object.keys(profileData).forEach(key => {
     const val = (profileData as any)[key];
-    if (val !== undefined && val !== null) {
-      sanitizedData[key] = val;
-    }
+    if (val !== undefined && val !== null) sanitizedData[key] = val;
   });
+  if (sanitizedData.id) delete sanitizedData.id;
 
-  // 1. Remove root ID if present
-  if (sanitizedData.id) {
-    delete sanitizedData.id;
-  }
+  const formData = new FormData();
+  formData.append("data", JSON.stringify(sanitizedData));
 
-  // 2. Sanitize image_sections (remove id and order to prevent Validation Error)
-  if (sanitizedData.image_sections && Array.isArray(sanitizedData.image_sections)) {
-    sanitizedData.image_sections = sanitizedData.image_sections.map((section: any) => {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { id, order, ...rest } = section;
-      return rest;
-    });
+  if (files?.profile_image) formData.append("profile_image", files.profile_image);
+  if (files?.header_image) formData.append("header_image", files.header_image);
+  if (files?.gallery_images?.length) {
+    files.gallery_images.forEach(f => formData.append("photos", f));
   }
 
   try {
     const response = await fetch(`${apiUrl}/api/user-profiles/${documentId}?populate=*`, {
       method: "PUT",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        data: sanitizedData, 
-      }),
+      headers: { Authorization: `Bearer ${token}` },
+      body: formData,
     });
 
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(
-        errorData?.error?.message || "Failed to update user profile"
-      );
+      throw new Error(errorData?.error?.message || "Failed to update user profile");
     }
 
     const data = await response.json();
@@ -1228,5 +1216,40 @@ export const getFullProfile = async (profileId: string): Promise<UserProfile | n
   } catch (error) {
     console.error("Error fetching full profile:", error);
     return null;
+  }
+};
+
+/**
+ * Save Onboarding Step
+ * POST /api/user-profiles/onboarding-step
+ */
+export const saveOnboardingStep = async (step: number, data: any): Promise<any> => {
+  const token = getToken();
+  if (!token) throw new Error("No authentication token found");
+
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://api.letsb2b.com";
+  
+  try {
+    const response = await fetch(`${apiUrl}/api/user-profiles/onboarding-step`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        step,
+        data
+      })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData?.error?.message || "Failed to save onboarding step");
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error(`Error saving onboarding step ${step}:`, error);
+    throw error;
   }
 };

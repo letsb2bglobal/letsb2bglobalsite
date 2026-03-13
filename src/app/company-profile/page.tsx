@@ -77,7 +77,7 @@ export default function CompanyProfilePage() {
 
   const getMediaUrl = (url: string) => {
     if (!url) return "";
-    if (url.startsWith("http")) return url;
+    if (url.startsWith("http") || url.startsWith("blob:") || url.startsWith("data:")) return url;
     return `${process.env.NEXT_PUBLIC_API_URL}${url}`;
   };
 
@@ -100,21 +100,8 @@ export default function CompanyProfilePage() {
       return;
     }
 
-    setProfileImageUploading(true);
-
-    try {
-      const response = await uploadProfileMedia([file]);
-
-      // backend returns array
-      const uploaded = response[0];
-
-      setProfileImageUrl(uploaded.url);
-      setProfileImageFile(file);
-    } catch (err) {
-      console.error("Profile image upload failed", err);
-    } finally {
-      setProfileImageUploading(false);
-    }
+    setProfileImageFile(file);
+    setProfileImageUrl(URL.createObjectURL(file));
   };
 
   const handleHeaderImageSelect = async (
@@ -129,19 +116,8 @@ export default function CompanyProfilePage() {
       return;
     }
 
-    setHeaderImageUploading(true);
-
-    try {
-      const response = await uploadProfileMedia([file]);
-      const uploaded = response[0];
-
-      setHeaderImageUrl(uploaded.url);
-      setHeaderImageFile(file);
-    } catch (err) {
-      console.error("Header image upload failed", err);
-    } finally {
-      setHeaderImageUploading(false);
-    }
+    setHeaderImageFile(file);
+    setHeaderImageUrl(URL.createObjectURL(file));
   };
 
   useEffect(() => {
@@ -381,6 +357,9 @@ export default function CompanyProfilePage() {
             ],
 
         image_sections: imageSections,
+      }, {
+        profile_image: profileImageFile || undefined,
+        header_image: headerImageFile || undefined
       });
 
       router.push("/profile");
