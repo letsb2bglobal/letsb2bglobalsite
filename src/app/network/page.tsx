@@ -14,63 +14,67 @@ import {
 import Image from "next/image";
 import TrendingCard from "@/components/home/TrendingCard";
 import SuggestionsCard from "@/components/home/SuggestionsCard";
+import InsightsCard from "@/components/home/InsightsCard";
 import { useTeam } from "@/context/TeamContext";
 import {
   getPendingInvitations,
   acceptInvitation,
   rejectInvitation,
+  getMutualConnections,
   type Connection as ApiConnection,
 } from "@/lib/connections";
 
 type TabType = "connections" | "invitations" | "suggestions";
 const VALID_TABS: TabType[] = ["connections", "invitations", "suggestions"];
 
-interface Connection {
+// Mock data for suggestions
+interface Suggestion {
   id: string;
   name: string;
-  logo?: string;
   location: string;
+  mutualConnections: number;
+  logo?: string;
+  logoColor?: string;
 }
 
-const mockConnections: Connection[] = [
+const mockSuggestions: Suggestion[] = [
+ 
   {
     id: "1",
-    name: "Taj Vivanta Bangalore",
-    logo: "/assets/logos/taj.png",
-    location: "Bangalore, Karnataka, India",
+    name: "JW Marriott",
+    location: "Kochi, Kerala, India",
+    mutualConnections: 13,
+    logoColor: "#8b4513",
   },
   {
     id: "2",
-    name: "JW Marriott",
-    logo: "/assets/logos/marriott.png",
+    name: "The Leela Palace",
     location: "Kochi, Kerala, India",
+    mutualConnections: 2,
+    logoColor: "#1a1a2e",
   },
   {
     id: "3",
-    name: "The Leela Palace",
-    logo: "/assets/logos/leela.png",
+    name: "The Oberoi",
     location: "Kochi, Kerala, India",
+    mutualConnections: 2,
+    logoColor: "#daa520",
   },
   {
     id: "4",
-    name: "The Oberoi",
-    logo: "/assets/logos/oberoi.png",
-    location: "Kochi, Kerala, India",
+    name: "Golden Palms Resort",
+    location: "Bangalore, Karnataka, India",
+    mutualConnections: 5,
+    logoColor: "#2e8b57",
   },
   {
     id: "5",
-    name: "Golden Palms",
-    logo: "/assets/logos/golden.png",
-    location: "Kochi, Kerala, India",
-  },
-  {
-    id: "6",
-    name: "Elegance Bangalore",
-    logo: "/assets/logos/elegance.png",
-    location: "Bangalore, Karnataka, India",
+    name: "ITC Grand Chola",
+    location: "Chennai, Tamil Nadu, India",
+    mutualConnections: 8,
+    logoColor: "#4a0e4e",
   },
 ];
-
 
 function NetworkPageContent() {
   const router = useRouter();
@@ -89,11 +93,15 @@ function NetworkPageContent() {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("recently_added");
   
+  // Connections state
+  const [connections, setConnections] = useState<ApiConnection[]>([]);
+  const [connectionsLoading, setConnectionsLoading] = useState(false);
+  const [connectionsError, setConnectionsError] = useState<string | null>(null);
+  
   // Invitations state
   const [invitations, setInvitations] = useState<ApiConnection[]>([]);
   const [invitationsLoading, setInvitationsLoading] = useState(false);
   const [invitationsError, setInvitationsError] = useState<string | null>(null);
-  const [processingIds, setProcessingIds] = useState<Set<string>>(new Set());
 
   const { activeWorkspace } = useTeam();
   const userProfileId = activeWorkspace?.data?.id;
@@ -104,9 +112,11 @@ function NetworkPageContent() {
     { id: "suggestions", label: "Suggestions" },
   ];
 
-  const filteredConnections = mockConnections.filter((conn) =>
-    conn.name.toLowerCase().includes(searchQuery.toLowerCase()),
-  );
+  // Filter connections based on search query
+  const filteredConnections = connections.filter((conn) => {
+    const name = conn.following?.full_name || conn.following?.company_name || "";
+    return name.toLowerCase().includes(searchQuery.toLowerCase());
+  });
 
   // Handle tab change and update URL
   const handleTabChange = (tab: TabType) => {
@@ -122,12 +132,36 @@ function NetworkPageContent() {
     }
   }, [searchParams]);
 
+  // Fetch connections when tab becomes active
+  useEffect(() => {
+    if (activeTab === "connections" && userProfileId) {
+      fetchConnections();
+    }
+  }, [activeTab, userProfileId]);
+
   // Fetch invitations when tab becomes active
   useEffect(() => {
     if (activeTab === "invitations" && userProfileId) {
       fetchInvitations();
     }
   }, [activeTab, userProfileId]);
+
+  const fetchConnections = async () => {
+    if (!userProfileId) return;
+    
+    setConnectionsLoading(true);
+    setConnectionsError(null);
+    
+    try {
+      const data = await getMutualConnections(userProfileId);
+      setConnections(data);
+    } catch (error) {
+      console.error("Failed to fetch connections:", error);
+      setConnectionsError("Failed to load connections");
+    } finally {
+      setConnectionsLoading(false);
+    }
+  };
 
   const fetchInvitations = async () => {
     if (!userProfileId) return;
@@ -147,43 +181,19 @@ function NetworkPageContent() {
   };
 
   const handleAcceptInvitation = async (connectionDocumentId: string) => {
-    setProcessingIds((prev) => new Set(prev).add(connectionDocumentId));
-    
-    try {
-      await acceptInvitation(connectionDocumentId);
-      // Remove from list after accepting
-      setInvitations((prev) => 
-        prev.filter((inv) => inv.documentId !== connectionDocumentId)
-      );
-    } catch (error) {
-      console.error("Failed to accept invitation:", error);
-    } finally {
-      setProcessingIds((prev) => {
-        const next = new Set(prev);
-        next.delete(connectionDocumentId);
-        return next;
-      });
-    }
+    await acceptInvitation(connectionDocumentId);
+    // Remove from list after accepting
+    setInvitations((prev) => 
+      prev.filter((inv) => inv.documentId !== connectionDocumentId)
+    );
   };
 
   const handleRejectInvitation = async (connectionDocumentId: string) => {
-    setProcessingIds((prev) => new Set(prev).add(connectionDocumentId));
-    
-    try {
-      await rejectInvitation(connectionDocumentId);
-      // Remove from list after rejecting
-      setInvitations((prev) => 
-        prev.filter((inv) => inv.documentId !== connectionDocumentId)
-      );
-    } catch (error) {
-      console.error("Failed to reject invitation:", error);
-    } finally {
-      setProcessingIds((prev) => {
-        const next = new Set(prev);
-        next.delete(connectionDocumentId);
-        return next;
-      });
-    }
+    await rejectInvitation(connectionDocumentId);
+    // Remove from list after ignoring
+    setInvitations((prev) => 
+      prev.filter((inv) => inv.documentId !== connectionDocumentId)
+    );
   };
 
   return (
@@ -203,7 +213,7 @@ function NetworkPageContent() {
                     <button
                       key={tab.id}
                       onClick={() => handleTabChange(tab.id)}
-                      className={`px-6 py-4 text-[16px] font-medium transition-colors relative ${
+                      className={`md:px-6 px-4 py-4 text-[16px] font-medium transition-colors relative ${
                         activeTab === tab.id
                           ? "text-[#6B3FA0]"
                           : "text-gray-500 hover:text-gray-700"
@@ -227,7 +237,7 @@ function NetworkPageContent() {
                   <div className="p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-gray-50">
                     <div className="flex items-center gap-4">
                       <span className="text-[14px] font-semibold text-[#000000]">
-                        209 connections
+                        {connections.length} connection{connections.length !== 1 ? 's' : ''}
                       </span>
                       <div className="relative">
                         <Search
@@ -243,21 +253,66 @@ function NetworkPageContent() {
                         />
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm text-gray-500">Sort by:</span>
-                      <button className="flex items-center gap-1 text-sm font-semibold text-gray-700 hover:text-[#6B3FA0]">
-                        Recently added
+                    <div className="flex items-center gap-1">
+                      <span className="text-[14px] text-[#000000]">Sort by :</span>
+                      <button className="flex items-center gap-1 text-[14px] font-medium text-[#000000] hover:text-[#6B3FA0]">
+                        Newest
                         <ChevronDown size={16} />
                       </button>
                     </div>
                   </div>
 
+                  {/* Loading State */}
+                  {connectionsLoading && (
+                    <div className="flex flex-col items-center justify-center py-16">
+                      <Loader2 size={32} className="text-[#6B3FA0] animate-spin" />
+                      <p className="mt-3 text-sm text-gray-500">Loading connections...</p>
+                    </div>
+                  )}
+
+                  {/* Error State */}
+                  {!connectionsLoading && connectionsError && (
+                    <div className="flex flex-col items-center justify-center py-16">
+                      <p className="text-sm text-red-500">{connectionsError}</p>
+                      <button 
+                        onClick={fetchConnections}
+                        className="mt-3 text-sm text-[#6B3FA0] hover:underline"
+                      >
+                        Try again
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Empty State */}
+                  {!connectionsLoading && !connectionsError && connections.length === 0 && (
+                    <div className="flex flex-col items-center justify-center py-16">
+                      <div className="w-16 h-16 rounded-full bg-[#f6f2f8] flex items-center justify-center mb-4">
+                        <UserPlus size={28} className="text-[#6B3FA0]" />
+                      </div>
+                      <h4 className="text-[15px] font-semibold text-gray-900 mb-1">
+                        No connections yet
+                      </h4>
+                      <p className="text-sm text-gray-500 text-center max-w-xs">
+                        Start connecting with other businesses to grow your network
+                      </p>
+                    </div>
+                  )}
+
                   {/* Connections List */}
-                  <div className="divide-y divide-gray-50">
-                    {filteredConnections.map((connection) => (
-                      <ConnectionCard key={connection.id} connection={connection} />
-                    ))}
-                  </div>
+                  {!connectionsLoading && !connectionsError && filteredConnections.length > 0 && (
+                    <div className="divide-y divide-gray-50">
+                      {filteredConnections.map((connection) => (
+                        <ConnectionCard key={connection.id} connection={connection} />
+                      ))}
+                    </div>
+                  )}
+
+                  {/* No Search Results */}
+                  {!connectionsLoading && !connectionsError && connections.length > 0 && filteredConnections.length === 0 && (
+                    <div className="flex flex-col items-center justify-center py-16">
+                      <p className="text-sm text-gray-500">No connections found matching "{searchQuery}"</p>
+                    </div>
+                  )}
                 </>
               )}
 
@@ -266,12 +321,12 @@ function NetworkPageContent() {
                 <>
                   {/* Header Bar */}
                   <div className="p-4 flex items-center justify-between border-b border-gray-50">
-                    <span className="text-[14px] font-semibold text-[#000000]">
+                    <span className="text-[14px] font-medium text-[#000000]">
                       Invitations ({invitations.length})
                     </span>
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm text-gray-500">Sort by:</span>
-                      <button className="flex items-center gap-1 text-sm font-semibold text-gray-700 hover:text-[#6B3FA0]">
+                    <div className="flex items-center gap-1">
+                      <span className="text-[14px] text-[#000000]">Sort by :</span>
+                      <button className="flex items-center gap-1 text-[14px] font-medium text-[#000000] hover:text-[#6B3FA0]">
                         Newest
                         <ChevronDown size={16} />
                       </button>
@@ -323,7 +378,6 @@ function NetworkPageContent() {
                           invitation={invitation}
                           onAccept={() => handleAcceptInvitation(invitation.documentId)}
                           onReject={() => handleRejectInvitation(invitation.documentId)}
-                          isProcessing={processingIds.has(invitation.documentId)}
                         />
                       ))}
                     </div>
@@ -333,23 +387,49 @@ function NetworkPageContent() {
 
               {/* Suggestions Tab Content */}
               {activeTab === "suggestions" && (
-                <div className="p-8 text-center text-gray-500">
-                  <p className="text-sm">Suggestions coming soon...</p>
-                </div>
+                <>
+                  {/* Header Bar */}
+                  <div className="p-4 flex items-center justify-between border-b border-gray-50">
+                    <span className="text-[14px] font-semibold text-[#000000]">
+                      Suggestions
+                    </span>
+                    <div className="flex items-center gap-1">
+                      <span className="text-[14px] text-[#000000]">Sort by :</span>
+                      <button className="flex items-center gap-1 text-[14px] font-medium text-[#000000] hover:text-[#6B3FA0]">
+                        Newest
+                        <ChevronDown size={16} />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Suggestions List */}
+                  <div className="divide-y divide-gray-50">
+                    {mockSuggestions.map((suggestion) => (
+                      <SuggestionCard key={suggestion.id} suggestion={suggestion} />
+                    ))}
+                  </div>
+                </>
               )}
             </div>
 
             {/* Cards below main content - visible below lg (two columns) */}
-            <div className="lg:hidden grid grid-cols-2 gap-4 mt-6">
-              <TrendingCard />
-              <SuggestionsCard />
+            {/* Cards below main content - visible below lg */}
+            <div className="lg:hidden flex flex-col gap-4 mt-6">
+              {/* Stack vertically on mobile, 2-column grid on md */}
+              <div className="flex flex-col md:grid md:grid-cols-2 gap-4">
+                <TrendingCard />
+                <SuggestionsCard />
+              </div>
+              <InsightsCard />
             </div>
           </div>
 
           {/* Right Sidebar - visible from lg and up */}
+          {/* Right Sidebar - visible from lg and up */}
           <div className="hidden lg:flex lg:col-span-3 flex-col gap-4 sticky top-[80px] self-start max-h-[calc(100vh-100px)] overflow-y-auto no-scrollbar">
             <TrendingCard />
             <SuggestionsCard />
+            <InsightsCard />
           </div>
         </div>
       </main>
@@ -383,27 +463,55 @@ export default function NetworkPage() {
   );
 }
 
-function ConnectionCard({ connection }: { connection: Connection }) {
+function ConnectionCard({ connection }: { connection: ApiConnection }) {
   const [menuOpen, setMenuOpen] = useState(false);
+  
+  // Get the connected user's info from the 'following' relation
+  const connectedUser = connection.following;
+  const displayName = connectedUser?.full_name || connectedUser?.company_name || "Unknown User";
+  
+  // Build location string from available fields
+  const locationParts = [connectedUser?.city, connectedUser?.state, connectedUser?.country].filter(Boolean);
+  const location = locationParts.length > 0 ? locationParts.join(", ") : "Location not available";
+
+  // Generate a consistent color based on the name
+  const getAvatarColor = (name: string) => {
+    const colors = ['#f5e6d3', '#e8d5f0', '#d5e8f0', '#f0e8d5', '#d5f0e8', '#f0d5e8'];
+    const index = name.charCodeAt(0) % colors.length;
+    return colors[index];
+  };
 
   return (
     <div className="flex items-center justify-between p-4 hover:bg-gray-50/50 transition-colors">
       <div className="flex items-center gap-4">
         {/* Profile Image */}
         <div className="w-14 h-14 rounded-full border border-gray-100 bg-white flex items-center justify-center overflow-hidden shrink-0">
-          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#f8f4fc] to-[#efe8f5] flex items-center justify-center text-[#6B3FA0] font-bold text-lg">
-            {connection.name.substring(0, 1)}
-          </div>
+          {connectedUser?.profileImageUrl ? (
+            <Image
+              src={connectedUser.profileImageUrl}
+              alt={displayName}
+              width={48}
+              height={48}
+              className="w-12 h-12 rounded-full object-cover"
+            />
+          ) : (
+            <div 
+              className="w-12 h-12 rounded-full flex items-center justify-center text-gray-700 font-semibold text-sm"
+              style={{ backgroundColor: getAvatarColor(displayName) }}
+            >
+              {displayName.substring(0, 2).toUpperCase()}
+            </div>
+          )}
         </div>
 
         {/* Info */}
-        <div className="flex flex-col gap-1">
-          <h4 className="text-[15px] font-bold text-gray-900 hover:text-[#6B3FA0] cursor-pointer transition-colors">
-            {connection.name}
+        <div className="flex flex-col">
+          <h4 className="text-[18px] font-medium text-[#000000] hover:text-[#6B3FA0] cursor-pointer transition-colors">
+            {displayName}
           </h4>
           <div className="flex items-center gap-1.5 text-gray-500">
-            <MapPin size={14} className="shrink-0" />
-            <span className="text-[13px]">{connection.location}</span>
+            <MapPin size={18} className="shrink-0" />
+            <span className="text-[16px] font-medium text-[#000000]">{location}</span>
           </div>
         </div>
       </div>
@@ -448,12 +556,14 @@ function ConnectionCard({ connection }: { connection: Connection }) {
 
 interface InvitationCardProps {
   invitation: ApiConnection;
-  onAccept: () => void;
-  onReject: () => void;
-  isProcessing: boolean;
+    onAccept: () => Promise<void>;
+  onReject: () => Promise<void>;
 }
 
-function InvitationCard({ invitation, onAccept, onReject, isProcessing }: InvitationCardProps) {
+function InvitationCard({ invitation, onAccept, onReject }: InvitationCardProps) {
+  const [acceptLoading, setAcceptLoading] = useState(false);
+  const [rejectLoading, setRejectLoading] = useState(false);
+  
   const follower = invitation.follower;
   const displayName = follower?.full_name || follower?.company_name || "Unknown User";
   
@@ -468,22 +578,42 @@ function InvitationCard({ invitation, onAccept, onReject, isProcessing }: Invita
     return colors[index];
   };
 
+  const handleAccept = async () => {
+    setAcceptLoading(true);
+    try {
+      await onAccept();
+    } finally {
+      setAcceptLoading(false);
+    }
+  };
+
+  const handleReject = async () => {
+    setRejectLoading(true);
+    try {
+      await onReject();
+    } finally {
+      setRejectLoading(false);
+    }
+  };
+
+  const isProcessing = acceptLoading || rejectLoading;
+
   return (
-    <div className="flex items-center justify-between p-4 hover:bg-gray-50/50 transition-colors">
-      <div className="flex items-center gap-4">
+    <div className="flex items-center justify-between p-3 md:p-4 hover:bg-gray-50/50 transition-colors gap-2 md:gap-4">
+      <div className="flex items-center gap-2 md:gap-4 min-w-0 flex-1">
         {/* Profile Image */}
-        <div className="w-14 h-14 rounded-full border border-gray-200 bg-white flex items-center justify-center overflow-hidden shrink-0">
+        <div className="w-10 h-10 md:w-14 md:h-14 rounded-full border border-gray-200 bg-white flex items-center justify-center overflow-hidden shrink-0">
           {follower?.profileImageUrl ? (
             <Image
               src={follower.profileImageUrl}
               alt={displayName}
               width={48}
               height={48}
-              className="w-12 h-12 rounded-full object-cover"
+              className="w-8 h-8 md:w-12 md:h-12 rounded-full object-cover"
             />
           ) : (
             <div 
-              className="w-12 h-12 rounded-full flex items-center justify-center text-gray-700 font-semibold text-sm"
+              className="w-8 h-8 md:w-12 md:h-12 rounded-full flex items-center justify-center text-gray-700 font-semibold text-[10px] md:text-sm"
               style={{ backgroundColor: getAvatarColor(displayName) }}
             >
               {displayName.substring(0, 2).toUpperCase()}
@@ -492,34 +622,123 @@ function InvitationCard({ invitation, onAccept, onReject, isProcessing }: Invita
         </div>
 
         {/* Info */}
-        <div className="flex flex-col gap-1">
-          <h4 className="text-[15px] font-bold text-gray-900">
+        <div className="flex flex-col min-w-0">
+          <h4 className="text-[13px] md:text-[16px] font-semibold text-gray-900 truncate">
             {displayName}
           </h4>
-          <div className="flex items-center gap-1.5 text-gray-500">
-            <MapPin size={14} className="shrink-0" />
-            <span className="text-[13px]">{location}</span>
+          <div className="flex items-center gap-1 text-gray-500">
+            <MapPin size={12} className="shrink-0 md:w-[14px] md:h-[14px]" />
+            <span className="text-[11px] md:text-[14px] text-gray-500 truncate">{location}</span>
           </div>
         </div>
       </div>
 
       {/* Actions */}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2 md:gap-4 shrink-0">
         <button 
-          onClick={onReject}
+          onClick={handleReject}
           disabled={isProcessing}
-          className="text-sm font-medium text-gray-600 hover:text-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="text-[12px] md:text-[14px] font-medium text-gray-600 hover:text-red-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {isProcessing ? "..." : "Ignore"}
+          {rejectLoading ? "..." : "Ignore"}
         </button>
         <button 
-          onClick={onAccept}
+          onClick={handleAccept}
           disabled={isProcessing}
-          className="px-6 py-2 bg-[#6B3FA0] text-white text-sm font-semibold rounded-lg hover:bg-[#5a3590] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+          className="px-3 md:px-5 py-1.5 bg-[#6B3FA0] text-white text-[12px] md:text-[14px] font-medium rounded-md md:rounded-lg hover:bg-[#5a3590] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
         >
-          {isProcessing && <Loader2 size={14} className="animate-spin" />}
-          Accept
+          {acceptLoading && <Loader2 size={12} className="animate-spin" />}
+          {acceptLoading ? "..." : "Accept"}
         </button>
+      </div>
+    </div>
+  );
+}
+
+function SuggestionCard({ suggestion }: { suggestion: Suggestion }) {
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Generate a consistent color based on the name
+  const getAvatarColor = (name: string) => {
+    const colors = ['#f5e6d3', '#e8d5f0', '#d5e8f0', '#f0e8d5', '#d5f0e8', '#f0d5e8'];
+    const index = name.charCodeAt(0) % colors.length;
+    return colors[index];
+  };
+
+  const handleFollow = async () => {
+    setIsLoading(true);
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 500));
+    setIsFollowing(true);
+    setIsLoading(false);
+  };
+
+  return (
+    <div className="flex items-center justify-between p-3 sm:p-4 hover:bg-gray-50/50 transition-colors gap-2 sm:gap-4">
+      <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-1">
+        {/* Profile Image */}
+        <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border border-gray-200 bg-white flex items-center justify-center overflow-hidden shrink-0">
+          {suggestion.logo ? (
+            <Image
+              src={suggestion.logo}
+              alt={suggestion.name}
+              width={48}
+              height={48}
+              className="w-full h-full object-contain p-1"
+              onError={(e) => {
+                (e.target as HTMLImageElement).style.display = 'none';
+              }}
+            />
+          ) : (
+            <div 
+              className="w-full h-full rounded-full flex items-center justify-center text-white font-bold text-[10px] sm:text-sm"
+              style={{ backgroundColor: suggestion.logoColor || getAvatarColor(suggestion.name) }}
+            >
+              {suggestion.name.substring(0, 2).toUpperCase()}
+            </div>
+          )}
+        </div>
+
+        {/* Info */}
+        <div className="flex flex-col min-w-0">
+          <h4 className="text-[13px] sm:text-[15px] font-semibold text-gray-900 truncate">
+            {suggestion.name}
+          </h4>
+          <div className="flex items-center gap-1">
+            <MapPin size={12} className="shrink-0 text-gray-400 sm:w-[14px] sm:h-[14px]" />
+            <span className="text-[11px] sm:text-[13px] text-gray-500 truncate">{suggestion.location}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Follow Button & Mutual Connections */}
+      <div className="flex flex-col items-end gap-0.5 shrink-0">
+        {isFollowing ? (
+          <button 
+            className="flex items-center gap-1 px-2 sm:px-3 py-1 border border-gray-200 text-gray-600 text-[11px] sm:text-sm font-medium rounded-md hover:bg-gray-50 transition-colors"
+            disabled
+          >
+            <span className="text-green-500">✓</span>
+            Following
+          </button>
+        ) : (
+          <button 
+            onClick={handleFollow}
+            disabled={isLoading}
+            className="flex items-center gap-1 px-2 sm:px-3 py-1 border border-[#E0E0E0] text-[#006DCB] text-[12px] sm:text-[14px] font-medium rounded-md cursor-pointer hover:bg-blue-50 transition-colors"
+          >
+            {isLoading ? (
+              <Loader2 size={12} className="animate-spin" />
+            ) : (
+              <span className="text-base sm:text-lg leading-none">+</span>
+            )}
+            {isLoading ? "..." : "Follow"}
+          </button>
+        )}
+        <span className="text-[10px] sm:text-[12px] text-gray-500">
+          {suggestion.mutualConnections} Mutual Connection{suggestion.mutualConnections !== 1 ? 's' : ''}
+        </span>
       </div>
     </div>
   );

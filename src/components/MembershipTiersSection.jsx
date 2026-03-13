@@ -196,7 +196,7 @@ export default function MembershipTiersSection() {
     <section
       ref={sectionRef}
       id="membership-tiers"
-      className="relative w-full bg-white py-20 md:py-24 px-4 md:px-8"
+      className="relative w-full bg-white py-20 md:py-12 px-4 md:px-8"
     >
       <div className="mx-auto max-w-[1200px]">
         <header className="mb-14 text-center">

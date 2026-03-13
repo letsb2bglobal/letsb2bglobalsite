@@ -8,10 +8,8 @@ import {
   BadgeCheck,
   BarChart3,
   Camera,
-  ChevronRight,
   Check,
   ExternalLink,
-  Globe,
   ImageIcon,
   MessageCircleMore,
   Phone,
@@ -21,7 +19,6 @@ import {
   ChevronUp,
   Share2,
   Star,
-  TrendingUp,
 } from "lucide-react";
 import ProtectedRoute, { useAuth } from "@/components/ProtectedRoute";
 import {
@@ -33,12 +30,15 @@ import {
 } from "@/lib/profile";
 import EnquiryModal from "@/components/EnquiryModal";
 import ContactInfoModal from "@/components/ContactInfoModal";
-import { deletePost, getPostsByUserId, getTradeWallFeed, getPostByDocumentId, type Post } from "@/lib/posts";
+import { deletePost, getPostsByUserId, getTradeWallFeed, type Post } from "@/lib/posts";
 import { getOrCreateDirectThread } from "@/lib/enquiry";
 import FollowButton from "@/components/FollowButton";
 import ConnectionsModal from "@/components/ConnectionsModal";
 import MediaModal from "@/components/MediaModal";
 import ProfileEditModal from "@/components/ProfileEditModal";
+import TrendingCard from "@/components/home/TrendingCard";
+import SuggestionsCard from "@/components/home/SuggestionsCard";
+import InsightsCard from "@/components/home/InsightsCard";
 
 type ProfileTab = "about" | "enquiries" | "analytics";
 
@@ -46,11 +46,6 @@ type GalleryItem = {
   url: string;
   name: string;
   mediaType?: string;
-};
-
-type SidebarSuggestion = {
-  name: string;
-  mutual: string;
 };
 
 type RichTextChild = {
@@ -73,24 +68,6 @@ type ExtendedProfile = UserProfile & {
 type PostContentBlock = {
   children?: Array<{ text?: string }>;
 };
-
-const trendingItems = [
-  { topic: "Stay @ Munnar", growth: 23 },
-  { topic: "Rent Car Goa", growth: 13 },
-  { topic: "Budget Stay Calicut", growth: 5 },
-  { topic: "Car Rent", growth: 5 },
-  { topic: "Summer Stay Kerala", growth: 5 },
-];
-
-// Static until the new API exposes network recommendation data for profile pages.
-const suggestedConnections: SidebarSuggestion[] = [
-  { name: "Taj Vivanta Bangalore", mutual: "12 Mutual Connections" },
-  { name: "JW Marriott", mutual: "7 Mutual Connections" },
-  { name: "The Leela Palace", mutual: "21 Mutual Connections" },
-  { name: "The Oberoi", mutual: "6 Mutual Connections" },
-  { name: "Golden Palms", mutual: "7 Mutual Connections" },
-  { name: "Elegance Bangalore", mutual: "13 Mutual Connections" },
-];
 
 // Static until the redesigned profile API sends service taxonomy for this block.
 const fallbackServices = [
@@ -134,7 +111,7 @@ const fallbackPortfolio = [
 const operationalStrengths = [
   "12 years in travel industry",
   "20+ travel professionals",
-  "4,500 travelers served annually",
+  "image.png,500 travelers served annually",
   "Expertise in Europe, Southeast Asia, and the Middle East",
   "Uses Amadeus and Sabre booking systems",
   "Partnerships with 300+ hotels worldwide",
@@ -318,10 +295,10 @@ export default function PublicProfilePage() {
     }
   };
 
-  const fetchNetworkingCounts = async (id: string) => {
+  const fetchNetworkingCounts = async (docId: string, numericId?: number) => {
     try {
       const { getNetworkingCounts } = await import("@/modules/networking/services/networking.service");
-      const counts = await getNetworkingCounts(id);
+      const counts = await getNetworkingCounts(docId, numericId);
       setNetworkingCounts(counts);
     } catch (error) {
       console.error("Failed to fetch counts:", error);
@@ -338,12 +315,12 @@ export default function PublicProfilePage() {
 
   useEffect(() => {
     const handleUpdate = () => {
-      fetchNetworkingCounts(documentId);
+      fetchNetworkingCounts(documentId, profile?.id);
     };
 
     window.addEventListener("networking:updated", handleUpdate);
     return () => window.removeEventListener("networking:updated", handleUpdate);
-  }, [documentId]);
+  }, [documentId, profile?.id]);
 
   const fetchUserPosts = async (userId: number) => {
     setLoadingPosts(true);
@@ -489,65 +466,36 @@ export default function PublicProfilePage() {
     },
   ];
   useEffect(() => {
-    if (!documentId) return;
-
-    const abortController = new AbortController();
-
     const fetchProfile = async () => {
-      setLoading(true);
+      if (!documentId) return;
 
       try {
-        // Try direct profile fetch first (faster path for profile URLs)
         let data = await getProfileByDocumentId(documentId).catch(() => null);
-        if (abortController.signal.aborted) return;
-
-        // If not found, check if it's a post documentId
-        if (!data) {
-          const post = await getPostByDocumentId(documentId);
-          if (abortController.signal.aborted) return;
-
-          if (post?.user_profile?.documentId) {
-            // It's a post, fetch the user's profile
-            data = await getProfileByDocumentId(post.user_profile.documentId).catch(() => null);
-            if (abortController.signal.aborted) return;
-          }
+        // Fallback: when viewing own profile, GET /me may succeed where GET /:documentId fails
+        if (!data && user?.id) {
+          const { ownProfile } = await getMyContexts();
+          if (ownProfile?.documentId === documentId) data = ownProfile;
         }
 
-        // Last fallback: own profile via /me endpoint
-        if (!data) {
-          const contexts = await getMyContexts().catch(() => null);
-          if (abortController.signal.aborted) return;
-          if (contexts?.ownProfile) {
-            data = contexts.ownProfile;
-          }
-        }
-
-        if (abortController.signal.aborted) return;
-
-        setProfile(data);
-        
         if (data) {
-          // Run these in parallel - they don't depend on each other
-          Promise.all([
-            fetchNetworkingCounts(data.documentId || documentId),
-            data.userId ? fetchUserPosts(data.userId) : Promise.resolve()
-          ]);
+          setProfile(data);
+          
+          // Fetch networking counts with numeric ID for accurate results
+          await fetchNetworkingCounts(documentId, data.id);
+
+          if (data.userId) {
+            fetchUserPosts(data.userId);
+          }
         }
       } catch (error) {
         console.error("Error fetching public profile:", error);
       } finally {
-        if (!abortController.signal.aborted) {
-          setLoading(false);
-        }
+        setLoading(false);
       }
     };
 
     fetchProfile();
-
-    return () => {
-      abortController.abort();
-    };
-  }, [documentId]);
+  }, [documentId, user?.id]);
 
   const handleMessageClick = async () => {
     if (!user?.id || !profile?.documentId) {
@@ -567,10 +515,7 @@ export default function PublicProfilePage() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#f3f2ef]">
-        <div className="flex flex-col items-center gap-4">
-          <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-[#6b2c91]" />
-          <p className="text-sm text-gray-500 font-medium">Loading profile...</p>
-        </div>
+        <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-[#6b2c91]" />
       </div>
     );
   }
@@ -580,9 +525,8 @@ export default function PublicProfilePage() {
       <div className="min-h-screen flex items-center justify-center bg-[#f3f2ef] px-4">
         <div className="rounded-3xl border border-[#e2dbe9] bg-white p-8 text-center shadow-sm">
           <h1 className="text-2xl font-bold text-[#21172d]">Profile Not Found</h1>
-          <p className="text-gray-500 mt-2 text-sm">The profile you're looking for doesn't exist or has been removed.</p>
           <button
-            onClick={() => router.push("/home")}
+            onClick={() => router.push("/")}
             className="mt-4 rounded-full bg-[#6b2c91] px-5 py-2 text-sm font-semibold text-white transition hover:bg-[#572377]"
           >
             Back to Feed
@@ -596,7 +540,7 @@ export default function PublicProfilePage() {
     <ProtectedRoute>
       <div className="min-h-screen bg-[#f2f1f6] pb-10">
         <div className="mx-auto max-w-[1320px] px-3 py-4 sm:px-4 lg:px-6">
-          <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_320px] md:mt-[90px] mt-[70px]">
+          <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_320px] md:mt-[90px] mt-[80px]">
             <main className="space-y-4 ">
               <section className="overflow-hidden rounded-[20px] border border-[#ddd6e5] bg-white shadow-[0_8px_28px_rgba(49,27,63,0.06)]">
                 <div
@@ -673,7 +617,7 @@ export default function PublicProfilePage() {
                         )}
                       </button>
 
-                      <div className="flex flex-wrap items-center gap-3 text-sm text-[#6b6176]">
+                      <div className="flex flex-wrap items-center gap-3 mt-5 text-sm text-[#6b6176]">
                         <button
                           type="button"
                           onClick={() => {
@@ -1416,68 +1360,9 @@ export default function PublicProfilePage() {
             </main>
 
             <aside className="space-y-4 xl:sticky xl:top-4 xl:self-start">
-              <section className="rounded-[20px] border border-[#ddd6e5] bg-white p-5 shadow-[0_8px_28px_rgba(49,27,63,0.05)]">
-                <h3 className="text-sm font-bold text-[#6b2c91] uppercase tracking-wider">Trending Now!</h3>
-                <div className="mt-5 space-y-4">
-                  {trendingItems.map((item) => (
-                    <div key={item.topic} className="flex items-center justify-between gap-3">
-                      <span className="text-sm font-medium text-[#3d3249]">{item.topic}</span>
-                      <div className="flex items-center gap-1.5 font-bold text-[#289c42]">
-                        <TrendingUp size={14} />
-                        <span className="text-xs">+{item.growth}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </section>
-
-              <section className="rounded-[20px] border border-[#ddd6e5] bg-white p-5 shadow-[0_8px_28px_rgba(49,27,63,0.05)]">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-bold text-[#6b2c91] uppercase tracking-wider">Suggested Connections</h3>
-                  <ChevronRight size={16} className="text-[#8b7b99]" />
-                </div>
-                <div className="mt-5 space-y-5">
-                  {suggestedConnections.map((item) => (
-                    <div key={item.name} className="flex items-center justify-between gap-3">
-                      <div className="flex min-w-0 items-center gap-3">
-                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#ece7f1] bg-[#fdfcff] text-xs font-bold text-[#6b2c91]">
-                          <img src={`https://api.dicebear.com/7.x/initials/svg?seed=${item.name}`} className="rounded-full" alt="" />
-                        </div>
-                        <div className="min-w-0">
-                          <p className="truncate text-sm font-bold text-[#201627]">{item.name}</p>
-                          <p className="truncate text-[10px] text-[#8b7b99]">{item.mutual}</p>
-                        </div>
-                      </div>
-                      <button className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-[#cec2db] text-[#6b2c91] transition hover:bg-[#6b2c91] hover:text-white">
-                        <Plus size={16} />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </section>
-
-              <section className="rounded-[20px] border border-[#ddd6e5] bg-white p-5 shadow-[0_8px_28px_rgba(49,27,63,0.05)]">
-                <h3 className="text-sm font-bold text-[#6b2c91] uppercase tracking-wider">Popular Insights</h3>
-                <div className="mt-5 overflow-hidden rounded-2xl border border-[#ece7f1]">
-                  <div className="relative aspect-[1.1/0.9] cursor-pointer group">
-                    <img src="/global-travel-network/travel_block.png" alt="Insights" className="h-full w-full object-cover transition duration-500 group-hover:scale-110" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#1a1230]/85 via-[#1a1230]/30 to-transparent" />
-                    <div className="absolute inset-x-0 bottom-0 p-4 text-white">
-                      <div className="flex items-center gap-2 text-[10px] font-bold">
-                        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#1d72d8]">
-                          <Globe size={12} />
-                        </span>
-                        <span>ABC Holiday&apos;s</span>
-                        <BadgeCheck size={12} className="text-blue-400" />
-                        <ExternalLink size={12} className="ml-auto opacity-70" />
-                      </div>
-                      <p className="mt-3 text-sm font-bold leading-5">
-                        Inspire your next creative video campaign with destination storytelling.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </section>
+              <TrendingCard />
+              <SuggestionsCard />
+              <InsightsCard />
             </aside>
           </div>
         </div>
@@ -1500,6 +1385,7 @@ export default function PublicProfilePage() {
           isOpen={isConnectionsModalOpen}
           onClose={() => setIsConnectionsModalOpen(false)}
           profileId={documentId}
+          numericProfileId={profile?.id}
           initialTab={connectionsInitialTab}
         />
 

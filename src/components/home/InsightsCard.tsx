@@ -1,32 +1,48 @@
 "use client";
 
-import React from 'react';
-import { Sparkles, Play } from 'lucide-react';
+import React from "react";
+import { BadgeCheck, ExternalLink } from "lucide-react";
 
 const InsightsCard = () => {
   return (
-    <div className="bg-white rounded-[12px] shadow-sm p-5 border border-gray-100 flex flex-col gap-4 mt-4">
-      <div className="flex items-center gap-2">
-         <Sparkles size={16} className="text-[#6B3FA0]" />
-         <h3 className="text-sm font-bold text-gray-800">Popular Insights</h3>
-      </div>
-
-      <div className="flex items-center gap-2 mb-1">
-        <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center font-bold text-[8px] text-gray-500">J</div>
-        <span className="text-[10px] font-bold text-gray-800">JW Marriott</span>
-      </div>
-
-      <div className="rounded-xl aspect-square bg-[#f6f2f8] relative overflow-hidden group cursor-pointer border border-gray-50 shadow-sm">
-        {/* Banner image placeholder */}
-        <div className="w-full h-full flex flex-col items-center justify-center p-6 text-center">
-           <div className="w-10 h-10 bg-[#6B3FA0] rounded-full flex items-center justify-center text-white mb-3 shadow-lg shadow-purple-200 group-hover:scale-110 transition-transform">
-             <Play size={16} fill="white" />
-           </div>
-           <p className="text-xs font-bold text-gray-800 leading-snug">Inspire Your Next Creative Video Campaign</p>
+    <div>
+      {/* Title outside the card */}
+      <h3 className="text-[15px] font-medium text-[#000000] ml-1 mb-3">
+        Popular Insights
+      </h3>
+      
+      {/* Card */}
+      <div className="rounded-xl border border-gray-200 bg-white overflow-hidden shadow-sm">
+        {/* Header with company info */}
+        <div className="flex items-center justify-between p-3 border-b border-gray-100">
+          <div className="flex items-center gap-2">
+            {/* Logo */}
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-red-500 to-blue-600 flex items-center justify-center">
+              <span className="text-white text-xs font-bold">AB</span>
+            </div>
+            <span className="text-sm font-semibold text-gray-900">ABC Holiday&apos;s</span>
+            <BadgeCheck size={16} className="text-blue-500 fill-blue-500" />
+          </div>
+          <ExternalLink size={16} className="text-gray-400 hover:text-gray-600 cursor-pointer" />
         </div>
         
-        <div className="absolute inset-0 bg-gradient-to-t from-gray-900/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4">
-           <span className="text-[10px] text-white font-bold">Watch Now</span>
+        {/* Image with overlay */}
+        <div className="relative aspect-[16/10] cursor-pointer group overflow-hidden">
+          <img
+            src="/global-travel-network/travel_block.png"
+            alt="Insights"
+            className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+          <div className="absolute inset-x-0 bottom-0 p-4">
+            {/* Tag */}
+            <div className="inline-block px-2 py-1 bg-[#0a4d68] text-white text-[9px] font-bold uppercase tracking-wide rounded mb-2">
+              Travel &amp; Tourism Ideas
+            </div>
+            <p className="text-white text-sm font-bold leading-5">
+              Inspire Your Next Creative Video Campaign
+            </p>
+          </div>
         </div>
       </div>
     </div>

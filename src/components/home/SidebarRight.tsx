@@ -7,7 +7,7 @@ import InsightsCard from './InsightsCard';
 
 const SidebarRight = () => {
   return (
-    <aside className="w-full flex flex-col">
+    <aside className="w-full flex flex-col gap-4">
       <TrendingCard />
       <SuggestionsCard />
       <InsightsCard />

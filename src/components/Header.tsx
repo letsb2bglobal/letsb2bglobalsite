@@ -204,14 +204,14 @@ const Header = () => {
               href="/"
               className="flex items-center gap-2 sm:gap-3 shrink-0 min-w-0"
             >
-              {/* <Image
-                src="/b2bheaderlogo1.png"
+              <Image
+                src="/b2bheaderlogo2.png"
                 alt="LetsB2B - Less Noise, Pure Business"
                 width={180}
                 height={48}
                 className="h-9 w-auto object-contain sm:h-10"
                 priority
-              /> */}
+              />
             </Link>
 
             {/* Desktop nav: pill with menu links */}
@@ -549,7 +549,7 @@ const Header = () => {
                   href="/profile"
                   className="flex items-center gap-2.5 p-1 rounded-xl hover:bg-gray-50 transition-colors"
                 >
-                  <div className="w-10 h-10 bg-gradient-to-tr from-[#6B3FA0] to-[#3a1d63] rounded-full flex items-center justify-center text-white font-bold text-sm ring-2 ring-white shadow-md overflow-hidden">
+                  <div className="w-10 h-10 bg-gradient-to-tr from-[#6B3FA0] to-[#3a1d63] rounded-full flex items-center justify-center text-white text-[16px] ring-2 ring-white shadow-md overflow-hidden">
                     {user?.username?.substring(0, 1).toUpperCase() || "U"}
                   </div>
 

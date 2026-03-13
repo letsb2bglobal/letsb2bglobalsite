@@ -100,18 +100,26 @@ export const uploadKYCWithData = async (
     body: formData,
   });
 
+  // Debug response
+  console.log("Response status:", response.status);
+  console.log("Response ok:", response.ok);
+
   if (!response.ok) {
     let message = "Failed to upload KYC documents";
+    let errorDetails = null;
     try {
-      const errorData = await response.json();
-      message = errorData?.error?.message || message;
+      errorDetails = await response.json();
+      console.log("Error response:", errorDetails);
+      message = errorDetails?.error?.message || message;
     } catch {
-      // ignore JSON parse errors, keep default message
+      console.log("Could not parse error response");
     }
     throw new Error(message);
   }
 
-  return response.json();
+  const result = await response.json();
+  console.log("Success response:", result);
+  return result;
 };
 
 export const updateKycMetadata = async (profileId: string, data: KYCUploadData) => {
