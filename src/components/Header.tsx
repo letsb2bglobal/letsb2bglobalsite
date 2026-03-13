@@ -163,6 +163,14 @@ const Header = () => {
     router.push("/signin");
   };
 
+  const handleSearch = () => {
+    const params = new URLSearchParams();
+    if (searchText.trim()) params.set("q", searchText.trim());
+    if (locationText.trim()) params.set("location", locationText.trim());
+    const queryString = params.toString();
+    router.push(queryString ? `/search?${queryString}` : "/search");
+  };
+
   const handleSectionClick = useCallback((id: string) => {
     setMobileMenuOpen(false);
     let attempts = 0;
@@ -518,7 +526,11 @@ const Header = () => {
                   onChange={(e) => setLocationText(e.target.value)}
                 />
               </div>
-              <button className="bg-[#6B3FA0] h-full px-5 text-white hover:bg-black transition-colors">
+              <button
+                type="button"
+                onClick={handleSearch}
+                className="bg-[#6B3FA0] h-full px-5 text-white hover:bg-black transition-colors"
+              >
                 <Search size={18} strokeWidth={3} />
               </button>
             </div>
