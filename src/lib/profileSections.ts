@@ -93,18 +93,26 @@ export const getProfileSections = async (profileId: string): Promise<ProfileSect
 /**
  * POST /api/profile-sections/profile/:profileId
  * Upserts a section (creates if not exists, updates if it does).
+ * Supports optional image upload via multipart/form-data.
  */
 export const upsertProfileSection = async (
   profileId: string,
-  payload: { section_key: string; category: CategoryKey; order: number; data?: Record<string, any> }
+  payload: { section_key: string; category: CategoryKey; order: number; data?: Record<string, any> },
+  imageFile?: File | null
 ): Promise<ProfileSection | null> => {
   const token = getToken();
   if (!token) return null;
   try {
+    const formData = new FormData();
+    formData.append('data', JSON.stringify(payload));
+    if (imageFile) {
+      formData.append('image', imageFile);
+    }
+
     const res = await fetch(`${API_URL}/api/profile-sections/profile/${profileId}`, {
       method: 'POST',
-      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
+      headers: { Authorization: `Bearer ${token}` },
+      body: formData,
     });
     if (!res.ok) return null;
     const json = await res.json();
@@ -172,26 +180,15 @@ export const createProfileItem = async (
   const token = getToken();
   if (!token) return null;
   try {
-    let res: Response;
+    const formData = new FormData();
+    formData.append('data', JSON.stringify(payload));
+    if (imageFile) formData.append('image', imageFile);
 
-    if (imageFile) {
-      // multipart/form-data when image is present
-      const formData = new FormData();
-      formData.append('image', imageFile);
-      formData.append('data', JSON.stringify(payload));
-      res = await fetch(`${API_URL}/api/profile-items/section/${sectionDocumentId}`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-        body: formData,
-      });
-    } else {
-      // plain JSON when no image
-      res = await fetch(`${API_URL}/api/profile-items/section/${sectionDocumentId}`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-    }
+    const res = await fetch(`${API_URL}/api/profile-items/section/${sectionDocumentId}`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body: formData,
+    });
 
     if (!res.ok) return null;
     const json = await res.json();
@@ -273,23 +270,59 @@ export const deleteProfileItem = async (itemDocumentId: string): Promise<boolean
 /**
  * POST /api/profile-items/section/:sectionId/batch
  * Updates many items at once. Automatically Creates, Updates, and Deletes.
+ * Supports binary images via multipart/form-data.
  */
 export const batchSyncProfileItems = async (
   sectionId: string,
-  items: Array<{ documentId?: string; title: string; description?: string; order: number; extra_data?: Record<string, any> }>
+  items: Array<{ documentId?: string; title: string; description?: string; order: number; extra_data?: Record<string, any> }>,
+  files?: File[]
 ): Promise<{ success: boolean; data: ProfileItem[] }> => {
   const token = getToken();
   if (!token) return { success: false, data: [] };
   try {
+    const formData = new FormData();
+    formData.append('items', JSON.stringify(items));
+    
+    if (files?.length) {
+      files.forEach(f => formData.append('images', f));
+    }
+
     const res = await fetch(`${API_URL}/api/profile-items/section/${sectionId}/batch`, {
       method: 'POST',
-      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ items }),
+      headers: { Authorization: `Bearer ${token}` },
+      body: formData,
     });
+
     if (!res.ok) return { success: false, data: [] };
     const json = await res.json();
     return { success: true, data: json.data || [] };
   } catch {
+    return { success: false, data: [] };
+  }
+};
+
+/**
+ * Convenience wrapper to batch sync items using a section KEY (e.g. 'fleet') 
+ * instead of a documentId. It fetches sections first to find the ID.
+ */
+export const batchSyncProfileItemsByKey = async (
+  profileId: string,
+  sectionKey: string,
+  items: Array<{ documentId?: string; title: string; description?: string; order: number; extra_data?: Record<string, any> }>,
+  files?: File[]
+): Promise<{ success: boolean; data: ProfileItem[] }> => {
+  try {
+    const sections = await getProfileSections(profileId);
+    const section = sections.find(s => s.section_key === sectionKey);
+    
+    if (!section) {
+      console.error(`Section with key "${sectionKey}" not found for profile ${profileId}`);
+      return { success: false, data: [] };
+    }
+    
+    return batchSyncProfileItems(section.documentId, items, files);
+  } catch (error) {
+    console.error("Error in batchSyncProfileItemsByKey:", error);
     return { success: false, data: [] };
   }
 };

@@ -33,15 +33,21 @@ export default function TabPage() {
     setKycFiles,
     socialMediaProfiles,
     setSocialMediaProfiles,
-    additionalPhones,
-    setAdditionalPhones,
+    contacts,
+    setContacts,
     showTourismLicense,
     setShowTourismLicense,
     businessCardFile,
     setBusinessCardFile,
     businessCardUrl,
     setBusinessCardUrl,
-    kycAttachments
+    kycAttachments,
+    coverPhotoUrl,
+    setCoverPhotoUrl,
+    setCoverPhotoFile,
+    profilePhotoUrl,
+    setProfilePhotoUrl,
+    setProfilePhotoFile,
   } = useDetails();
 
   const businessCardInputRef = useRef<HTMLInputElement | null>(null);
@@ -49,6 +55,32 @@ export default function TabPage() {
   const gstCertificateInputRef = useRef<HTMLInputElement | null>(null);
   const panCopyInputRef = useRef<HTMLInputElement | null>(null);
   const tourismLicenseInputRef = useRef<HTMLInputElement | null>(null);
+  const coverPhotoInputRef = useRef<HTMLInputElement | null>(null);
+  const profilePhotoInputRef = useRef<HTMLInputElement | null>(null);
+
+  const handleCoverPhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setCoverPhotoFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setCoverPhotoUrl(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleProfilePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setProfilePhotoFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setProfilePhotoUrl(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const addSocialMediaProfile = () => {
     setSocialMediaProfiles((prev) => [...prev, { platform: '', value: '' }]);
@@ -66,20 +98,20 @@ export default function TabPage() {
     setSocialMediaProfiles((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const addPhoneNumber = () => {
-    setAdditionalPhones((prev) => [...prev, { countryCode: '+91', phone: '' }]);
+  const addContact = () => {
+    setContacts((prev) => [...prev, { name: '', position: '', email: '', countryCode: '+91', phone_number: '' }]);
   };
 
-  const updateAdditionalPhone = (index: number, field: 'countryCode' | 'phone', value: string) => {
-    setAdditionalPhones((prev) => {
+  const updateContact = (index: number, field: keyof typeof contacts[0], value: string) => {
+    setContacts((prev) => {
       const updated = [...prev];
       updated[index] = { ...updated[index], [field]: value };
       return updated;
     });
   };
 
-  const removeAdditionalPhone = (index: number) => {
-    setAdditionalPhones((prev) => prev.filter((_, i) => i !== index));
+  const removeContact = (index: number) => {
+    setContacts((prev) => prev.filter((_, i) => i !== index));
   };
 
   const removeLanguage = (idx: number) => {
@@ -102,14 +134,48 @@ export default function TabPage() {
         <>
           {/* Combined: Profile + Company Details */}
           <div className="rounded-[16px] overflow-hidden bg-white shadow-sm mb-4 sm:mb-6">
-            <div className="relative h-32 sm:h-40 w-full" style={{ backgroundColor: '#E3BFDD' }}>
-              <button type="button" className="absolute top-3 right-3 w-10 h-10 rounded-full flex items-center justify-center overflow-hidden" style={{ backgroundColor: PURPLE }} aria-label="Edit cover">
+            <div className="relative h-32 sm:h-40 w-full overflow-hidden" style={{ backgroundColor: '#E3BFDD' }}>
+              {coverPhotoUrl && (
+                <img 
+                  src={coverPhotoUrl} 
+                  alt="Cover" 
+                  className="w-full h-full object-cover"
+                />
+              )}
+              <input
+                ref={coverPhotoInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleCoverPhotoChange}
+              />
+              <button 
+                type="button" 
+                onClick={() => coverPhotoInputRef.current?.click()}
+                className="absolute top-3 right-3 w-10 h-10 rounded-full flex items-center justify-center overflow-hidden z-10 hover:opacity-90" 
+                style={{ backgroundColor: PURPLE }} 
+                aria-label="Edit cover"
+              >
                 <Image src="/cover_cameralogo.png" alt="" width={20} height={20} className="object-contain" />
               </button>
             </div>
             <div className="flex justify-start relative -mt-12 pl-4 sm:pl-6">
-              <div className="w-24 h-24 rounded-full bg-white border-4 border-white shadow-lg flex items-center justify-center overflow-hidden z-10 cursor-pointer">
-                <Image src="/profilecamera.png" alt="" width={24} height={24} className="object-contain" />
+              <div 
+                className="w-24 h-24 rounded-full bg-white border-4 border-white shadow-lg flex items-center justify-center overflow-hidden z-10 cursor-pointer relative hover:opacity-90"
+                onClick={() => profilePhotoInputRef.current?.click()}
+              >
+                {profilePhotoUrl ? (
+                  <img src={profilePhotoUrl} alt="Profile" className="w-full h-full object-cover" />
+                ) : (
+                  <Image src="/profilecamera.png" alt="" width={24} height={24} className="object-contain" />
+                )}
+                <input
+                  ref={profilePhotoInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleProfilePhotoChange}
+                />
               </div>
             </div>
             <div className="px-6 sm:px-8 pt-4 pb-6 sm:pb-8 space-y-4">
@@ -249,9 +315,9 @@ export default function TabPage() {
               <div>
                 <input
                   type="text"
-                  value={formData.location}
-                  onChange={(e) => setFormData((p) => ({ ...p, location: e.target.value }))}
-                  placeholder="Location"
+                  value={formData.address}
+                  onChange={(e) => setFormData((p) => ({ ...p, address: e.target.value }))}
+                  placeholder="Location/Address"
                   className="w-full px-4 py-3 bg-white border border-[#D9D9D9] rounded-xl text-[#545454] placeholder-[#545454] font-normal font-sans focus:outline-none focus:border-[#612178]"
                 />
               </div>
@@ -308,100 +374,79 @@ export default function TabPage() {
           {/* Card 3: Contact Information */}
           <div className="bg-white rounded-[16px] shadow-sm p-6 sm:p-8">
             <h2 className="text-base font-bold text-gray-900 mb-4">Contact Information</h2>
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <input
-                  type="text"
-                  value={formData.contactPerson}
-                  onChange={(e) => setFormData((p) => ({ ...p, contactPerson: e.target.value }))}
-                  placeholder="Enter The Contact Person"
-                  className="w-full px-4 py-3 bg-white border border-[#D9D9D9] rounded-xl text-[#545454] placeholder-[#545454] font-normal font-sans focus:outline-none focus:border-[#612178]"
-                />
-                <div className={SELECT_WRAPPER}>
-                  <span className={SELECT_CHEVRON}><ChevronDownIcon /></span>
-                  <select
-                    value={formData.designation}
-                    onChange={(e) => setFormData((p) => ({ ...p, designation: e.target.value }))}
-                    className={SELECT_BASE}
-                  >
-                    <option value="">Select Designation</option>
-                    {DESIGNATION_OPTIONS.map((d) => (
-                      <option key={d} value={d}>{d}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-              <div>
-                <input
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => setFormData((p) => ({ ...p, email: e.target.value }))}
-                  placeholder="Abc@gmail.com"
-                  className="w-full px-4 py-3 bg-white border border-[#D9D9D9] rounded-xl text-[#545454] placeholder-[#545454] font-normal font-sans focus:outline-none focus:border-[#612178]"
-                />
-              </div>
-              <div className="flex gap-2 flex-wrap sm:flex-nowrap">
-                <div className={`${SELECT_WRAPPER} min-w-[70px] sm:w-20 shrink-0`}>
-                  <span className={SELECT_CHEVRON}><ChevronDownIcon /></span>
-                  <select
-                    value={formData.countryCode}
-                    onChange={(e) => setFormData((p) => ({ ...p, countryCode: e.target.value }))}
-                    className={SELECT_COUNTRY_CODE}
-                    aria-label="Country code"
-                  >
-                    <option value="+91">+91</option>
-                    <option value="+1">+1</option>
-                    <option value="+971">+971</option>
-                    <option value="+44">+44</option>
-                  </select>
-                </div>
-                <input
-                  type="tel"
-                  value={formData.phone}
-                  onChange={(e) => setFormData((p) => ({ ...p, phone: e.target.value }))}
-                  placeholder="Enter Phone No."
-                  aria-label="Phone number"
-                  className="flex-1 px-4 py-3 bg-white border border-[#D9D9D9] rounded-xl text-[#545454] placeholder-[#545454] font-normal font-sans focus:outline-none focus:border-[#612178]"
-                />
-              </div>
-              {/* Additional Phone Numbers */}
-              {additionalPhones.map((phoneEntry, index) => (
-                <div key={index} className="flex gap-2 flex-wrap sm:flex-nowrap items-center">
-                  <div className={`${SELECT_WRAPPER} min-w-[70px] sm:w-20 shrink-0`}>
-                    <span className={SELECT_CHEVRON}><ChevronDownIcon /></span>
-                    <select
-                      value={phoneEntry.countryCode}
-                      onChange={(e) => updateAdditionalPhone(index, 'countryCode', e.target.value)}
-                      className={SELECT_COUNTRY_CODE}
-                      aria-label="Country code"
+            <div className="space-y-6">
+              {contacts.map((contact, index) => (
+                <div key={index} className="space-y-4 relative p-4 border border-gray-100 rounded-xl bg-gray-50/50">
+                  {contacts.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => removeContact(index)}
+                      className="absolute top-2 right-2 p-1 text-gray-400 hover:text-red-500 transition-colors"
+                      aria-label="Remove contact"
                     >
-                      <option value="+91">+91</option>
-                      <option value="+1">+1</option>
-                      <option value="+971">+971</option>
-                      <option value="+44">+44</option>
-                    </select>
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                    </button>
+                  )}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <input
+                      type="text"
+                      value={contact.name}
+                      onChange={(e) => updateContact(index, 'name', e.target.value)}
+                      placeholder="Enter The Contact Person"
+                      className="w-full px-4 py-3 bg-white border border-[#D9D9D9] rounded-xl text-[#545454] placeholder-[#545454] font-normal font-sans focus:outline-none focus:border-[#612178]"
+                    />
+                    <div className={SELECT_WRAPPER}>
+                      <span className={SELECT_CHEVRON}><ChevronDownIcon /></span>
+                      <select
+                        value={contact.position}
+                        onChange={(e) => updateContact(index, 'position', e.target.value)}
+                        className={SELECT_BASE}
+                      >
+                        <option value="">Select Designation</option>
+                        {DESIGNATION_OPTIONS.map((d) => (
+                          <option key={d} value={d}>{d}</option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
-                  <input
-                    type="tel"
-                    value={phoneEntry.phone}
-                    onChange={(e) => updateAdditionalPhone(index, 'phone', e.target.value)}
-                    placeholder="Enter Phone No."
-                    aria-label="Phone number"
-                    className="flex-1 px-4 py-3 bg-white border border-[#D9D9D9] rounded-xl text-[#545454] placeholder-[#545454] font-normal font-sans focus:outline-none focus:border-[#612178]"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => removeAdditionalPhone(index)}
-                    className="shrink-0 cursor-pointer"
-                    aria-label="Remove phone number"
-                  >
-                    <Image src="/cancle_symbole.svg" alt="Remove" width={28} height={28} className="w-7 h-7" />
-                  </button>
+                  <div>
+                    <input
+                      type="email"
+                      value={contact.email}
+                      onChange={(e) => updateContact(index, 'email', e.target.value)}
+                      placeholder="Abc@gmail.com"
+                      className="w-full px-4 py-3 bg-white border border-[#D9D9D9] rounded-xl text-[#545454] placeholder-[#545454] font-normal font-sans focus:outline-none focus:border-[#612178]"
+                    />
+                  </div>
+                  <div className="flex gap-2 flex-wrap sm:flex-nowrap">
+                    <div className={`${SELECT_WRAPPER} min-w-[70px] sm:w-20 shrink-0`}>
+                      <span className={SELECT_CHEVRON}><ChevronDownIcon /></span>
+                      <select
+                        value={contact.countryCode}
+                        onChange={(e) => updateContact(index, 'countryCode', e.target.value)}
+                        className={SELECT_COUNTRY_CODE}
+                        aria-label="Country code"
+                      >
+                        <option value="+91">+91</option>
+                        <option value="+1">+1</option>
+                        <option value="+971">+971</option>
+                        <option value="+44">+44</option>
+                      </select>
+                    </div>
+                    <input
+                      type="tel"
+                      value={contact.phone_number}
+                      onChange={(e) => updateContact(index, 'phone_number', e.target.value)}
+                      placeholder="Enter Phone No."
+                      aria-label="Phone number"
+                      className="flex-1 px-4 py-3 bg-white border border-[#D9D9D9] rounded-xl text-[#545454] placeholder-[#545454] font-normal font-sans focus:outline-none focus:border-[#612178]"
+                    />
+                  </div>
                 </div>
               ))}
               <button
                 type="button"
-                onClick={addPhoneNumber}
+                onClick={addContact}
                 className="inline-flex items-center gap-2 font-normal text-base"
                 style={{ color: '#1F1E25' }}
               >
@@ -410,7 +455,7 @@ export default function TabPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                   </svg>
                 </span>
-                Add Phone Number
+                Add Contact Person
               </button>
             </div>
           </div>

@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/components/ProtectedRoute";
-import { getMyProfile } from "@/lib/profile";
+import { getMyProfile, saveOnboardingStep } from "@/lib/profile";
 import Image from "next/image";
 import AuthLayout from "@/components/AuthLayout";
 import SignupHeader from "@/components/SignupHeader";
@@ -351,8 +351,25 @@ export default function CompleteProfileContent() {
     setSubmitError("");
 
     try {
-      // API disabled for now - advance steps locally
-      // Add flow: Step 2 -> Step 4 (skip 3); Who Are You flow: Step 2 -> Step 3
+      // Map the payload based on the current step according to the new architecture
+      let payload: any = {};
+      if (step === 1) {
+        payload = { business_type: formData.business_type };
+      } else if (step === 2) {
+        payload = { 
+          company_name: formData.company_name, 
+          business_details: formData.business_details 
+        };
+      } else if (step === 3) {
+        payload = { preferred_collaborations: formData.preferred_collaborations };
+      } else if (step === 4) {
+        // Step 4 is finalization
+        payload = {};
+      }
+
+      await saveOnboardingStep(step, payload);
+
+      // Advance steps locally
       let nextStep = step < 4 ? step + 1 : 4;
       if (step === 2 && cameFromAddFlow) {
         nextStep = 4;
@@ -783,8 +800,16 @@ export default function CompleteProfileContent() {
     setCurrentStep(4); // Skip from Add flow's preference → go to Preview
   };
 
-  const handleSkip = () => {
+  const handleSkip = async () => {
     setErrors({});
+    
+    // Save current step progress as empty/skip before advancing
+    try {
+      await saveOnboardingStep(currentStep, {});
+    } catch (err) {
+      console.warn("Failed to save skip progress:", err);
+    }
+
     if (showPreferenceAfterAdd) {
       handlePreferenceAfterAddSkip();
       return;
