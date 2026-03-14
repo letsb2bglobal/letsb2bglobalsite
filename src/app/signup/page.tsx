@@ -1,10 +1,11 @@
 'use client';
 
-import React, { Suspense, useState } from 'react';
+import React, { Suspense, useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { checkEmail, register, setAuthData } from '@/lib/auth';
+import styles from './signup.module.css';
 
 const validatePassword = (pw: string) => ({
   length: pw.length >= 8,
@@ -56,6 +57,26 @@ function SignupContent() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitError, setSubmitError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [zoomScale, setZoomScale] = useState(1);
+  const [isDesktop, setIsDesktop] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const updateZoom = () => {
+      if (window.visualViewport) setZoomScale(window.visualViewport.scale);
+    };
+    const updateDesktop = () => setIsDesktop(window.innerWidth >= 768);
+    updateZoom();
+    updateDesktop();
+    window.visualViewport?.addEventListener('resize', updateZoom);
+    window.visualViewport?.addEventListener('scroll', updateZoom);
+    window.addEventListener('resize', updateDesktop);
+    return () => {
+      window.visualViewport?.removeEventListener('resize', updateZoom);
+      window.visualViewport?.removeEventListener('scroll', updateZoom);
+      window.removeEventListener('resize', updateDesktop);
+    };
+  }, []);
 
   const pwRules = validatePassword(formData.password);
   const pwStrong = pwRules.length && pwRules.uppercase && pwRules.number;
@@ -127,7 +148,7 @@ function SignupContent() {
     <button
       type="submit"
       disabled={disabled}
-      className="w-full mt-2 flex items-center justify-center gap-2 h-12 rounded-full text-sm font-bold text-white disabled:opacity-60"
+      className="w-full mt-1 flex items-center justify-center gap-2 h-12 rounded-full text-sm font-bold text-white disabled:opacity-60"
       style={{
         background:
           'linear-gradient(90deg, rgba(255, 247, 0, 0.57715) 0%, rgba(255, 172, 6, 0.623225) 31.21%, rgba(196, 67, 69, 0.646263) 66.1%, rgba(155, 63, 188, 0.6693) 99.27%)',
@@ -141,14 +162,40 @@ function SignupContent() {
   );
 
   return (
-    <div className="w-full min-h-screen bg-[#05020F] text-white">
-      <div className="flex flex-col md:flex-row min-h-screen max-w-[1440px] mx-auto overflow-hidden shadow-[0_20px_60px_rgba(0,0,0,0.35)]">
-        {/* Left onboarding stepper panel */}
-        <div className="relative w-full md:w-[420px] bg-[#05020F] text-white flex flex-col justify-between px-5 sm:px-7 pt-4 sm:pt-10 pb-6 sm:pb-8">
-          <div className="space-y-6 sm:space-y-8">
-            <div className="pt-4 sm:pt-2">
+    <div className="w-full min-h-screen bg-white text-white">
+      <div className="flex flex-col md:flex-row min-h-screen w-full overflow-hidden">
+        {/* Left sidebar — fixed full height; at 90% zoom black box stays 100% visual size */}
+        <div
+          className="relative w-full md:w-[428px] md:flex-shrink-0 md:fixed md:left-0 md:top-0 md:z-10 md:h-screen"
+          style={zoomScale !== 1 && isDesktop ? { width: 428 / zoomScale } : undefined}
+        >
+          <div
+            className={`${styles.sidebar} w-full md:w-[428px] flex flex-col justify-between min-h-screen md:min-h-full px-3 sm:px-5 pt-2 sm:pt-4 pb-3 sm:pb-5`}
+            style={
+              zoomScale !== 1 && isDesktop
+                ? {
+                    transform: `scale(${1 / zoomScale})`,
+                    transformOrigin: 'left top',
+                    width: 428,
+                    minWidth: 428,
+                  }
+                : undefined
+            }
+          >
+          <div className="space-y-3 sm:space-y-4 mb-3 sm:mb-4">
+            {/* Logo at top (design: logo on black) */}
+            <Link href="/" className="flex items-center shrink-0">
+              <Image
+                src="/assets/icons/b2blogofinal.png"
+                alt="LetsB2B"
+                width={140}
+                height={38}
+                className="h-7 sm:h-8 w-auto object-contain object-left"
+              />
+            </Link>
+            <div className="pt-1">
               <h2
-                className="text-2xl sm:text-3xl font-bold leading-tight"
+                className="text-xl sm:text-2xl font-bold leading-tight"
                 style={{
                   fontFamily: "'Inter Display','Inter',sans-serif",
                   letterSpacing: '-0.02em',
@@ -158,13 +205,13 @@ function SignupContent() {
                 <br />
                 Business Ready
               </h2>
-              <p className="mt-3 text-sm text-gray-300 max-w-xs">
+              <p className="mt-1.5 text-xs sm:text-sm text-gray-300 max-w-xs">
                 Add a few details so we can get everything ready for you.
               </p>
             </div>
 
             {/* Mobile progress bar + current step */}
-            <div className="mt-5 space-y-2 md:hidden">
+            <div className="mt-3 space-y-1.5 md:hidden">
               <div className="h-2 rounded-full bg-[#2A2738] overflow-hidden">
                 <div
                   className="h-full w-1/5 rounded-full"
@@ -192,7 +239,7 @@ function SignupContent() {
               </div>
             </div>
 
-            <div className="mt-4 space-y-5 hidden md:block">
+            <div className="mt-2 space-y-2 hidden md:block">
               {[
                 'Your Account Details',
                 'Business Type',
@@ -202,10 +249,10 @@ function SignupContent() {
               ].map((label, index) => {
                 const active = index === 0;
                 return (
-                  <div key={label} className="flex items-start gap-3">
+                  <div key={label} className="flex items-start gap-2">
                     <div className="flex flex-col items-center">
                       <div
-                        className="w-9 h-9 rounded-full flex items-center justify-center border"
+                        className="w-8 h-8 rounded-full flex items-center justify-center border shrink-0"
                         style={
                           active
                             ? {
@@ -220,14 +267,24 @@ function SignupContent() {
                         <span className="text-xs font-bold">{index + 1}</span>
                       </div>
                       {index < 4 && (
-                        <div className="flex-1 w-px grow mt-1 bg-gradient-to-b from-[#F9B233] via-[#4B4A55] to-[#4B4A55]" />
+                        <div
+                          className="flex-1 min-h-[8px] flex justify-center"
+                          style={{
+                            borderLeft: `2px dotted ${index === 0 ? '#F9B233' : '#4B4A55'}`,
+                          }}
+                        />
                       )}
                     </div>
-                    <div className="pt-1">
+                    <div className="pt-px">
                       <p
-                        className={`text-sm font-semibold ${
-                          active ? 'text-white' : 'text-gray-400'
+                        className={`text-xs sm:text-sm font-semibold ${
+                          active ? '' : 'text-white'
                         }`}
+                        style={
+                          active
+                            ? { color: '#F9B233' }
+                            : undefined
+                        }
                       >
                         {label}
                       </p>
@@ -240,22 +297,51 @@ function SignupContent() {
 
           <button
             type="button"
-            className="mt-8 text-sm font-semibold text-gray-300 hover:text-white w-fit"
+            className="shrink-0 mt-0 text-sm font-semibold w-fit transition-colors hover:opacity-90"
+            style={{ color: '#F9B233' }}
             onClick={() => router.back()}
           >
             Back
           </button>
+          </div>
         </div>
 
-        {/* Right content panel */}
-        <div className="relative flex-1 bg-transparent md:bg-white text-black px-4 sm:px-6 lg:px-12 pb-8 pt-6 sm:pt-8 flex flex-col">
+        {/* Right panel — flush against sidebar; margin-left matches sidebar (428 or 428/zoom at 90%) */}
+        <div
+          className="relative flex-1 md:ml-[428px] bg-transparent md:bg-white text-black px-4 sm:px-6 lg:px-12 md:pl-0 pb-6 pt-4 sm:pt-6 flex flex-col min-w-0"
+          style={zoomScale !== 1 && isDesktop ? { marginLeft: 428 / zoomScale } : undefined}
+        >
+          {/* Top actions: Download App + Log In (same as signin) */}
+          <div className="flex justify-end gap-2 sm:gap-3 mb-4 shrink-0">
+            <Link
+              href="/download"
+              className="hidden sm:inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold text-white transition-colors"
+              style={{ background: '#9747FF' }}
+            >
+              <Image
+                src="/assets/icons/android.png"
+                alt=""
+                width={18}
+                height={18}
+                className="object-contain"
+              />
+              <span>Download App</span>
+            </Link>
+            <Link
+              href="/signin"
+              className="inline-flex items-center px-4 py-1.5 rounded-full text-xs font-semibold"
+              style={{ background: '#FEA40C9C', color: 'var(--Background-Colour, #FFFFFF)' }}
+            >
+              Log In
+            </Link>
+          </div>
           {/* Centered content */}
-          <div className="flex-1 flex items-start md:items-center justify-center">
-            <div className="w-full max-w-xl bg-white rounded-3xl md:rounded-none md:bg-transparent shadow-[0px_16px_40px_rgba(0,0,0,0.38)] md:shadow-none px-5 py-6 sm:px-6 sm:py-7 md:p-0 md:shadow-none">
+          <div className="flex flex-1 items-center justify-center">
+            <div className="w-full max-w-2xl bg-white rounded-3xl md:rounded-none md:bg-transparent shadow-[0px_16px_40px_rgba(0,0,0,0.38)] md:shadow-none px-4 py-4 sm:px-5 sm:py-5 md:p-0 md:shadow-none">
               {step === 'email' && (
                 <form
                   onSubmit={handleEmailStep}
-                  className="w-full space-y-5 sm:space-y-6"
+                  className="w-full space-y-3 sm:space-y-4"
                 >
                   <div>
                     <h2
@@ -269,19 +355,19 @@ function SignupContent() {
                       <span style={{ color: '#F9B233' }}>info</span> to create your
                       account.
                     </h2>
-                    <p className="text-sm text-gray-700 mt-3">
+                    <p className="text-sm text-gray-700 mt-1">
                       Enter Your E-mail ID Below
                     </p>
                   </div>
 
                   <div className="space-y-1">
-                    <div className="relative">
+                    <div className="relative w-full">
                       <span className="pointer-events-none absolute inset-y-0 left-4 flex items-center">
                         <Image
-                          src="/assets/icons/mailicon.png"
+                          src="/assets/icons/mailicon2.png"
                           alt="Email"
-                          width={18}
-                          height={18}
+                          width={20}
+                          height={20}
                           className="object-contain"
                         />
                       </span>
@@ -293,14 +379,21 @@ function SignupContent() {
                         placeholder="E-mail"
                         autoComplete="email"
                         autoFocus
-                        className={`w-full pl-11 pr-4 py-3 rounded-full border focus:outline-none focus:ring-2 focus:ring-[#F9B233] placeholder:text-gray-400 text-[16px] leading-6 ${
+                        className={`w-full h-[60px] pl-12 pr-5 rounded-[30px] border focus:outline-none focus:ring-2 focus:ring-[#F9B233] placeholder:text-[#000000] text-base ${
                           errors.email
                             ? 'border-red-400 bg-red-50/30'
                             : 'border-[#F3D1EE] hover:border-[#F9B233]/60'
                         }`}
                         style={{
                           background:
-                            'linear-gradient(90deg, #FFFFFF 0%, #F9F9FF 100%)',
+                            'linear-gradient(90deg, rgba(255, 255, 255, 0.78) 0%, rgba(238, 238, 238, 0.4524) 100%)',
+                          boxShadow: '0px 4px 7px 0px #645C6E3D inset',
+                          fontFamily: "'Inter Display', sans-serif",
+                          fontWeight: 400,
+                          fontSize: 16,
+                          lineHeight: 24,
+                          letterSpacing: '0.15px',
+                          color: '#000000',
                         }}
                       />
                     </div>
@@ -318,18 +411,33 @@ function SignupContent() {
                     </div>
                   )}
 
-                  <PrimaryButton disabled={isLoading}>
-                    {isLoading ? (
-                      <>
-                        <div className="w-4 h-4 border-2 border-black/40 border-t-black rounded-full animate-spin" />
-                        Checking...
-                      </>
-                    ) : (
-                      'Continue'
-                    )}
-                  </PrimaryButton>
+                  <div className="w-full flex justify-end">
+                    <button
+                      type="submit"
+                      disabled={isLoading}
+                      className="mt-1 flex items-center justify-center gap-2 rounded-[24px] text-sm font-bold disabled:opacity-60"
+                      style={{
+                        width: 307,
+                        height: 50,
+                        background: '#FF9900',
+                        color: '#FFFFFF',
+                        boxShadow: '0px 2px 5px 0px #E9AF1040',
+                        fontFamily: "'Inter Display','Inter',sans-serif",
+                        fontWeight: 700,
+                      }}
+                    >
+                      {isLoading ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-black/40 border-t-black rounded-full animate-spin" />
+                          Checking...
+                        </>
+                      ) : (
+                        'Continue'
+                      )}
+                    </button>
+                  </div>
 
-                  <p className="text-center text-sm text-gray-700 pt-1 break-words">
+                  <p className="text-center text-sm text-gray-700 pt-0 break-words">
                     Already Have An Account ?{' '}
                     <Link
                       href="/signin"
@@ -345,15 +453,8 @@ function SignupContent() {
               {step === 'form' && (
                 <form
                   onSubmit={handleRegister}
-                  className="w-full space-y-5 sm:space-y-6"
+                  className="w-full space-y-3 sm:space-y-4"
                 >
-                  <button
-                    type="button"
-                    onClick={() => setStep('email')}
-                    className="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1 mb-1"
-                  >
-                    ← Back
-                  </button>
                   <div>
                     <h2
                       className="text-xl sm:text-2xl md:text-[28px] font-bold leading-snug"
@@ -371,7 +472,16 @@ function SignupContent() {
                   </div>
 
                   <div className="space-y-1">
-                    <div className="relative">
+                    <div className="relative w-full">
+                      <span className="pointer-events-none absolute inset-y-0 left-4 flex items-center">
+                        <Image
+                          src="/assets/icons/passwoardicon2.png"
+                          alt="Password"
+                          width={33}
+                          height={33}
+                          className="object-contain"
+                        />
+                      </span>
                       <input
                         type={showPassword ? 'text' : 'password'}
                         name="password"
@@ -379,17 +489,27 @@ function SignupContent() {
                         onChange={handleChange}
                         placeholder="Enter Password"
                         autoComplete="new-password"
-                        className={`w-full px-4 pr-11 py-3 rounded-full border focus:outline-none focus:ring-2 focus:ring-[#F9B233] placeholder:text-gray-400 text-[16px] leading-6 ${
+                        className={`w-full h-[52px] pl-14 pr-12 rounded-[26px] border focus:outline-none focus:ring-2 focus:ring-[#F9B233] placeholder:text-[#9A959E] text-base ${
                           errors.password
                             ? 'border-red-400 bg-red-50/30'
-                            : 'border-[#F3D1EE]'
+                            : 'border-[#F3D1EE] hover:border-[#F9B233]/60'
                         }`}
-                        style={{ backgroundColor: '#FFFFFF' }}
+                        style={{
+                          background:
+                            'linear-gradient(90deg, rgba(255, 255, 255, 0.78) 0%, rgba(238, 238, 238, 0.4524) 100%)',
+                          boxShadow: '0px 4px 7px 0px #645C6E3D inset',
+                          fontFamily: "'Inter Display', sans-serif",
+                          fontWeight: 400,
+                          fontSize: 16,
+                          lineHeight: 24,
+                          letterSpacing: '0.15px',
+                          color: '#000000',
+                        }}
                       />
                       <button
                         type="button"
                         onClick={() => setShowPassword((v) => !v)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                         tabIndex={-1}
                       >
                         {showPassword ? (
@@ -434,13 +554,32 @@ function SignupContent() {
                         {errors.password}
                       </p>
                     )}
-                    <p className="text-xs text-gray-500 mt-1.5 ml-1">
+                    <p
+                      className="text-xs font-medium mt-1.5 ml-1 flex items-center gap-1.5"
+                      style={{ color: '#612178' }}
+                    >
+                      <Image
+                        src="/assets/icons/erroricon.png"
+                        alt=""
+                        width={16}
+                        height={16}
+                        className="shrink-0 object-contain"
+                      />
                       The password should have a number
                     </p>
                   </div>
 
                   <div className="space-y-1">
-                    <div className="relative">
+                    <div className="relative w-full">
+                      <span className="pointer-events-none absolute inset-y-0 left-4 flex items-center">
+                        <Image
+                          src="/assets/icons/passwoardicon2.png"
+                          alt="Confirm Password"
+                          width={33}
+                          height={33}
+                          className="object-contain"
+                        />
+                      </span>
                       <input
                         type={showConfirmPassword ? 'text' : 'password'}
                         name="confirmPassword"
@@ -448,17 +587,27 @@ function SignupContent() {
                         onChange={handleChange}
                         placeholder="Confirm Password"
                         autoComplete="new-password"
-                        className={`w-full px-4 pr-11 py-3 rounded-full border focus:outline-none focus:ring-2 focus:ring-[#F9B233] placeholder:text-gray-400 text-[16px] leading-6 ${
+                        className={`w-full h-[52px] pl-14 pr-12 rounded-[26px] border focus:outline-none focus:ring-2 focus:ring-[#F9B233] placeholder:text-[#9A959E] text-base ${
                           errors.confirmPassword
                             ? 'border-red-400 bg-red-50/30'
-                            : 'border-[#F3D1EE]'
+                            : 'border-[#F3D1EE] hover:border-[#F9B233]/60'
                         }`}
-                        style={{ backgroundColor: '#FFFFFF' }}
+                        style={{
+                          background:
+                            'linear-gradient(90deg, rgba(255, 255, 255, 0.78) 0%, rgba(238, 238, 238, 0.4524) 100%)',
+                          boxShadow: '0px 4px 7px 0px #645C6E3D inset',
+                          fontFamily: "'Inter Display', sans-serif",
+                          fontWeight: 400,
+                          fontSize: 16,
+                          lineHeight: 24,
+                          letterSpacing: '0.15px',
+                          color: '#000000',
+                        }}
                       />
                       <button
                         type="button"
                         onClick={() => setShowConfirmPassword((v) => !v)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                         tabIndex={-1}
                       >
                         {showConfirmPassword ? (
@@ -512,27 +661,31 @@ function SignupContent() {
                     </div>
                   )}
 
-                  <PrimaryButton disabled={isLoading}>
-                    {isLoading ? (
-                      <>
-                        <div className="w-4 h-4 border-2 border-black/40 border-t-black rounded-full animate-spin" />
-                        Registering...
-                      </>
-                    ) : (
-                      'Register'
-                    )}
-                  </PrimaryButton>
-
-                  <p className="text-center text-sm text-gray-700 pt-1 break-words">
-                    Already Have An Account ?{' '}
-                    <Link
-                      href="/signin"
-                      className="font-bold hover:underline"
-                      style={{ color: '#612178' }}
+                  <div className="w-full flex justify-end">
+                    <button
+                      type="submit"
+                      disabled={isLoading}
+                      className="mt-1 flex items-center justify-center gap-2 rounded-[24px] text-sm font-bold disabled:opacity-60"
+                      style={{
+                        width: 307,
+                        height: 50,
+                        background: '#FF9900',
+                        color: '#FFFFFF',
+                        boxShadow: '0px 2px 5px 0px #E9AF1040',
+                        fontFamily: "'Inter Display','Inter',sans-serif",
+                        fontWeight: 700,
+                      }}
                     >
-                      Log In
-                    </Link>
-                  </p>
+                      {isLoading ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-black/40 border-t-black rounded-full animate-spin" />
+                          Registering...
+                        </>
+                      ) : (
+                        'Register'
+                      )}
+                    </button>
+                  </div>
                 </form>
               )}
             </div>

@@ -7,7 +7,7 @@ import SignupHeader from './SignupHeader';
 
 const AUTH_PATHS = ['/signin', '/signup'];
 
-const SIGNUP_HEADER_PATHS = ['/signup', '/complete-profile', '/add-additional-details'];
+const SIGNUP_HEADER_PATHS = ['/complete-profile', '/add-additional-details'];
 
 /** Pages that provide their own header/footer layout (e.g. complete-profile) */
 const SELF_LAYOUT_PATHS = ['/complete-profile', '/add-additional-details'];

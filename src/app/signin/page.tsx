@@ -369,7 +369,7 @@ function SigninContent() {
                 {/* Vertical divider with rounded bottom */}
                 <div className="hidden md:block absolute -left-px top-0 h-full w-px bg-white shadow-[0px_2px_10px_0px_#ECFF4678] rounded-b-full" />
                 {/* Top actions */}
-                <div className="flex justify-end gap-3 mb-6">
+                <div className="flex justify-end gap-3 mb-[123.17px]">
                   <Link
                     href="/download"
                     className="hidden sm:inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold transition-colors"
@@ -687,7 +687,7 @@ function SigninContent() {
           <div className="relative md:w-[663px] flex-col justify-between px-5 sm:px-7 py-6 sm:py-8">
             <div className="hidden md:block absolute -left-px top-0 h-full w-px bg-white shadow-[0px_2px_10px_0px_#ECFF4678] rounded-b-full" />
             {/* Top actions */}
-            <div className="flex justify-end gap-3 mb-6">
+            <div className="flex justify-end gap-3 mb-[123.17px]">
               <Link
                 href="/download"
                 className="hidden sm:inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold transition-colors"
@@ -866,7 +866,7 @@ function SigninContent() {
           <div className="relative md:w-[663px] flex-col justify-between px-5 sm:px-7 py-6 sm:py-8">
             <div className="hidden md:block absolute -left-px top-0 h-full w-px bg-white shadow-[0px_2px_10px_0px_#ECFF4678] rounded-b-full" />
             {/* Top actions */}
-            <div className="flex justify-end gap-3 mb-6">
+            <div className="flex justify-end gap-3 mb-[123.17px]">
               <Link
                 href="/download"
                 className="hidden sm:inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold transition-colors"
@@ -975,7 +975,7 @@ function SigninContent() {
                     background:
                       forgotOtp.length === 6
                         ? 'linear-gradient(90deg, rgba(255, 247, 0, 0.57715) 0%, rgba(255, 172, 6, 0.623225) 31.21%, rgba(196, 67, 69, 0.646263) 66.1%, rgba(155, 63, 188, 0.6693) 99.27%)'
-                        : '#111111',
+                        : '#D9D9D921',
                     boxShadow:
                       forgotOtp.length === 6 ? '-1px 1px 8px 3px #B3850896' : '0px 0px 0px 1px #FFFFFF1A',
                     fontFamily: "'Inter Display','Inter',sans-serif",
@@ -1076,7 +1076,7 @@ function SigninContent() {
           <div className="relative md:w-[663px] flex-col justify-between px-5 sm:px-7 py-6 sm:py-8">
             <div className="hidden md:block absolute -left-px top-0 h-full w-px bg-white shadow-[0px_2px_10px_0px_#ECFF4678] rounded-b-full" />
             {/* Top actions */}
-            <div className="flex justify-end gap-3 mb-6">
+            <div className="flex justify-end gap-3 mb-[123.17px]">
               <Link
                 href="/download"
                 className="hidden sm:inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold transition-colors"
@@ -1449,7 +1449,7 @@ function SigninContent() {
               className="w-full text-white font-bold text-sm transition-all disabled:opacity-50 flex items-center justify-center gap-2"
               style={{
                 height: "50px",
-                background: "#612178",
+                background: forgotOtp.length === 6 ? "#612178" : "#D9D9D921",
                 borderRadius: "16px",
                 boxShadow: "0px 4px 10px -2px #00000040",
               }}
