@@ -1115,7 +1115,7 @@ export const saveFullProfile = async (
     country?: string;
     state?: string;
     city?: string;
-    contact_person_name?: string;
+    contact_person_name?: any[];
     mobile_number?: string;
     email?: string;
     website?: string;

@@ -53,86 +53,131 @@ const CITIES: Record<string, string[]> = {
 
 // ─── Section behaviour ────────────────────────────────────────────────────────
 
-const TEXTAREA_SECTIONS = new Set(['trade_terms', 'driver_safety', 'trade_support', 'destination_overview']);
-const METRICS_SECTIONS = new Set(['tourism_infrastructure', 'operational_strength']);
+const TEXTAREA_SECTIONS = new Set(['trade_terms', 'driver_safety', 'trade_support', 'destination_overview', 'safety_guidelines']);
+const METRICS_SECTIONS = new Set(['tourism_infrastructure', 'operational_strength', 'operational_capacity']);
 const TAG_SECTIONS = new Set(['services', 'transport_services', 'experiences']);
-const IMAGE_SECTIONS = new Set(['destinations', 'product_portfolio', 'fleet', 'packages', 'locations', 'tourism_products', 'certifications', 'operational_coverage']);
+const IMAGE_SECTIONS = new Set(['destinations', 'product_portfolio', 'packages', 'locations', 'tourism_products', 'certifications', 'operational_coverage']);
 
-const METRICS_FIELDS: Record<string, { key: string; label: string }[]> = {
+const METRICS_FIELDS: Record<string, { key: string; label: string; type: 'input' | 'textarea' | 'tags'; options?: string[] }[]> = {
   tourism_infrastructure: [
-    { key: 'number_of_hotels', label: 'Hotels' },
-    { key: 'number_of_international_airports', label: 'International Airports' },
-    { key: 'number_of_major_attractions', label: 'Major Attractions' },
-    { key: 'number_of_convention_centres', label: 'Convention Centres' },
-    { key: 'number_of_national_parks', label: 'National Parks' },
-    { key: 'number_of_licensed_tour_operators', label: 'Licensed Tour Operators' },
+    { key: 'number_of_hotels', label: 'Hotels', type: 'input' },
+    { key: 'number_of_international_airports', label: 'International Airports', type: 'input' },
+    { key: 'number_of_major_attractions', label: 'Major Attractions', type: 'input' },
+    { key: 'number_of_convention_centres', label: 'Convention Centres', type: 'input' },
+    { key: 'number_of_national_parks', label: 'National Parks', type: 'input' },
+    { key: 'number_of_licensed_tour_operators', label: 'Licensed Tour Operators', type: 'input' },
   ],
   operational_strength: [
-    { key: 'years_of_experience', label: 'Years of Experience' },
-    { key: 'travel_professionals_count', label: 'Travel Professionals' },
-    { key: 'travellers_served_annually', label: 'Travellers Served Annually' },
-    { key: 'hotel_partnerships_count', label: 'Hotel Partnerships' },
-    { key: 'regions_of_expertise', label: 'Regions of Expertise' },
-    { key: 'booking_systems', label: 'Booking Systems' },
-    { key: 'languages_supported', label: 'Languages' },
-    { key: 'additional_strength', label: 'Additional Strength' },
+    { key: 'years_of_experience', label: 'Years Of Experience', type: 'input' },
+    { key: 'travel_professionals_count', label: 'No. Of Travel Professional', type: 'input' },
+    { key: 'travellers_served_annually', label: 'No. Of Travelers Served Annually', type: 'input' },
+    { key: 'regions_of_expertise', label: 'Regions Of Expertise', type: 'tags', options: ['Europe', 'South East Asia', 'Middle East', 'USA', 'Africa'] },
+    { key: 'booking_systems', label: 'Select Booking Systems', type: 'tags', options: ['Amadeus', 'Sabre', 'Galileo', 'Others'] },
+    { key: 'hotel_partnerships_count', label: 'No. Of Hotels Partnered', type: 'input' },
+    { key: 'languages_supported', label: 'Select Languages', type: 'tags', options: ['English', 'Hindi', 'Spanish', 'French', 'Arabic'] },
+    { key: 'additional_strength', label: 'Type Additional Strength', type: 'textarea' },
+  ],
+  operational_capacity: [
+    { key: 'daily_capacity', label: 'Daily Guest Capacity', type: 'input' },
+    { key: 'min_group_size', label: 'Minimum Group Size', type: 'input' },
+    { key: 'max_group_size', label: 'Maximum Group Size', type: 'input' },
+    { key: 'duration_options', label: 'Duration Options', type: 'tags', options: ['1 Hour', 'Half Day', 'Full Day', 'Multi Day'] },
+    { key: 'seasonal_availability', label: 'Seasonal Peak', type: 'input' },
   ],
 };
 
 // ─── Shared UI helpers ────────────────────────────────────────────────────────
 
-const inputCls = 'w-full px-4 py-3 text-sm border border-gray-200 rounded-xl focus:outline-none focus:border-[#612178] bg-white transition-colors';
-const labelCls = 'block text-xs font-semibold text-gray-700 mb-1.5';
+const inputCls = 'w-full px-4 py-3 text-sm border border-gray-200 rounded-xl focus:outline-none focus:border-[#612178] bg-white transition-all hover:border-gray-300';
+const labelCls = 'block text-[13px] font-semibold text-gray-700 mb-2';
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Field({ label, children, className = '' }: { label: string; children: React.ReactNode; className?: string }) {
   return (
-    <div>
+    <div className={className}>
       <label className={labelCls}>{label}</label>
       {children}
     </div>
   );
 }
 
-function StepBadge({ step, total, label }: { step: number; total: number; label: string }) {
+function Sidebar({ items, activeId, onScrollTo }: { items: { id: string; label: string }[]; activeId: string; onScrollTo: (id: string) => void }) {
   return (
-    <div className="flex items-center gap-3">
-      <div className="flex items-center gap-1.5">
-        {Array.from({ length: total }).map((_, i) => (
-          <div
-            key={i}
-            className={`h-1.5 rounded-full transition-all ${i < step ? 'bg-[#612178] w-6' : i === step - 1 ? 'bg-[#a044c0] w-8' : 'bg-gray-200 w-4'}`}
-          />
+    <div className="w-64 shrink-0 hidden lg:block sticky top-[100px] h-fit">
+      <div className="bg-white rounded-[24px] border border-gray-100 shadow-sm p-3 space-y-1">
+        {items.map((item) => (
+          <button
+            key={item.id}
+            onClick={() => onScrollTo(item.id)}
+            className={`w-full text-left px-5 py-3.5 rounded-xl text-sm font-semibold transition-all ${
+              activeId === item.id
+                ? 'bg-[#F3E8FF] text-[#612178] shadow-sm'
+                : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'
+            }`}
+          >
+            {item.label}
+          </button>
         ))}
       </div>
-      <span className="text-xs text-gray-500 font-medium">Step {step}/{total} — {label}</span>
     </div>
   );
 }
 
 // ─── Step 1: Common Profile ───────────────────────────────────────────────────
 
-function Step1CommonProfile({
+function StepBadge({ step, total, label }: { step: number, total: number, label: string }) {
+  return (
+    <div className="flex items-center gap-4 bg-white/50 backdrop-blur-sm p-1.5 pr-5 rounded-2xl border border-gray-100 shadow-sm w-fit">
+      <div className="flex -space-x-1">
+        {[...Array(total)].map((_, i) => (
+          <div key={i} className={`w-8 h-8 rounded-xl flex items-center justify-center text-xs font-bold transition-all ${i + 1 === step ? 'bg-[#612178] text-white shadow-lg scale-110' : 'bg-gray-100 text-gray-400'}`}>
+            {i + 1}
+          </div>
+        ))}
+      </div>
+      <div className="flex flex-col">
+        <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Step {step} of {total}</span>
+        <span className="text-sm font-bold text-gray-900 leading-tight">{label}</span>
+      </div>
+    </div>
+  );
+}
+
+function UnifiedCommonProfile({
   profile,
   profileDocId,
   userId,
-  onComplete,
+  onUpdateProfile,
+  sectionRefs,
+  category,
+  setCategory,
+  onNext,
 }: {
   profile: UserProfile | null;
   profileDocId: string;
   userId: number;
-  onComplete: (updatedProfile: UserProfile) => void;
+  onUpdateProfile: (updatedProfile: UserProfile) => void;
+  sectionRefs: React.MutableRefObject<Record<string, HTMLDivElement | null>>;
+  category: CategoryKey;
+  setCategory: (c: CategoryKey) => void;
+  onNext: () => void;
 }) {
   // General Info
   const [companyName,  setCompanyName]  = useState(profile?.company_name || '');
-  const [mainCategory, setMainCategory] = useState<CategoryKey>((profile as any)?.category?.main || 'travel_trade');
   const [subCategories, setSubCategories] = useState<string[]>((profile as any)?.sub_categories || []);
   const [about,        setAbout]        = useState(typeof profile?.about === 'string' ? profile.about : '');
   
   const initialSocial = profile?.social_links || {};
-  const [instagram,    setInstagram]    = useState(initialSocial.instagram || '');
-  const [linkedin,     setLinkedin]     = useState(initialSocial.linkedin || '');
-  const [facebook,     setFacebook]     = useState(initialSocial.facebook || '');
-  const [website,      setWebsite]      = useState(profile?.website || initialSocial.website || '');
+  const [socialLinks, setSocialLinks] = useState<Record<string, string>>({
+    instagram: initialSocial.instagram || '',
+    linkedin: initialSocial.linkedin || '',
+    facebook: initialSocial.facebook || '',
+    twitter: initialSocial.twitter || '',
+    youtube: initialSocial.youtube || '',
+  });
+  const [website, setWebsite] = useState(profile?.website || initialSocial.website || '');
+  const [activeSocials, setActiveSocials] = useState<string[]>(
+    Object.keys(initialSocial).filter(k => k !== 'website' && initialSocial[k])
+  );
 
   // Profile image
   const [profileImg,    setProfileImg]    = useState<File | null>(null);
@@ -145,7 +190,15 @@ function Step1CommonProfile({
   const [city,    setCity]    = useState(profile?.city || '');
 
   // Contact
-  const [contactName, setContactName] = useState((profile as any)?.contact_person_name || '');
+  const [contactImg,    setContactImg]    = useState<File | null>(null);
+  const [contactImgUrl, setContactImgUrl] = useState((profile as any)?.contact_person_image_url || '');
+  const contactImgInputRef = useRef<HTMLInputElement>(null);
+  
+  const rawContact = (profile as any)?.contact_person_name;
+  const initialContactName = Array.isArray(rawContact) && rawContact.length > 0 
+    ? rawContact[0].name 
+    : (typeof rawContact === 'string' ? rawContact : '');
+  const [contactName, setContactName] = useState(initialContactName || '');
   const [phone,       setPhone]       = useState((profile as any)?.mobile_number || '');
   const [email,       setEmail]       = useState(profile?.email || '');
 
@@ -156,7 +209,6 @@ function Step1CommonProfile({
   const galleryInputRef = useRef<HTMLInputElement>(null);
 
   const [saving, setSaving] = useState(false);
-
   const cityOptions = CITIES[state] || [];
 
   const handleDrop = (e: DragEvent<HTMLDivElement>) => {
@@ -168,23 +220,30 @@ function Step1CommonProfile({
     setGalleryQueue((prev) => [...prev, ...files]);
   };
 
-  const handleSave = async () => {
+  const handleSaveAndContinue = async () => {
     setSaving(true);
     try {
       const textData = {
         company_name: companyName || undefined,
         about: about || undefined,
-        category: { main: mainCategory, sub: subCategories },
+        category: { main: category, sub: subCategories },
         sub_categories: subCategories,
         country: country || undefined,
         state: state || undefined,
         city: city || undefined,
-        contact_person_name: contactName || undefined,
+        contact_person_name: contactName ? [
+          {
+            name: contactName,
+            email: email || '',
+            position: 'Owner', // Default role since UI has 1 contact slot
+            phone_number: phone ? (phone.startsWith('+91-') ? phone : `+91-${phone.replace(/^\+91/, '')}`) : ''
+          }
+        ] : [],
         mobile_number: phone || undefined,
         email: email || undefined,
         website: website || undefined,
         social_links: {
-          instagram, linkedin, facebook, website,
+          ...socialLinks, website,
         },
       };
 
@@ -203,10 +262,9 @@ function Step1CommonProfile({
           setProfileImgUrl(result.data.profileImageUrl);
         }
         setGalleryQueue([]);
-        
-        // Re-fetch updated profile then proceed
         const { profile: updated } = await getMyProfile(userId);
-        onComplete((updated || profile) as UserProfile);
+        onUpdateProfile((updated || profile) as UserProfile);
+        onNext(); // Transition to Step 2
       }
     } catch (error) {
       console.error("Save failed:", error);
@@ -226,223 +284,279 @@ function Step1CommonProfile({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* ── General Info ───────────────────────────────────────────── */}
-      <Section title="General Info" icon={<Building2 size={16} />}>
-        <div className="space-y-4">
-          {/* Avatar */}
-          <div className="flex items-center gap-4">
-            <div className="relative w-20 h-20 shrink-0">
-              {profileImgUrl || profileImg ? (
-                <img
-                  src={profileImg ? URL.createObjectURL(profileImg) : profileImgUrl}
-                  alt="Avatar"
-                  className="w-20 h-20 rounded-2xl object-cover border-2 border-purple-200"
-                />
-              ) : (
-                <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-purple-100 to-purple-200 flex items-center justify-center">
-                  <User size={28} className="text-[#612178]" />
+      <div ref={(el) => { sectionRefs.current.general = el; }} className="scroll-mt-24">
+        <div className="bg-white rounded-[24px] border border-gray-100 shadow-sm overflow-hidden">
+          {/* Banner area */}
+          <div className="h-44 bg-gradient-to-r from-red-500 via-pink-500 to-red-400 relative">
+             <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'radial-gradient(circle at 20% 50%, white 0%, transparent 50%), radial-gradient(circle at 80% 50%, white 0%, transparent 50%)' }} />
+             <div className="absolute right-6 top-6">
+                <button 
+                  onClick={() => avatarInputRef.current?.click()}
+                  className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white hover:bg-white/30 transition-all border border-white/30"
+                >
+                  <Camera size={20} />
+                </button>
+             </div>
+             {/* Profile Image Overlay */}
+             <div className="absolute -bottom-10 left-8">
+                <div className="relative group">
+                   <div className="w-32 h-32 rounded-full border-[6px] border-white shadow-xl overflow-hidden bg-gray-100">
+                      {profileImgUrl || profileImg ? (
+                        <img
+                          src={profileImg ? URL.createObjectURL(profileImg) : profileImgUrl}
+                          alt="Avatar"
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <User size={48} className="text-gray-300" />
+                        </div>
+                      )}
+                   </div>
+                   <button
+                    onClick={() => avatarInputRef.current?.click()}
+                    className="absolute bottom-1 right-1 w-9 h-9 rounded-full bg-[#612178] text-white flex items-center justify-center shadow-lg hover:bg-[#4d1860] transition-colors border-4 border-white"
+                   >
+                    <Camera size={14} />
+                   </button>
                 </div>
-              )}
-              <button
-                type="button"
-                onClick={() => avatarInputRef.current?.click()}
-                className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-[#612178] text-white flex items-center justify-center shadow-lg hover:bg-[#4d1860] transition-colors"
-              >
-                <Camera size={12} />
-              </button>
-              <input
-                ref={avatarInputRef}
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={(e) => setProfileImg(e.target.files?.[0] || null)}
-              />
-            </div>
-            <div className="flex-1">
-              <p className="text-sm font-semibold text-gray-800">Profile Photo</p>
-              <p className="text-xs text-gray-400 mt-0.5">Click the camera icon to update</p>
-            </div>
+             </div>
           </div>
-
-          <Field label="Company Name">
-            <input className={inputCls} value={companyName} onChange={(e) => setCompanyName(e.target.value)} placeholder="e.g. Globix Tours Pvt Ltd" />
-          </Field>
-
-          <Field label="Business Category">
-            <div className="relative">
-              <select className={inputCls + ' appearance-none pr-8'} value={mainCategory} onChange={(e) => setMainCategory(e.target.value as CategoryKey)}>
-                {MAIN_CATEGORIES.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
-              </select>
-              <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+          
+          <div className="pt-16 pb-8 px-8 space-y-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+               <Field label="Categories">
+                  <div className="relative">
+                    <select className={inputCls + ' appearance-none pr-8 bg-gray-50/50 border-gray-100'} value={category} onChange={(e) => setCategory(e.target.value as CategoryKey)}>
+                      {MAIN_CATEGORIES.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
+                    </select>
+                    <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                  </div>
+               </Field>
+               <Field label="Sub Categories">
+                  <div className="relative">
+                    <select className={inputCls + ' appearance-none pr-8 bg-gray-50/50 border-gray-100'}>
+                      <option>Select Sub Categories</option>
+                    </select>
+                    <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                  </div>
+               </Field>
             </div>
-          </Field>
 
-          <Field label="About">
-            <textarea className={inputCls + ' resize-none'} rows={4} value={about} onChange={(e) => setAbout(e.target.value)} placeholder="Tell partners about your business…" />
-          </Field>
+            <Field label="Name Of The Company">
+              <input className={inputCls} value={companyName} onChange={(e) => setCompanyName(e.target.value)} placeholder="Enter company name" />
+            </Field>
 
-          {/* Social Links */}
-          <div>
-            <label className={labelCls}>Social Links</label>
-            <div className="space-y-3">
-              {[
-                { icon: <Instagram size={15} />, label: 'Instagram', value: instagram, set: setInstagram, ph: 'https://instagram.com/…' },
-                { icon: <Linkedin size={15} />, label: 'LinkedIn',  value: linkedin,  set: setLinkedin,  ph: 'https://linkedin.com/company/…' },
-                { icon: <Facebook size={15} />, label: 'Facebook',  value: facebook,  set: setFacebook,  ph: 'https://facebook.com/…' },
-                { icon: <Globe size={15} />,    label: 'Website',   value: website,   set: setWebsite,   ph: 'https://yourwebsite.com' },
-              ].map((s) => (
-                <div key={s.label} className="flex items-center gap-2">
-                  <div className="w-9 h-9 rounded-xl bg-gray-100 flex items-center justify-center text-gray-500 shrink-0">{s.icon}</div>
-                  <input className={inputCls} value={s.value} onChange={(e) => s.set(e.target.value)} placeholder={s.ph} />
-                </div>
-              ))}
-            </div>
+            <Field label="About">
+              <textarea className={inputCls + ' resize-none'} rows={4} value={about} onChange={(e) => setAbout(e.target.value)} placeholder="Type about your company here..." />
+            </Field>
+            <input
+              ref={avatarInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => setProfileImg(e.target.files?.[0] || null)}
+            />
           </div>
         </div>
-      </Section>
+      </div>
 
       {/* ── Location ─────────────────────────────────────────────────── */}
-      <Section title="Location" icon={<MapPin size={16} />}>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <Field label="Country">
-            <div className="relative">
-              <select className={inputCls + ' appearance-none pr-8'} value={country} onChange={(e) => { setCountry(e.target.value); setState(''); setCity(''); }}>
-                <option value="">Select country</option>
-                {COUNTRIES.map((c) => <option key={c} value={c}>{c}</option>)}
-              </select>
-              <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+      <div ref={(el) => { sectionRefs.current.location = el; }} className="scroll-mt-24">
+        <Section title="Location" icon={<MapPin size={16} />}>
+          <div className="space-y-4">
+            <Field label="Country">
+              <div className="relative">
+                <select className={inputCls + ' appearance-none pr-8'} value={country} onChange={(e) => { setCountry(e.target.value); setState(''); setCity(''); }}>
+                  <option value="">Select country</option>
+                  {COUNTRIES.map((c) => <option key={c} value={c}>{c}</option>)}
+                </select>
+                <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+              </div>
+            </Field>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Field label="State">
+                <div className="relative">
+                  <select className={inputCls + ' appearance-none pr-8'} value={state} onChange={(e) => { setState(e.target.value); setCity(''); }}>
+                    <option value="">Select state</option>
+                    {INDIAN_STATES.map((s) => <option key={s} value={s}>{s}</option>)}
+                  </select>
+                  <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                </div>
+              </Field>
+              <Field label="City">
+                <div className="relative">
+                  <select className={inputCls + ' appearance-none pr-8'} value={city} onChange={(e) => setCity(e.target.value)}>
+                    <option value="">Select city</option>
+                    {cityOptions.map((c) => <option key={c} value={c}>{c}</option>)}
+                    <option value="Other">Other</option>
+                  </select>
+                  <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                </div>
+              </Field>
             </div>
-          </Field>
-          <Field label="State">
-            <div className="relative">
-              <select className={inputCls + ' appearance-none pr-8'} value={state} onChange={(e) => { setState(e.target.value); setCity(''); }}>
-                <option value="">Select state</option>
-                {INDIAN_STATES.map((s) => <option key={s} value={s}>{s}</option>)}
-              </select>
-              <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-            </div>
-          </Field>
-          <Field label="City">
-            <div className="relative">
-              <select className={inputCls + ' appearance-none pr-8'} value={city} onChange={(e) => setCity(e.target.value)}>
-                <option value="">Select city</option>
-                {cityOptions.map((c) => <option key={c} value={c}>{c}</option>)}
-                <option value="Other">Other</option>
-              </select>
-              <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-            </div>
-          </Field>
-        </div>
-      </Section>
+          </div>
+        </Section>
+      </div>
 
       {/* ── Contact Person ────────────────────────────────────────────── */}
-      <Section title="Contact Person" icon={<User size={16} />}>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Field label="Contact Person Name">
-            <input className={inputCls} value={contactName} onChange={(e) => setContactName(e.target.value)} placeholder="e.g. Rahul Sharma" />
-          </Field>
-          <Field label="Phone Number">
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1 border border-gray-200 rounded-xl px-3 py-3 bg-white shrink-0">
-                <Phone size={14} className="text-gray-400" />
-                <span className="text-sm text-gray-400">+91</span>
+      <div ref={(el) => { sectionRefs.current.contact = el; }} className="scroll-mt-24">
+        <Section title="Contact Person" icon={<User size={16} />}>
+          <div className="space-y-6">
+            <div className="flex items-center gap-6">
+              <div className="w-24 h-24 rounded-2xl border-2 border-dashed border-gray-200 flex items-center justify-center bg-gray-50 overflow-hidden relative">
+                {contactImgUrl || contactImg ? (
+                  <img src={contactImg ? URL.createObjectURL(contactImg) : contactImgUrl} className="w-full h-full object-cover" />
+                ) : (
+                  <ImagePlus size={24} className="text-gray-300" />
+                )}
               </div>
-              <input className={inputCls} value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="9876543210" />
+              <button 
+                type="button" 
+                onClick={() => contactImgInputRef.current?.click()}
+                className="px-6 py-2.5 rounded-xl bg-[#612178] text-white text-xs font-bold hover:bg-[#4d1860] transition-all shadow-md"
+              >
+                Upload Profile Image
+              </button>
+              <input ref={contactImgInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => setContactImg(e.target.files?.[0] || null)} />
             </div>
-          </Field>
-          <Field label="Email">
-            <input className={inputCls} type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="contact@company.com" />
-          </Field>
-          <Field label="Website">
-            <input className={inputCls} value={website} onChange={(e) => setWebsite(e.target.value)} placeholder="https://yourwebsite.com" />
-          </Field>
-        </div>
-      </Section>
+
+            <Field label="Name Of Contact Person">
+              <input className={inputCls} value={contactName} onChange={(e) => setContactName(e.target.value)} placeholder="Enter name of contact person" />
+            </Field>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Field label="Phone No">
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1 border border-gray-200 rounded-xl px-4 py-3 bg-gray-50 text-gray-500 text-sm font-medium">
+                    +91
+                  </div>
+                  <input className={inputCls} value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Phone No" />
+                </div>
+              </Field>
+              <Field label="E-mail ID">
+                <input className={inputCls} type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="E-mail ID" />
+              </Field>
+            </div>
+
+            <Field label="Website">
+              <input className={inputCls} value={website} onChange={(e) => setWebsite(e.target.value)} placeholder="Website" />
+            </Field>
+
+            <div className="space-y-4 pt-2">
+              <Field label="Add Social Media Profile">
+                <div className="relative">
+                  <select 
+                    className={inputCls + ' appearance-none pr-8'}
+                    value=""
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val && !activeSocials.includes(val)) {
+                        setActiveSocials(prev => [...prev, val]);
+                      }
+                      e.target.value = "";
+                    }}
+                  >
+                    <option value="" disabled>Select Social Platform</option>
+                    {['instagram', 'linkedin', 'facebook', 'twitter', 'youtube'].filter(v => !activeSocials.includes(v)).map(platform => (
+                      <option key={platform} value={platform}>{platform.charAt(0).toUpperCase() + platform.slice(1)}</option>
+                    ))}
+                  </select>
+                  <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                </div>
+              </Field>
+              {activeSocials.map(platform => (
+                <div key={platform} className="flex gap-3">
+                  <div className="w-[140px] h-12 flex items-center gap-2 px-3 border border-gray-200 rounded-xl bg-white overflow-hidden shrink-0">
+                    {platform === 'instagram' && <Instagram size={18} className="text-pink-600 shrink-0" />}
+                    {platform === 'linkedin' && <Linkedin size={18} className="text-blue-700 shrink-0" />}
+                    {platform === 'facebook' && <Facebook size={18} className="text-blue-600 shrink-0" />}
+                    {platform === 'twitter' && <Twitter size={18} className="text-sky-500 shrink-0" />}
+                    {platform === 'youtube' && <Youtube size={18} className="text-red-600 shrink-0" />}
+                    <span className="text-sm font-semibold capitalize truncate flex-1">{platform}</span>
+                    <button 
+                      type="button"
+                      onClick={() => {
+                        setActiveSocials(prev => prev.filter(p => p !== platform));
+                        setSocialLinks(prev => ({ ...prev, [platform]: '' }));
+                      }}
+                      className="text-red-400 hover:text-red-500 transition-colors shrink-0"
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+                  <input 
+                    className={inputCls} 
+                    placeholder="Web Address" 
+                    value={socialLinks[platform]} 
+                    onChange={(e) => setSocialLinks(prev => ({ ...prev, [platform]: e.target.value }))} 
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        </Section>
+      </div>
 
       {/* ── Photos ────────────────────────────────────────────────────── */}
-      <Section title="Photos" icon={<ImagePlus size={16} />}>
-        {/* Drop zone */}
-        <div
-          onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
-          onDragLeave={() => setDragging(false)}
-          onDrop={handleDrop}
-          onClick={() => galleryInputRef.current?.click()}
-          className={`border-2 border-dashed rounded-2xl p-8 flex flex-col items-center gap-3 cursor-pointer transition-all ${dragging ? 'border-[#612178] bg-purple-50' : 'border-gray-300 hover:border-[#612178] hover:bg-purple-50/50'}`}
-        >
-          <input
-            ref={galleryInputRef}
-            type="file"
-            accept="image/png,image/jpg,image/jpeg,image/webp"
-            multiple
-            className="hidden"
-            onChange={(e) => setGalleryQueue((prev) => [...prev, ...Array.from(e.target.files || [])])}
-          />
-          <div className="w-12 h-12 rounded-2xl bg-purple-100 flex items-center justify-center">
-            <Upload size={22} className="text-[#612178]" />
-          </div>
-          <div className="text-center">
-            <p className="text-sm font-semibold text-gray-700">Drag & drop or click to upload</p>
-            <p className="text-xs text-gray-400 mt-0.5">PNG, JPG, JPEG, WEBP supported</p>
-          </div>
-        </div>
+      <div ref={(el) => { sectionRefs.current.photos = el; }} className="scroll-mt-24">
+        <Section title="Photos" icon={<ImagePlus size={16} />}>
+          <div className="space-y-6">
+            <div
+              onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
+              onDragLeave={() => setDragging(false)}
+              onDrop={handleDrop}
+              onClick={() => galleryInputRef.current?.click()}
+              className={`border-2 border-dashed rounded-[20px] p-12 flex flex-col items-center gap-4 cursor-pointer transition-all ${dragging ? 'border-[#612178] bg-purple-50' : 'border-gray-200 hover:border-purple-300 hover:bg-purple-50/30'}`}
+            >
+              <input
+                ref={galleryInputRef}
+                type="file"
+                accept="image/png,image/jpg,image/jpeg,image/webp"
+                multiple
+                className="hidden"
+                onChange={(e) => setGalleryQueue((prev) => [...prev, ...Array.from(e.target.files || [])])}
+              />
+              <div className="w-16 h-16 rounded-2xl bg-gray-100 flex items-center justify-center text-gray-400">
+                <ImagePlus size={32} />
+              </div>
+              <div className="text-center">
+                <p className="text-[15px] font-semibold text-gray-700">Drop your image here, or Browse</p>
+                <p className="text-sm text-gray-400 mt-1">Support : PNG,JPG,JPEG,WEBP</p>
+              </div>
+            </div>
 
-        {/* Queued (not yet uploaded) */}
-        {galleryQueue.length > 0 && (
-          <div>
-            <p className="text-xs font-semibold text-gray-500 mb-2 mt-4">Pending upload ({galleryQueue.length})</p>
-            <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
-              {galleryQueue.map((f, i) => (
-                <div key={i} className="relative group">
-                  <img src={URL.createObjectURL(f)} alt="" className="w-full aspect-square object-cover rounded-xl border border-gray-100 opacity-70" />
-                  <div className="absolute inset-0 flex items-center justify-center rounded-xl bg-black/20">
-                    <span className="text-[10px] text-white font-semibold bg-black/50 px-2 py-0.5 rounded">Pending</span>
+            {(gallery.length > 0 || galleryQueue.length > 0) && (
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                {gallery.map((img) => (
+                  <div key={img.url} className="relative aspect-[4/3] rounded-2xl overflow-hidden group border border-gray-100 shadow-sm">
+                    <img src={img.url} alt="" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                    <button onClick={() => handleDeleteGallery(img.url)} className="absolute top-3 right-3 w-8 h-8 rounded-full bg-black/50 backdrop-blur-md text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"><X size={14} /></button>
                   </div>
-                  <button
-                    type="button"
-                    onClick={(e) => { e.stopPropagation(); removeQueuedPhoto(i); }}
-                    className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-red-500 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                  >
-                    <X size={10} className="text-white" />
-                  </button>
-                </div>
-              ))}
-            </div>
+                ))}
+                {galleryQueue.map((f, i) => (
+                  <div key={i} className="relative aspect-[4/3] rounded-2xl overflow-hidden group bg-gray-100 opacity-60 flex items-center justify-center">
+                    <img src={URL.createObjectURL(f)} className="w-full h-full object-cover" />
+                    <div className="absolute inset-0 flex items-center justify-center"><Loader2 size={24} className="animate-spin text-white" /></div>
+                    <button onClick={() => removeQueuedPhoto(i)} className="absolute top-3 right-3 w-8 h-8 rounded-full bg-red-500 text-white flex items-center justify-center shadow-lg"><X size={14} /></button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
-        )}
+        </Section>
+      </div>
 
-        {/* Already uploaded gallery */}
-        {gallery.length > 0 && (
-          <div>
-            <p className="text-xs font-semibold text-gray-500 mb-2 mt-4">Uploaded ({gallery.length})</p>
-            <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
-              {gallery.map((img) => (
-                <div key={img.url} className="relative group">
-                  <img src={img.url} alt={img.name} className="w-full aspect-square object-cover rounded-xl border border-gray-100" />
-                  <button
-                    type="button"
-                    onClick={() => handleDeleteGallery(img.url)}
-                    className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-red-500 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                  >
-                    <X size={10} className="text-white" />
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-      </Section>
-
-      {/* Save & Next */}
-      <div className="flex justify-end pt-2">
+      <div className="flex justify-end pt-4 pb-12 border-t border-gray-100">
         <button
-          type="button"
-          onClick={handleSave}
+          onClick={handleSaveAndContinue}
           disabled={saving}
-          className="flex items-center gap-2 h-12 px-8 rounded-2xl bg-[#612178] text-white text-sm font-bold hover:bg-[#4d1860] transition-colors disabled:opacity-60 shadow-lg shadow-purple-200"
+          className="flex items-center gap-2 h-14 px-10 rounded-2xl bg-[#612178] text-white text-base font-bold hover:bg-[#4d1860] transition-all disabled:opacity-60 shadow-xl shadow-purple-200"
         >
-          {saving ? <Loader2 size={16} className="animate-spin" /> : <ArrowRight size={16} />}
-          {saving ? 'Saving…' : 'Save & Next'}
+          {saving ? <Loader2 size={20} className="animate-spin" /> : <ArrowRight size={20} />}
+          {saving ? 'Saving...' : 'Save & Continue'}
         </button>
       </div>
     </div>
@@ -510,26 +624,80 @@ function ItemModal({ sectionKey, editItem, onClose, onSave, saving }: {
                 )}
 
                 <div className="space-y-4">
-                  {isTextarea && (
-                    <Field label="Content">
-                      <textarea rows={5} value={form.description} onChange={(e) => updateEntry(idx, { description: e.target.value })} placeholder="Enter details…" className={inputCls + ' resize-none'} />
-                    </Field>
-                  )}
                   {isMetrics && fields.map((f) => (
                     <Field key={f.key} label={f.label}>
-                      <input type="text" value={form.extra_data[f.key] || ''} onChange={(e) => updateExtra(idx, f.key, e.target.value)} placeholder={`Enter ${f.label.toLowerCase()}`} className={inputCls} />
+                      {f.type === 'textarea' ? (
+                        <textarea rows={3} value={form.extra_data[f.key] || ''} onChange={(e) => updateExtra(idx, f.key, e.target.value)} placeholder={`Enter ${f.label.toLowerCase()}`} className={inputCls + ' resize-none'} />
+                      ) : f.type === 'tags' ? (
+                        <div className="space-y-2">
+                           <div className="relative">
+                              <select 
+                                className={inputCls + ' appearance-none pr-8 bg-gray-50/50'} 
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  if (!val) return;
+                                  const current = form.extra_data[f.key] ? form.extra_data[f.key].split(',').filter(Boolean) : [];
+                                  if (!current.includes(val)) {
+                                    updateExtra(idx, f.key, [...current, val].join(','));
+                                  }
+                                }}
+                              >
+                                <option value="">{f.label}</option>
+                                {f.options?.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                              </select>
+                              <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                           </div>
+                           <div className="flex flex-wrap gap-2">
+                              {(form.extra_data[f.key] ? form.extra_data[f.key].split(',').filter(Boolean) : []).map(tag => (
+                                <div key={tag} className="flex items-center gap-1.5 px-3 py-1 bg-purple-100 text-[#612178] rounded-lg text-xs font-bold">
+                                  {tag}
+                                  <button 
+                                    onClick={() => {
+                                      const current = form.extra_data[f.key].split(',').filter(Boolean);
+                                      updateExtra(idx, f.key, current.filter(t => t !== tag).join(','));
+                                    }}
+                                    className="hover:text-red-500"
+                                  >
+                                    <X size={12} />
+                                  </button>
+                                </div>
+                              ))}
+                           </div>
+                        </div>
+                      ) : (
+                        <input type="text" value={form.extra_data[f.key] || ''} onChange={(e) => updateExtra(idx, f.key, e.target.value)} placeholder={`Enter ${f.label.toLowerCase()}`} className={inputCls} />
+                      )}
                     </Field>
                   ))}
                   {!isTextarea && !isMetrics && (
                     <>
-                      <Field label="Item Name *">
-                        <input type="text" value={form.title} onChange={(e) => updateEntry(idx, { title: e.target.value })} placeholder="e.g. Sedan Fleet, Delhi, Cultural Tourism" className={inputCls} />
+                      <Field label={sectionKey === 'certifications' ? 'Certification Name *' : sectionKey === 'fleet' ? 'Type of Car *' : "Item Name *"}>
+                        <input type="text" value={form.title} onChange={(e) => updateEntry(idx, { title: e.target.value })} placeholder={sectionKey === 'certifications' ? "e.g. ISO 9001" : sectionKey === 'fleet' ? "e.g. Sedan, SUV, etc" : "e.g. Cultural Tourism"} className={inputCls} />
                       </Field>
-                      {!isTag && (
+                      
+                      {sectionKey === 'certifications' && (
+                        <div className="grid grid-cols-2 gap-4">
+                           <Field label="Company Name">
+                              <input className={inputCls} value={form.extra_data.company_name || ''} onChange={(e) => updateExtra(idx, 'company_name', e.target.value)} placeholder="Company Name" />
+                           </Field>
+                           <Field label="Issued At">
+                              <input className={inputCls} value={form.extra_data.issued_at || ''} onChange={(e) => updateExtra(idx, 'issued_at', e.target.value)} placeholder="XX-XX-202X" />
+                           </Field>
+                        </div>
+                      )}
+
+                      {!isTag && sectionKey !== 'certifications' && sectionKey !== 'fleet' && (
                         <Field label="Description">
                           <textarea rows={2} value={form.description} onChange={(e) => updateEntry(idx, { description: e.target.value })} placeholder="Optional details…" className={inputCls + ' resize-none'} />
                         </Field>
                       )}
+
+                      {sectionKey === 'product_portfolio' && (
+                         <Field label="Location">
+                            <input className={inputCls} value={form.extra_data.location || ''} onChange={(e) => updateExtra(idx, 'location', e.target.value)} placeholder="e.g. Jaipur, India" />
+                         </Field>
+                      )}
+
                       {sectionKey === 'fleet' && (
                         <div className="grid grid-cols-2 gap-3">
                           <Field label="Vehicle Models"><input className={inputCls} value={form.extra_data.models || ''} onChange={(e) => updateExtra(idx, 'models', e.target.value)} placeholder="e.g. Innova, Swift" /></Field>
@@ -594,15 +762,17 @@ function ItemModal({ sectionKey, editItem, onClose, onSave, saving }: {
   );
 }
 
+// ─── Section Card Component ──────────────────────────────────────────────────
+
 interface LocalProfileItem extends ProfileItem {
   _pendingFile?: File | null;
   _isNew?: boolean;
 }
 
-function SectionCard({ config, category, section, onAdd, onEdit, onDelete, onSave, isDirty, saving }: {
+function SectionCard({ config, category, section, onAdd, onEdit, onDelete, onSave, isDirty, saving, sectionRefs, onUpdateTextarea }: {
   config: SectionConfig; category: CategoryKey; section?: ProfileSection;
-  onAdd: () => void; onEdit: (item: LocalProfileItem) => void; onDelete: (item: LocalProfileItem) => void;
-  onSave: () => void; isDirty: boolean; saving: boolean;
+  onAdd?: () => void; onEdit?: (item: LocalProfileItem) => void; onDelete?: (item: LocalProfileItem) => void;
+  onSave: () => void; isDirty: boolean; saving: boolean; sectionRefs: React.MutableRefObject<Record<string, HTMLDivElement | null>>; onUpdateTextarea?: (text: string) => void;
 }) {
   const items     = section?.profile_items || [];
   const isTA      = TEXTAREA_SECTIONS.has(config.key);
@@ -611,95 +781,117 @@ function SectionCard({ config, category, section, onAdd, onEdit, onDelete, onSav
   const metricsFields = METRICS_FIELDS[config.key] || [];
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-      <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+    <div ref={(el) => { sectionRefs.current[config.key] = el; }} className="bg-white rounded-[24px] border border-gray-100 shadow-sm overflow-hidden scroll-mt-24">
+      <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
         <div className="flex items-center gap-3">
-          <div className="w-2 h-5 rounded-full bg-[#612178]" />
-          <h3 className="font-bold text-gray-900 text-sm">{config.label}</h3>
-          {items.length > 0 && <span className="text-[11px] bg-purple-100 text-[#612178] font-semibold px-2 py-0.5 rounded-full">{items.length}</span>}
+          <h3 className="font-bold text-gray-900 text-[15px]">{config.label}</h3>
+          {items.length > 0 && <span className="text-[11px] bg-purple-100 text-[#612178] font-bold px-2 py-0.5 rounded-full">{items.length}</span>}
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           {isDirty && (
-            <div className="flex items-center gap-2 animate-in fade-in slide-in-from-right-2 duration-300">
-              <button
-                type="button"
-                onClick={(e) => { e.stopPropagation(); onSave(); }}
-                disabled={saving}
-                className="flex items-center gap-1.5 text-[10px] font-bold bg-[#612178] text-white px-3 py-1.5 rounded-lg shadow-md hover:shadow-purple-200 hover:bg-[#4d1860] transition-all"
-              >
-                {saving ? <Loader2 size={12} className="animate-spin" /> : <Check size={12} />}
-                SAVE CHANGES
-              </button>
-            </div>
+            <button
+              onClick={(e) => { e.stopPropagation(); onSave(); }}
+              disabled={saving}
+              className="flex items-center gap-1.5 text-[11px] font-bold bg-[#612178] text-white px-4 py-2 rounded-xl shadow-lg shadow-purple-100 hover:bg-[#4d1860] transition-all disabled:opacity-50"
+            >
+              {saving ? <Loader2 size={12} className="animate-spin" /> : <Check size={12} />}
+              SAVE
+            </button>
           )}
           
-          {(isTA || isMetrics) && items.length > 0 ? (
-            <button type="button" onClick={() => onEdit(items[0])} className="flex items-center gap-1.5 text-xs font-semibold text-gray-500 hover:text-[#612178] hover:bg-purple-50 px-3 py-1.5 rounded-lg transition-colors">
-              <Pencil size={12} />Edit
-            </button>
-          ) : (
-            <button type="button" onClick={onAdd} className="flex items-center gap-1.5 text-xs font-semibold text-[#612178] hover:bg-purple-50 px-3 py-1.5 rounded-lg transition-colors">
-              <Plus size={13} />{isTA || isMetrics ? 'Set' : 'Add'}
+          {!isTA && onAdd && (
+            <button 
+              type="button" 
+              onClick={onAdd}
+              className="flex items-center gap-1.5 text-[13px] font-bold text-[#612178] hover:bg-purple-50 px-4 py-2 rounded-xl transition-all"
+            >
+              <Plus size={16} />{isMetrics ? (items.length > 0 ? 'Edit' : 'Set') : 'Add'}
             </button>
           )}
         </div>
       </div>
-      <div className="p-4">
-        {items.length === 0 ? (
-          <div className="py-7 flex flex-col items-center gap-2 text-gray-400">
-            <div className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center"><Plus size={16} /></div>
-            <p className="text-xs font-medium">No items yet</p>
+      <div className="p-6">
+        {isTA ? (
+          <textarea
+            value={items.length > 0 ? (items[0].description || items[0].title || '') : ''}
+            onChange={(e) => onUpdateTextarea?.(e.target.value)}
+            placeholder={`Enter ${config.label.toLowerCase()} details here...`}
+            className="w-full px-4 py-3 text-[15px] border border-gray-200 rounded-xl focus:outline-none focus:border-[#612178] bg-gray-50/50 resize-y min-h-[140px] text-gray-700 leading-relaxed"
+          />
+        ) : items.length === 0 ? (
+          <div className="py-10 flex flex-col items-center gap-3 text-gray-400">
+
+            <div className="w-12 h-12 rounded-2xl bg-gray-50 flex items-center justify-center border border-gray-100"><Plus size={20} /></div>
+            <p className="text-sm font-semibold">No {config.label.toLowerCase()} added yet</p>
           </div>
-        ) : isTA ? (
-          <p className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">{items[0].description || items[0].title}</p>
         ) : isMetrics ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="space-y-4">
             {metricsFields.map((f) => {
               const val = items[0].extra_data?.[f.key];
               if (!val) return null;
               return (
-                <div key={f.key} className="bg-gray-50 rounded-xl p-3 border border-gray-100 flex flex-col justify-center">
-                  <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">{f.label}</p>
-                  <p className="text-sm font-extrabold text-[#612178]">{String(val)}</p>
+                <div key={f.key} className="space-y-2">
+                   <p className="text-[13px] font-semibold text-gray-700">{f.label}</p>
+                   {f.type === 'tags' ? (
+                      <div className="flex flex-wrap gap-2">
+                        {String(val).split(',').filter(Boolean).map(tag => (
+                          <span key={tag} className="px-3 py-1 bg-purple-50 text-[#612178] rounded-lg text-xs font-bold border border-purple-100/50">{tag}</span>
+                        ))}
+                      </div>
+                   ) : (
+                      <p className="bg-gray-50/50 rounded-xl p-4 border border-gray-100 text-sm text-gray-800">{String(val)}</p>
+                   )}
                 </div>
               );
             })}
           </div>
         ) : isTag ? (
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2.5">
             {items.map((item) => (
-              <div key={item.documentId} className="group flex items-center gap-1.5 px-3 py-1.5 bg-purple-50 text-[#612178] rounded-xl text-xs font-semibold">
+              <div key={item.documentId} className="group flex items-center gap-2 pl-4 pr-2 py-2 bg-purple-50/80 text-[#612178] rounded-xl text-sm font-bold border border-purple-100/50">
                 {item.title}
-                <button type="button" onClick={() => onDelete(item)} className="w-4 h-4 rounded-full bg-purple-200 flex items-center justify-center hover:bg-red-200 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-all"><X size={10} /></button>
+                {onDelete && <button type="button" onClick={() => onDelete(item)} className="w-5 h-5 rounded-lg bg-white/50 flex items-center justify-center hover:bg-red-100 hover:text-red-600 transition-all"><X size={12} /></button>}
               </div>
             ))}
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="grid grid-cols-1 gap-4">
             {items.map((item: LocalProfileItem) => (
-              <div key={item.documentId || `new-${item.title}-${item.order}`} className="bg-white border border-gray-100 rounded-2xl shadow-sm p-4 flex gap-3 hover:shadow-md transition-shadow relative overflow-hidden">
-                {item._isNew && <div className="absolute top-0 right-0 px-2 py-0.5 bg-purple-100 text-[#612178] text-[8px] font-bold rounded-bl-lg">NEW</div>}
+              <div key={item.documentId || `new-${item.title}-${item.order}`} className="bg-white border border-gray-100 rounded-2xl p-4 flex gap-4 items-center group hover:border-[#612178]/30 hover:shadow-md transition-all relative">
                 {(item.image_url || item._pendingFile) && (
-                  <img 
-                    src={item._pendingFile ? URL.createObjectURL(item._pendingFile) : item.image_url} 
-                    alt="" 
-                    className="w-14 h-14 rounded-xl object-cover shrink-0 border border-gray-100" 
-                  />
+                  <div className={`rounded-xl overflow-hidden border border-gray-100 shrink-0 shadow-sm ${config.key === 'certifications' ? 'w-24 h-16' : 'w-20 h-20'}`}>
+                    <img 
+                      src={item._pendingFile ? URL.createObjectURL(item._pendingFile) : item.image_url} 
+                      alt="" 
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
+                    />
+                  </div>
                 )}
                 <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-gray-900 text-sm truncate">{item.title}</p>
-                  {item.description && <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{item.description}</p>}
-                  {item.extra_data && Object.values(item.extra_data).some(Boolean) && (
-                    <div className="mt-1.5 flex flex-wrap gap-1">
-                      {Object.entries(item.extra_data).filter(([, v]) => v).map(([k, v]) => (
-                        <span key={k} className="text-[10px] bg-purple-50 text-[#612178] px-2 py-0.5 rounded-full font-medium">{k.replace(/_/g, ' ')}: {String(v)}</span>
-                      ))}
+                  <p className="font-bold text-gray-900 text-base flex items-center gap-2">
+                    {item.title}
+                    {config.key === 'certifications' && <span className="text-[10px] text-gray-400 font-normal">1</span>}
+                  </p>
+                  
+                  {config.key === 'certifications' && (
+                    <div className="mt-0.5 space-y-0.5">
+                       <p className="text-xs text-gray-500">{item.extra_data?.company_name || 'Company Name'}</p>
+                       <p className="text-[11px] text-gray-400">Issued At : {item.extra_data?.issued_at || 'XX-XX-202X'}</p>
                     </div>
                   )}
+
+                  {config.key === 'product_portfolio' && item.extra_data?.location && (
+                     <p className="text-xs text-gray-400 flex items-center gap-1 mt-0.5">
+                        <MapPin size={10} /> {item.extra_data.location}
+                     </p>
+                  )}
+
+                  {item.description && <p className="text-sm text-gray-500 mt-1 line-clamp-2 leading-relaxed">{item.description}</p>}
                 </div>
-                <div className="flex flex-col gap-2 shrink-0">
-                  <button type="button" onClick={() => onEdit(item)} className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-500 hover:bg-purple-100 hover:text-[#612178] transition-colors" title="Edit Item"><Pencil size={13} /></button>
-                  <button type="button" onClick={() => onDelete(item)} className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-500 hover:bg-red-100 hover:text-red-600 transition-colors" title="Remove Locally"><Trash2 size={13} /></button>
+                
+                <div className="flex gap-2">
+                   {onEdit && <button type="button" onClick={() => onEdit(item)} className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center text-gray-400 hover:bg-purple-50 hover:text-[#612178] transition-all"><Pencil size={18} /></button>}
+                   {onDelete && <button type="button" onClick={() => onDelete(item)} className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center text-gray-400 hover:bg-red-50 hover:text-red-500 transition-all"><Trash2 size={18} /></button>}
                 </div>
               </div>
             ))}
@@ -710,8 +902,16 @@ function SectionCard({ config, category, section, onAdd, onEdit, onDelete, onSav
   );
 }
 
-function Step2CategorySections({ profileDocId, initialCategory }: { profileDocId: string; initialCategory: CategoryKey }) {
-  const [category,  setCategory]  = useState<CategoryKey>(initialCategory);
+function Step2CategorySections({ profileDocId, initialCategory, sectionRefs }: { 
+  profileDocId: string; 
+  initialCategory: CategoryKey; 
+  sectionRefs: React.MutableRefObject<Record<string, HTMLDivElement | null>>;
+}) {
+  const [category, setCategory] = useState<CategoryKey>(initialCategory);
+
+  useEffect(() => {
+    setCategory(initialCategory);
+  }, [initialCategory]);
   const [sections,  setSections]  = useState<ProfileSection[]>([]);
   const [loading,   setLoading]   = useState(true);
   const [modalCfg,  setModalCfg]  = useState<SectionConfig | null>(null);
@@ -864,44 +1064,37 @@ function Step2CategorySections({ profileDocId, initialCategory }: { profileDocId
     const section = sections.find(s => s.profile_items.some(i => i.documentId === item.documentId));
     if (!section) return;
 
-    setSections(prev => prev.map(s => s.documentId === section.documentId || s.section_key === section.section_key 
-      ? { ...s, profile_items: s.profile_items.filter(i => i.documentId !== item.documentId) } 
+    setSections(prev => prev.map(s => (s.documentId === section.documentId || s.section_key === section.section_key) 
+      ? { ...s, profile_items: s.profile_items.filter(i => (i as any).documentId !== (item as any).documentId) } 
       : s
     ));
     setDirtyKeys(prev => new Set(prev).add(section.section_key));
     setDelTarget(null);
   };
 
+  const handleUpdateTextarea = (sectionKey: string, text: string) => {
+    setSections(prev => {
+      const existing = prev.find(s => s.section_key === sectionKey);
+      let updatedItems = existing?.profile_items || [];
+      if (updatedItems.length === 0) {
+        updatedItems = [{ documentId: `temp-${Math.random()}`, title: text.slice(0, 60) || 'Item', description: text, order: 1 } as ProfileItem];
+      } else {
+        updatedItems = [{ ...updatedItems[0], title: text.slice(0, 60) || 'Item', description: text }];
+      }
+      if (existing) {
+        return prev.map(s => s.section_key === sectionKey ? { ...s, profile_items: updatedItems } : s);
+      } else {
+        return [...prev, { documentId: '', section_key: sectionKey, category, order: 1, profile_items: updatedItems }];
+      }
+    });
+    setDirtyKeys(prev => new Set(prev).add(sectionKey));
+  };
+
   const configs = CATEGORY_SECTIONS[category];
 
   return (
     <div className="space-y-6">
-      {/* Category banner */}
-      <div className="rounded-3xl p-6 text-white relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #612178 0%, #a044c0 60%, #d06de0 100%)' }}>
-        <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 80% 20%, white 0%, transparent 60%)' }} />
-        <p className="text-xs font-semibold uppercase tracking-widest text-purple-200 mb-1">Category</p>
-        <h2 className="text-xl font-bold mb-3">{CATEGORY_LABELS[category]}</h2>
-        <div className="mt-4 pt-4 border-t border-white/20">
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-[10px] text-purple-200 font-bold tracking-widest flex items-center gap-1">
-              <Sparkles size={10} className="animate-pulse" /> TEST CATEGORY SWITCHER (FRONTEND PREVIEW)
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {(Object.keys(CATEGORY_SECTIONS) as CategoryKey[]).map((k) => (
-              <button 
-                key={k} 
-                type="button" 
-                onClick={() => setCategory(k)} 
-                className={`px-3 py-1.5 rounded-xl text-[10px] font-extrabold uppercase transition-all flex items-center gap-1 ${category === k ? 'bg-white text-[#612178] shadow-lg scale-105' : 'bg-white/10 text-white hover:bg-white/20'}`}
-              >
-                {category === k && <Check size={10} />}
-                {CATEGORY_LABELS[k]}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
+      {/* Removed TEST CATEGORY SWITCHER (FRONTEND PREVIEW) entirely */}
 
       {loading ? (
         <div className="flex justify-center py-12"><Loader2 size={28} className="animate-spin text-[#612178]" /></div>
@@ -911,11 +1104,13 @@ function Step2CategorySections({ profileDocId, initialCategory }: { profileDocId
             key={cfg.key} config={cfg} category={category}
             section={sections.find((s) => s.section_key === cfg.key)}
             onAdd={() => { setModalCfg(cfg); setEditItem(undefined); }}
-            onEdit={(item) => { setModalCfg(cfg); setEditItem(item); }}
-            onDelete={(item) => setDelTarget(item)}
+            onEdit={(item: any) => { setModalCfg(cfg); setEditItem(item); }}
+            onDelete={(item: any) => setDelTarget(item)}
             onSave={() => syncSection(cfg.key)}
             isDirty={dirtyKeys.has(cfg.key)}
             saving={saving === cfg.key}
+            sectionRefs={sectionRefs}
+            onUpdateTextarea={(text) => handleUpdateTextarea(cfg.key, text)}
           />
         ))
       )}
@@ -958,42 +1153,118 @@ function Section({ title, icon, children }: { title: string; icon: React.ReactNo
 }
 
 // ─── Main page ────────────────────────────────────────────────────────────────
-
 export default function EnhanceProfilePage() {
   const router = useRouter();
-  const user   = useAuth();
-
-  const [step,         setStep]         = useState<1 | 2>(1);
-  const [profile,      setProfile]      = useState<UserProfile | null>(null);
+  const user = useAuth();
+  const [step, setStep] = useState<1 | 2>(1);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [profileDocId, setProfileDocId] = useState<string>('');
   const [initCategory, setInitCategory] = useState<CategoryKey>('travel_trade');
-  const [loading,      setLoading]      = useState(true);
+  const [loading, setLoading] = useState(true);
+  const [activeSection, setActiveSection] = useState('general');
+
+  // Refs for scrolling
+  const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   useEffect(() => {
-    if (!user?.id) return;
+    if (!user?.id) {
+      setLoading(false);
+      return;
+    }
     (async () => {
-      const { exists, profile: p } = await getMyProfile(user.id);
-      if (exists && p) {
-        // Use documentId if available, fallback to numeric id stringified
-        const id = p.documentId || (p as any).id?.toString();
-        
-        if (id) {
-          // Fetch full profile with sections and items for Step 2
-          const fullProf = await getFullProfile(id);
-          const activeProfile = fullProf || p;
-          
-          setProfile(activeProfile as any);
-          setProfileDocId(activeProfile.documentId || (activeProfile as any).id?.toString() || '');
-          if ((activeProfile as any).category?.main) {
-            setInitCategory((activeProfile as any).category.main);
+      try {
+        const { exists, profile: p } = await getMyProfile(user.id);
+        if (exists && p) {
+          const id = p.documentId || (p as any).id?.toString();
+          if (id) {
+            const fullProf = await getFullProfile(id);
+            const activeProfile = fullProf || p;
+            setProfile(activeProfile as any);
+            setProfileDocId(activeProfile.documentId || (activeProfile as any).id?.toString() || '');
+            if ((activeProfile as any).category?.main) {
+              setInitCategory((activeProfile as any).category.main);
+            }
           }
         }
+      } catch (err) {
+        console.error("Initialization failed:", err);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     })();
   }, [user]);
 
-  const STEPS = ['Common Profile', 'Business Sections'];
+  useEffect(() => {
+    if (loading) return;
+    const observerCallback: IntersectionObserverCallback = (entries) => {
+      const intersecting = entries.filter(e => e.isIntersecting);
+      if (intersecting.length > 0) {
+        intersecting.sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
+        const topEntry = intersecting[0];
+        const id = Object.keys(sectionRefs.current).find(key => sectionRefs.current[key] === topEntry.target);
+        if (id) setActiveSection(id);
+      }
+    };
+    const observer = new IntersectionObserver(observerCallback, { root: null, rootMargin: '-120px 0px -60% 0px', threshold: 0 });
+    const timeout = setTimeout(() => {
+      Object.values(sectionRefs.current).forEach(el => { if (el) observer.observe(el); });
+    }, 200);
+    return () => { clearTimeout(timeout); observer.disconnect(); };
+  }, [step, loading]);
+
+  const handleScrollTo = (id: string, updateStep = true) => {
+    if (updateStep) {
+      const categoryItemIds = (CATEGORY_SECTIONS[initCategory] || []).map(c => c.key);
+      if (categoryItemIds.includes(id)) {
+        setStep(2);
+      } else {
+        setStep(1);
+      }
+    }
+
+    setTimeout(() => {
+      const el = sectionRefs.current[id];
+      if (el) {
+        const offset = 120; // More offset for Step 2
+        const bodyRect = document.body.getBoundingClientRect().top;
+        const elementRect = el.getBoundingClientRect().top;
+        const elementPosition = elementRect - bodyRect;
+        const offsetPosition = elementPosition - offset;
+
+        window.scrollTo({
+          top: offsetPosition,
+          behavior: 'smooth'
+        });
+        setActiveSection(id);
+      }
+    }, 100);
+  };
+
+  const handleNextStep = () => {
+    setStep(2);
+    const categoryConfigs = CATEGORY_SECTIONS[initCategory] || [];
+    if (categoryConfigs.length > 0) {
+      // Small delay to let opacity transition if needed
+      setTimeout(() => {
+        handleScrollTo(categoryConfigs[0].key, false);
+      }, 100);
+    }
+  };
+
+  // Sidebar items based on category
+  const commonItems = [
+    { id: 'general', label: 'General Info' },
+    { id: 'location', label: 'Location' },
+    { id: 'contact', label: 'Contact Person' },
+    { id: 'photos', label: 'Photos' },
+  ];
+
+  const categoryItems = (CATEGORY_SECTIONS[initCategory] || []).map(c => ({
+    id: c.key,
+    label: c.label
+  }));
+
+  const sidebarItems = step === 1 ? commonItems : categoryItems;
 
   if (loading) {
     return (
@@ -1007,65 +1278,77 @@ export default function EnhanceProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pt-[72px]">
+    <div className="min-h-screen bg-gray-50 pb-20">
       <Header />
-
-      {/* Top bar */}
-      <div className="sticky top-[72px] z-30 bg-white border-b border-gray-200 shadow-sm">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 py-3 flex items-center gap-4">
-          <button type="button" onClick={() => step === 1 ? router.push('/home') : setStep(1)} className="flex items-center gap-2 text-sm text-gray-500 hover:text-[#612178] font-medium transition-colors shrink-0">
-            <ArrowLeft size={16} />{step === 1 ? 'Back' : 'Previous'}
-          </button>
-          <div className="flex-1">
-            <StepBadge step={step} total={2} label={STEPS[step - 1]} />
-          </div>
-          {step === 2 && (
-            <button type="button" onClick={() => router.push('/home')} className="flex items-center gap-2 h-9 px-4 rounded-xl bg-[#612178] text-white text-xs font-bold hover:bg-[#4d1860] transition-colors shrink-0">
-              <Check size={13} />Finish
-            </button>
-          )}
+      
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-24">
+        {/* Step Header */}
+        <div className="mb-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+           <StepBadge 
+             step={step} 
+             total={2} 
+             label={step === 1 ? 'Common Profile Info' : 'Business Specific Details'} 
+           />
+           {step === 2 && (
+             <div className="flex items-center gap-3">
+               <button onClick={() => { setStep(1); setTimeout(() => handleScrollTo('general', false), 100); }} className="h-12 px-6 rounded-2xl bg-white border border-gray-200 text-gray-600 font-bold text-sm shadow-sm hover:bg-gray-50 transition-all flex items-center gap-2">
+                 <ArrowLeft size={18} /> Back to Step 1
+               </button>
+               <button onClick={() => router.push('/home')} className="h-12 px-8 rounded-2xl bg-[#612178] text-white font-bold text-sm shadow-xl shadow-purple-100 hover:bg-[#4d1860] transition-all flex items-center gap-2">
+                 <Check size={18} /> Finish Profile
+               </button>
+             </div>
+           )}
         </div>
-      </div>
 
-      {/* Step header */}
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 pt-8 pb-4">
-        <div className="flex items-center gap-3 mb-1">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#612178] to-[#a044c0] flex items-center justify-center text-white shadow-md shadow-purple-200">
-            <Sparkles size={16} />
-          </div>
-          <div>
-            <h1 className="text-xl font-bold text-gray-900">
-              {step === 1 ? 'Common Profile Info' : 'Business Sections'}
-            </h1>
-            <p className="text-xs text-gray-500 mt-0.5">
-              {step === 1
-                ? 'Set up your company info, location, contact & photos'
-                : 'Add detailed sections specific to your business category'}
-            </p>
+        <div className="flex flex-col lg:flex-row gap-8">
+          {/* Sidebar */}
+          <Sidebar items={sidebarItems} activeId={activeSection} onScrollTo={handleScrollTo} />
+
+          {/* Main Content */}
+          <div className="flex-1 space-y-12 max-w-3xl">
+            {/* Mobile Navigation */}
+            <div className="lg:hidden sticky top-[0px] z-30 -mx-4 px-4 py-3 bg-white/90 backdrop-blur-md border-b border-gray-100 shadow-sm">
+               <div className="relative">
+                  <select 
+                    className="w-full h-11 pl-4 pr-10 bg-gray-50 border border-gray-100 rounded-xl text-sm font-bold appearance-none text-[#612178] focus:outline-none"
+                    value={activeSection}
+                    onChange={(e) => handleScrollTo(e.target.value)}
+                  >
+                    {sidebarItems.map(it => <option key={it.id} value={it.id}>{it.label}</option>)}
+                  </select>
+                  <ChevronDown size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-[#612178] pointer-events-none" />
+               </div>
+            </div>
+
+            {/* Step 1 Content Group */}
+            <div className={`space-y-8 animate-in fade-in slide-in-from-left-4 duration-500 ${step !== 1 ? 'hidden' : ''}`}>
+              <UnifiedCommonProfile
+                profile={profile}
+                profileDocId={profileDocId}
+                userId={user?.id || 0}
+                onUpdateProfile={(updated) => setProfile(updated as any)}
+                sectionRefs={sectionRefs}
+                category={initCategory}
+                setCategory={setInitCategory}
+                onNext={handleNextStep}
+              />
+            </div>
+
+            {/* Step 2 Content Group */}
+            <div className={`space-y-8 animate-in fade-in slide-in-from-right-4 duration-500 ${step !== 2 ? 'hidden' : ''}`}>
+               <div className="flex items-center gap-3 mb-6">
+                  <div className="w-1.5 h-8 rounded-full bg-[#612178]" />
+                  <h2 className="text-xl font-bold text-gray-900">{CATEGORY_LABELS[initCategory]} Details</h2>
+               </div>
+              <Step2CategorySections
+                profileDocId={profileDocId}
+                initialCategory={initCategory}
+                sectionRefs={sectionRefs}
+              />
+            </div>
           </div>
         </div>
-      </div>
-
-      {/* Content */}
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 pb-16">
-        {step === 1 ? (
-          <Step1CommonProfile
-            profile={profile}
-            profileDocId={profileDocId}
-            userId={user?.id || 0}
-            onComplete={(updated) => {
-              setProfile(updated as any);
-              if (updated.documentId) setProfileDocId(updated.documentId);
-              setStep(2);
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-            }}
-          />
-        ) : (
-          <Step2CategorySections
-            profileDocId={profileDocId}
-            initialCategory={initCategory}
-          />
-        )}
       </div>
     </div>
   );

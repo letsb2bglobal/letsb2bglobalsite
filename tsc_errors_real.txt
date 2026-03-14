@@ -1,0 +1,17 @@
+﻿src/app/enhance-profile/page.tsx(245,9): error TS2345: Argument of type '{ company_name: string | undefined; about: string | undefined; category: { main: CategoryKey; sub: string[]; }; sub_categories: string[]; country: string | undefined; state: string | undefined; ... 5 more ...; social_links: { ...; }; }' is not assignable to parameter of type '{ company_name?: string | undefined; about?: string | undefined; category?: { main: string; sub: string[]; } | undefined; sub_categories?: string[] | undefined; social_links?: Record<string, string> | undefined; ... 6 more ...; website?: string | undefined; }'.
+  Types of property 'contact_person_name' are incompatible.
+    Type '{ name: any; email: string; position: string; phone_number: any; }[]' is not assignable to type 'string'.
+src/app/enhance-profile/page.tsx(732,51): error TS2339: Property 'onAdd' does not exist on type '{ config: SectionConfig; category: CategoryKey; section?: ProfileSection | undefined; onSave: () => void; isDirty: boolean; saving: boolean; sectionRefs: MutableRefObject<...>; onUpdateTextarea?: ((text: string) => void) | undefined; }'.
+src/app/enhance-profile/page.tsx(732,58): error TS2339: Property 'onEdit' does not exist on type '{ config: SectionConfig; category: CategoryKey; section?: ProfileSection | undefined; onSave: () => void; isDirty: boolean; saving: boolean; sectionRefs: MutableRefObject<...>; onUpdateTextarea?: ((text: string) => void) | undefined; }'.
+src/app/enhance-profile/page.tsx(732,66): error TS2339: Property 'onDelete' does not exist on type '{ config: SectionConfig; category: CategoryKey; section?: ProfileSection | undefined; onSave: () => void; isDirty: boolean; saving: boolean; sectionRefs: MutableRefObject<...>; onUpdateTextarea?: ((text: string) => void) | undefined; }'.
+src/app/enhance-profile/page.tsx(776,30): error TS2304: Cannot find name 'onUpdateTextarea'.
+src/app/enhance-profile/page.tsx(1090,13): error TS2322: Type '{ key: string; config: SectionConfig; category: CategoryKey; section: ProfileSection | undefined; onAdd: () => void; onEdit: (item: any) => void; ... 5 more ...; onUpdateTextarea: (text: string) => void; }' is not assignable to type 'IntrinsicAttributes & { config: SectionConfig; category: CategoryKey; section?: ProfileSection | undefined; ... 4 more ...; onUpdateTextarea?: ((text: string) => void) | undefined; }'.
+  Property 'onAdd' does not exist on type 'IntrinsicAttributes & { config: SectionConfig; category: CategoryKey; section?: ProfileSection | undefined; ... 4 more ...; onUpdateTextarea?: ((text: string) => void) | undefined; }'.
+src/app/enhance-profile/page.tsx(1091,22): error TS7006: Parameter 'item' implicitly has an 'any' type.
+src/app/enhance-profile/page.tsx(1092,24): error TS7006: Parameter 'item' implicitly has an 'any' type.
+src/hooks/useEnquirySocket.ts(15,10): error TS2305: Module '"socket.io-client"' has no exported member 'io'.
+src/hooks/useEnquirySocket.ts(50,28): error TS2749: 'Socket' refers to a value, but is being used as a type here. Did you mean 'typeof Socket'?
+src/hooks/useEnquirySocket.ts(80,30): error TS7006: Parameter 'reason' implicitly has an 'any' type.
+src/hooks/useEnquirySocket.ts(86,33): error TS7006: Parameter 'err' implicitly has an 'any' type.
+src/hooks/useEnquirySocket.ts(110,19): error TS7006: Parameter 'eventName' implicitly has an 'any' type.
+src/hooks/useEnquirySocket.ts(110,30): error TS7019: Rest parameter 'args' implicitly has an 'any[]' type.
