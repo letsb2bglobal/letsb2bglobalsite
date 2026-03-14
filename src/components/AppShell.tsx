@@ -16,7 +16,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isAuthPage = AUTH_PATHS.some((p) => pathname?.startsWith(p));
   const isSignupPage = pathname?.startsWith('/signup');
-  const isSignupHeaderPage = SIGNUP_HEADER_PATHS.some((p) => pathname?.startsWith(p)) && !isSignupPage;
+  const isSignupHeaderPage = SIGNUP_HEADER_PATHS.some((p) => pathname?.startsWith(p));
   const hasSelfLayout = SELF_LAYOUT_PATHS.some((p) => pathname?.startsWith(p));
 
   if (hasSelfLayout) {
