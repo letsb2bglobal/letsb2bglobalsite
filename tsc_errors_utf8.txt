@@ -1,0 +1,388 @@
+﻿node_modules/next/dist/build/templates/app-page.d.ts(3,25): error TS2307: Cannot find module 'VAR_MODULE_GLOBAL_ERROR' or its corresponding type declarations.
+node_modules/next/dist/build/webpack-config.d.ts(10,104): error TS2694: Namespace '"C:/Users/hp/Desktop/letsb2b/letsb2b_frontend/node_modules/next/dist/compiled/webpack/webpack".webpack' has no exported member 'RuleSetUseItem'.
+node_modules/next/dist/build/webpack/loaders/next-app-loader/index.d.ts(1,13): error TS2613: Module '"C:/Users/hp/Desktop/letsb2b/letsb2b_frontend/node_modules/next/dist/compiled/webpack/webpack"' has no default export. Did you mean to use 'import { webpack } from "C:/Users/hp/Desktop/letsb2b/letsb2b_frontend/node_modules/next/dist/compiled/webpack/webpack"' instead?
+node_modules/next/dist/client/components/error-boundary.d.ts(1,8): error TS1259: Module '"C:/Users/hp/Desktop/letsb2b/letsb2b_frontend/node_modules/@types/react/index"' can only be default-imported using the 'esModuleInterop' flag
+node_modules/next/dist/client/components/http-access-fallback/error-boundary.d.ts(11,8): error TS1259: Module '"C:/Users/hp/Desktop/letsb2b/letsb2b_frontend/node_modules/@types/react/index"' can only be default-imported using the 'esModuleInterop' flag
+node_modules/next/dist/client/components/layout-router.d.ts(2,8): error TS1259: Module '"C:/Users/hp/Desktop/letsb2b/letsb2b_frontend/node_modules/@types/react/index"' can only be default-imported using the 'esModuleInterop' flag
+node_modules/next/dist/client/with-router.d.ts(1,8): error TS1259: Module '"C:/Users/hp/Desktop/letsb2b/letsb2b_frontend/node_modules/@types/react/index"' can only be default-imported using the 'esModuleInterop' flag
+node_modules/next/dist/lib/metadata/metadata.d.ts(1,8): error TS1259: Module '"C:/Users/hp/Desktop/letsb2b/letsb2b_frontend/node_modules/@types/react/index"' can only be default-imported using the 'esModuleInterop' flag
+node_modules/next/dist/next-devtools/userspace/pages/pages-dev-overlay-setup.d.ts(1,8): error TS1259: Module '"C:/Users/hp/Desktop/letsb2b/letsb2b_frontend/node_modules/@types/react/index"' can only be default-imported using the 'esModuleInterop' flag
+node_modules/next/dist/server/app-render/entry-base.d.ts(1,114): error TS2307: Cannot find module 'react-server-dom-webpack/server' or its corresponding type declarations.
+node_modules/next/dist/server/app-render/entry-base.d.ts(2,27): error TS2307: Cannot find module 'react-server-dom-webpack/static' or its corresponding type declarations.
+node_modules/next/dist/server/web/spec-extension/adapters/headers.d.ts(39,16): error TS2304: Cannot find name 'HeadersIterator'.
+node_modules/next/dist/server/web/spec-extension/adapters/headers.d.ts(40,13): error TS2304: Cannot find name 'HeadersIterator'.
+node_modules/next/dist/server/web/spec-extension/adapters/headers.d.ts(41,15): error TS2304: Cannot find name 'HeadersIterator'.
+node_modules/next/dist/server/web/spec-extension/adapters/headers.d.ts(42,26): error TS2304: Cannot find name 'HeadersIterator'.
+node_modules/next/dist/shared/lib/app-router-context.shared-runtime.d.ts(4,8): error TS1259: Module '"C:/Users/hp/Desktop/letsb2b/letsb2b_frontend/node_modules/@types/react/index"' can only be default-imported using the 'esModuleInterop' flag
+node_modules/next/dist/shared/lib/app-router-types.d.ts(7,13): error TS1259: Module '"C:/Users/hp/Desktop/letsb2b/letsb2b_frontend/node_modules/@types/react/index"' can only be default-imported using the 'esModuleInterop' flag
+node_modules/next/dist/shared/lib/head-manager-context.shared-runtime.d.ts(1,8): error TS1259: Module '"C:/Users/hp/Desktop/letsb2b/letsb2b_frontend/node_modules/@types/react/index"' can only be default-imported using the 'esModuleInterop' flag
+node_modules/next/dist/shared/lib/image-config-context.shared-runtime.d.ts(1,8): error TS1259: Module '"C:/Users/hp/Desktop/letsb2b/letsb2b_frontend/node_modules/@types/react/index"' can only be default-imported using the 'esModuleInterop' flag
+node_modules/next/dist/shared/lib/loadable-context.shared-runtime.d.ts(1,8): error TS1259: Module '"C:/Users/hp/Desktop/letsb2b/letsb2b_frontend/node_modules/@types/react/index"' can only be default-imported using the 'esModuleInterop' flag
+node_modules/next/dist/shared/lib/loadable.shared-runtime.d.ts(21,8): error TS1259: Module '"C:/Users/hp/Desktop/letsb2b/letsb2b_frontend/node_modules/@types/react/index"' can only be default-imported using the 'esModuleInterop' flag
+node_modules/next/dist/shared/lib/router-context.shared-runtime.d.ts(1,8): error TS1259: Module '"C:/Users/hp/Desktop/letsb2b/letsb2b_frontend/node_modules/@types/react/index"' can only be default-imported using the 'esModuleInterop' flag
+node_modules/next/dist/shared/lib/server-inserted-html.shared-runtime.d.ts(1,8): error TS1259: Module '"C:/Users/hp/Desktop/letsb2b/letsb2b_frontend/node_modules/@types/react/index"' can only be default-imported using the 'esModuleInterop' flag
+node_modules/next/dist/shared/lib/utils.d.ts(10,13): error TS1192: Module '"fs"' has no default export.
+src/app/enhance-profile/page.tsx(3,8): error TS1259: Module '"C:/Users/hp/Desktop/letsb2b/letsb2b_frontend/node_modules/@types/react/index"' can only be default-imported using the 'esModuleInterop' flag
+src/app/enhance-profile/page.tsx(5,25): error TS2307: Cannot find module '@/components/ProtectedRoute' or its corresponding type declarations.
+src/app/enhance-profile/page.tsx(9,8): error TS2307: Cannot find module '@/lib/profile' or its corresponding type declarations.
+src/app/enhance-profile/page.tsx(24,8): error TS2307: Cannot find module '@/lib/profileSections' or its corresponding type declarations.
+src/app/enhance-profile/page.tsx(25,20): error TS2307: Cannot find module '@/components/Header' or its corresponding type declarations.
+src/app/enhance-profile/page.tsx(96,5): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(97,7): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(105,5): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(106,7): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(108,11): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(129,5): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(130,7): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(132,11): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(137,7): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(138,9): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(139,9): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(280,5): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(282,7): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(283,9): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(285,11): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(286,14): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(287,14): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(288,17): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(292,19): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(296,14): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(297,17): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(298,20): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(300,25): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(306,25): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(307,27): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(311,20): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(315,21): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(321,11): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(322,13): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(323,16): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(323,17): error TS2741: Property 'children' is missing in type '{ label: string; }' but required in type '{ label: string; children: React.ReactNode; className?: string; }'.
+src/app/enhance-profile/page.tsx(324,19): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(325,21): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(326,51): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(328,21): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(331,16): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(331,17): error TS2741: Property 'children' is missing in type '{ label: string; }' but required in type '{ label: string; children: React.ReactNode; className?: string; }'.
+src/app/enhance-profile/page.tsx(332,19): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(333,21): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(334,23): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(336,21): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(341,13): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(341,14): error TS2741: Property 'children' is missing in type '{ label: string; }' but required in type '{ label: string; children: React.ReactNode; className?: string; }'.
+src/app/enhance-profile/page.tsx(342,15): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(345,13): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(345,14): error TS2741: Property 'children' is missing in type '{ label: string; }' but required in type '{ label: string; children: React.ReactNode; className?: string; }'.
+src/app/enhance-profile/page.tsx(346,15): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(348,13): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(360,7): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(361,9): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(361,10): error TS2741: Property 'children' is missing in type '{ title: string; icon: any; }' but required in type '{ title: string; icon: React.ReactNode; children: React.ReactNode; }'.
+src/app/enhance-profile/page.tsx(361,41): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(362,11): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(363,13): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(363,14): error TS2741: Property 'children' is missing in type '{ label: string; }' but required in type '{ label: string; children: React.ReactNode; className?: string; }'.
+src/app/enhance-profile/page.tsx(364,15): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(365,17): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(366,19): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(367,41): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(369,17): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(372,13): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(373,15): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(373,16): error TS2741: Property 'children' is missing in type '{ label: string; }' but required in type '{ label: string; children: React.ReactNode; className?: string; }'.
+src/app/enhance-profile/page.tsx(374,17): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(375,19): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(376,21): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(377,47): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(379,19): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(382,15): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(382,16): error TS2741: Property 'children' is missing in type '{ label: string; }' but required in type '{ label: string; children: React.ReactNode; className?: string; }'.
+src/app/enhance-profile/page.tsx(383,17): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(384,19): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(385,21): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(386,45): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(387,21): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(389,19): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(398,7): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(399,9): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(399,10): error TS2741: Property 'children' is missing in type '{ title: string; icon: any; }' but required in type '{ title: string; icon: React.ReactNode; children: React.ReactNode; }'.
+src/app/enhance-profile/page.tsx(399,47): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(400,11): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(401,13): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(402,15): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(404,19): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(406,19): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(409,15): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(416,15): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(419,13): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(419,14): error TS2741: Property 'children' is missing in type '{ label: string; }' but required in type '{ label: string; children: React.ReactNode; className?: string; }'.
+src/app/enhance-profile/page.tsx(420,15): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(423,13): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(424,15): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(424,16): error TS2741: Property 'children' is missing in type '{ label: string; }' but required in type '{ label: string; children: React.ReactNode; className?: string; }'.
+src/app/enhance-profile/page.tsx(425,17): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(426,19): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(429,19): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(432,15): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(432,16): error TS2741: Property 'children' is missing in type '{ label: string; }' but required in type '{ label: string; children: React.ReactNode; className?: string; }'.
+src/app/enhance-profile/page.tsx(433,17): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(437,13): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(437,14): error TS2741: Property 'children' is missing in type '{ label: string; }' but required in type '{ label: string; children: React.ReactNode; className?: string; }'.
+src/app/enhance-profile/page.tsx(438,15): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(441,13): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(442,15): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(442,16): error TS2741: Property 'children' is missing in type '{ label: string; }' but required in type '{ label: string; children: React.ReactNode; className?: string; }'.
+src/app/enhance-profile/page.tsx(443,17): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(444,19): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(445,21): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(447,19): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(450,15): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(451,17): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(452,19): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(453,19): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(454,19): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(456,17): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(464,7): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(465,9): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(465,10): error TS2741: Property 'children' is missing in type '{ title: string; icon: any; }' but required in type '{ title: string; icon: React.ReactNode; children: React.ReactNode; }'.
+src/app/enhance-profile/page.tsx(465,39): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(466,11): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(467,13): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(474,15): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(480,50): error TS2345: Argument of type '(prev: File[]) => unknown[]' is not assignable to parameter of type 'SetStateAction<File[]>'.
+  Type '(prev: File[]) => unknown[]' is not assignable to type '(prevState: File[]) => File[]'.
+    Type 'unknown[]' is not assignable to type 'File[]'.
+      Type '{}' is missing the following properties from type 'File': lastModified, name, webkitRelativePath, size, and 6 more.
+src/app/enhance-profile/page.tsx(482,15): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(483,17): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(485,15): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(486,17): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(487,17): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(492,15): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(494,19): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(495,21): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(496,21): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(496,256): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(500,19): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(501,21): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(502,21): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(502,88): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(503,21): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(503,187): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(512,7): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(513,9): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(518,21): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(518,70): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(538,23): error TS2339: Property 'title' does not exist on type 'LocalProfileItem'.
+src/app/enhance-profile/page.tsx(539,29): error TS2339: Property 'description' does not exist on type 'LocalProfileItem'.
+src/app/enhance-profile/page.tsx(541,62): error TS2339: Property 'extra_data' does not exist on type 'LocalProfileItem'.
+src/app/enhance-profile/page.tsx(564,5): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(565,7): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(566,9): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(567,11): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(568,11): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(568,135): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(571,9): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(575,15): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(577,19): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(582,21): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(586,17): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(588,21): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(588,28): error TS2322: Type '{ key: string; label: string; }' is not assignable to type '{ label: string; children: React.ReactNode; className?: string; }'.
+  Property 'key' does not exist on type '{ label: string; children: React.ReactNode; className?: string; }'.
+src/app/enhance-profile/page.tsx(590,25): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(592,25): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(593,28): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(594,31): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(605,33): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(606,56): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(608,31): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(610,28): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(612,33): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(614,35): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(621,37): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(628,25): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(633,21): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(634,23): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(634,24): error TS2741: Property 'children' is missing in type '{ label: string; }' but required in type '{ label: string; children: React.ReactNode; className?: string; }'.
+src/app/enhance-profile/page.tsx(635,25): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(639,25): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(640,28): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(640,29): error TS2741: Property 'children' is missing in type '{ label: string; }' but required in type '{ label: string; children: React.ReactNode; className?: string; }'.
+src/app/enhance-profile/page.tsx(641,31): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(643,28): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(643,29): error TS2741: Property 'children' is missing in type '{ label: string; }' but required in type '{ label: string; children: React.ReactNode; className?: string; }'.
+src/app/enhance-profile/page.tsx(644,31): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(650,25): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(650,26): error TS2741: Property 'children' is missing in type '{ label: string; }' but required in type '{ label: string; children: React.ReactNode; className?: string; }'.
+src/app/enhance-profile/page.tsx(651,27): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(656,26): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(656,27): error TS2741: Property 'children' is missing in type '{ label: string; }' but required in type '{ label: string; children: React.ReactNode; className?: string; }'.
+src/app/enhance-profile/page.tsx(657,29): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(662,25): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(663,27): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(663,28): error TS2741: Property 'children' is missing in type '{ label: string; }' but required in type '{ label: string; children: React.ReactNode; className?: string; }'.
+src/app/enhance-profile/page.tsx(663,57): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(664,27): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(664,28): error TS2741: Property 'children' is missing in type '{ label: string; }' but required in type '{ label: string; children: React.ReactNode; className?: string; }'.
+src/app/enhance-profile/page.tsx(664,48): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(667,72): error TS2339: Property 'image_url' does not exist on type 'LocalProfileItem'.
+src/app/enhance-profile/page.tsx(668,25): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(668,26): error TS2741: Property 'children' is missing in type '{ label: string; }' but required in type '{ label: string; children: React.ReactNode; className?: string; }'.
+src/app/enhance-profile/page.tsx(669,27): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(671,29): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(672,31): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(673,31): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(673,63): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(674,31): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(674,128): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(676,66): error TS2339: Property 'image_url' does not exist on type 'LocalProfileItem'.
+src/app/enhance-profile/page.tsx(677,29): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(678,31): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(678,50): error TS2339: Property 'image_url' does not exist on type 'LocalProfileItem'.
+src/app/enhance-profile/page.tsx(679,31): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(682,29): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(683,31): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(683,49): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(696,13): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(701,15): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(706,9): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(707,11): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(708,11): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(732,51): error TS2339: Property 'onAdd' does not exist on type '{ config: SectionConfig; category: CategoryKey; section?: ProfileSection; onSave: () => void; isDirty: boolean; saving: boolean; sectionRefs: React.MutableRefObject<Record<string, HTMLDivElement>>; onUpdateTextarea?: (text: string) => void; }'.
+src/app/enhance-profile/page.tsx(732,58): error TS2339: Property 'onEdit' does not exist on type '{ config: SectionConfig; category: CategoryKey; section?: ProfileSection; onSave: () => void; isDirty: boolean; saving: boolean; sectionRefs: React.MutableRefObject<Record<string, HTMLDivElement>>; onUpdateTextarea?: (text: string) => void; }'.
+src/app/enhance-profile/page.tsx(732,66): error TS2339: Property 'onDelete' does not exist on type '{ config: SectionConfig; category: CategoryKey; section?: ProfileSection; onSave: () => void; isDirty: boolean; saving: boolean; sectionRefs: React.MutableRefObject<Record<string, HTMLDivElement>>; onUpdateTextarea?: (text: string) => void; }'.
+src/app/enhance-profile/page.tsx(743,5): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(744,7): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(745,9): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(746,11): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(747,32): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(749,9): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(751,13): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(756,25): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(756,74): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(762,13): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(767,15): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(772,7): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(774,11): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(776,30): error TS2304: Cannot find name 'onUpdateTextarea'.
+src/app/enhance-profile/page.tsx(781,11): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(783,13): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(783,119): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(784,13): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(787,11): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(792,17): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(793,20): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(795,23): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(797,27): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(801,23): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(808,11): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(810,15): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(812,17): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(812,197): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(817,11): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(819,15): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(819,30): error TS2339: Property 'documentId' does not exist on type 'LocalProfileItem'.
+src/app/enhance-profile/page.tsx(819,56): error TS2339: Property 'title' does not exist on type 'LocalProfileItem'.
+src/app/enhance-profile/page.tsx(819,70): error TS2339: Property 'order' does not exist on type 'LocalProfileItem'.
+src/app/enhance-profile/page.tsx(820,24): error TS2339: Property 'image_url' does not exist on type 'LocalProfileItem'.
+src/app/enhance-profile/page.tsx(821,19): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(822,21): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(823,94): error TS2339: Property 'image_url' does not exist on type 'LocalProfileItem'.
+src/app/enhance-profile/page.tsx(829,17): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(830,19): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(831,27): error TS2339: Property 'title' does not exist on type 'LocalProfileItem'.
+src/app/enhance-profile/page.tsx(832,57): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(836,21): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(837,24): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(837,67): error TS2339: Property 'extra_data' does not exist on type 'LocalProfileItem'.
+src/app/enhance-profile/page.tsx(838,24): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(838,83): error TS2339: Property 'extra_data' does not exist on type 'LocalProfileItem'.
+src/app/enhance-profile/page.tsx(842,63): error TS2339: Property 'extra_data' does not exist on type 'LocalProfileItem'.
+src/app/enhance-profile/page.tsx(843,22): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(844,25): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(844,52): error TS2339: Property 'extra_data' does not exist on type 'LocalProfileItem'.
+src/app/enhance-profile/page.tsx(848,25): error TS2339: Property 'description' does not exist on type 'LocalProfileItem'.
+src/app/enhance-profile/page.tsx(848,40): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(848,117): error TS2339: Property 'description' does not exist on type 'LocalProfileItem'.
+src/app/enhance-profile/page.tsx(851,17): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(852,20): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(852,217): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(853,20): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(853,214): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(923,54): error TS2339: Property 'documentId' does not exist on type 'LocalProfileItem'.
+src/app/enhance-profile/page.tsx(927,49): error TS2339: Property 'order' does not exist on type 'LocalProfileItem'.
+src/app/enhance-profile/page.tsx(930,53): error TS2339: Property 'image_url' does not exist on type 'LocalProfileItem'.
+src/app/enhance-profile/page.tsx(940,91): error TS2339: Property 'documentId' does not exist on type 'LocalProfileItem'.
+src/app/enhance-profile/page.tsx(988,35): error TS2339: Property 'documentId' does not exist on type 'LocalProfileItem'.
+src/app/enhance-profile/page.tsx(988,59): error TS2339: Property 'documentId' does not exist on type 'LocalProfileItem'.
+src/app/enhance-profile/page.tsx(990,54): error TS2339: Property 'documentId' does not exist on type 'LocalProfileItem'.
+src/app/enhance-profile/page.tsx(991,28): error TS2339: Property 'title' does not exist on type 'LocalProfileItem'.
+src/app/enhance-profile/page.tsx(992,34): error TS2339: Property 'description' does not exist on type 'LocalProfileItem'.
+src/app/enhance-profile/page.tsx(993,28): error TS2339: Property 'order' does not exist on type 'LocalProfileItem'.
+src/app/enhance-profile/page.tsx(994,33): error TS2339: Property 'extra_data' does not exist on type 'LocalProfileItem'.
+src/app/enhance-profile/page.tsx(995,32): error TS2339: Property 'image_url' does not exist on type 'LocalProfileItem'.
+src/app/enhance-profile/page.tsx(1023,88): error TS2339: Property 'documentId' does not exist on type 'LocalProfileItem'.
+src/app/enhance-profile/page.tsx(1055,5): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(1057,7): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(1058,9): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(1059,9): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(1060,9): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(1061,9): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(1062,11): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(1063,13): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(1064,15): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(1067,11): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(1069,15): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(1075,36): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(1084,9): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(1084,52): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(1087,11): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(1088,13): error TS2322: Type '{ key: any; config: any; category: CategoryKey; section: ProfileSection; onAdd: () => void; onEdit: (item: any) => void; onDelete: (item: any) => void; onSave: () => Promise<void>; isDirty: boolean; saving: boolean; sectionRefs: React.MutableRefObject<...>; onUpdateTextarea: (text: string) => void; }' is not assignable to type '{ config: SectionConfig; category: CategoryKey; section?: ProfileSection; onSave: () => void; isDirty: boolean; saving: boolean; sectionRefs: React.MutableRefObject<Record<string, HTMLDivElement>>; onUpdateTextarea?: (text: string) => void; }'.
+  Property 'key' does not exist on type '{ config: SectionConfig; category: CategoryKey; section?: ProfileSection; onSave: () => void; isDirty: boolean; saving: boolean; sectionRefs: React.MutableRefObject<Record<string, HTMLDivElement>>; onUpdateTextarea?: (text: string) => void; }'.
+src/app/enhance-profile/page.tsx(1103,9): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(1109,9): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(1110,11): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(1111,13): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(1111,110): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(1112,13): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(1113,13): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(1113,87): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(1113,106): error TS2339: Property 'title' does not exist on type 'LocalProfileItem'.
+src/app/enhance-profile/page.tsx(1114,13): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(1115,15): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(1116,15): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(1129,5): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(1130,7): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(1131,9): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(1132,9): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(1134,7): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(1255,7): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(1256,9): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(1257,11): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(1258,11): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(1265,5): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(1266,7): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(1268,7): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(1270,9): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(1271,12): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(1277,14): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(1278,16): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(1279,18): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(1281,16): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(1282,18): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(1288,9): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(1290,11): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(1293,11): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(1295,13): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(1296,16): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(1297,19): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(1302,45): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(1304,19): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(1309,13): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(1310,15): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(1323,13): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(1324,16): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(1325,19): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(1326,19): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/enhance-profile/page.tsx(1328,15): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.

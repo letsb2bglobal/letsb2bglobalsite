@@ -38,27 +38,31 @@ export interface SectionConfig {
 export const CATEGORY_SECTIONS: Record<CategoryKey, SectionConfig[]> = {
   travel_trade: [
     { key: 'services',             label: 'Services Offered',     order: 1 },
-    { key: 'destinations',         label: 'Destinations',          order: 2 },
+    { key: 'destinations',         label: 'Destinations Covered',  order: 2 },
     { key: 'product_portfolio',    label: 'Product Portfolio',     order: 3 },
     { key: 'operational_strength', label: 'Operational Strength',  order: 4 },
     { key: 'trade_terms',          label: 'Trade Terms',           order: 5 },
+    { key: 'certifications',       label: 'Certification And Awards', order: 6 },
   ],
   transport_provider: [
-    { key: 'transport_services',   label: 'Transport Services',    order: 1 },
+    { key: 'transport_services',   label: 'Transport Service Offered', order: 1 },
     { key: 'fleet',                label: 'Fleet Details',         order: 2 },
     { key: 'operational_coverage', label: 'Operational Coverage',  order: 3 },
-    { key: 'driver_safety',        label: 'Driver & Safety',       order: 4 },
+    { key: 'driver_safety',        label: 'Driver Standards and Safety', order: 4 },
+    { key: 'certifications',       label: 'Certification And Awards', order: 5 },
   ],
   experience_provider: [
-    { key: 'experiences',          label: 'Experiences Offered',   order: 1 },
-    { key: 'packages',             label: 'Packages',              order: 2 },
-    { key: 'locations',            label: 'Locations Covered',     order: 3 },
+    { key: 'experiences',          label: 'Experience Offered',   order: 1 },
+    { key: 'operational_coverage', label: 'Operational Coverage', order: 2 },
+    { key: 'operational_capacity', label: 'Operational Capacity', order: 3 },
+    { key: 'safety_guidelines',    label: 'Safety and Guest Guidelines', order: 4 },
+    { key: 'certifications',       label: 'Certification And Awards', order: 5 },
   ],
   institution: [
     { key: 'destination_overview',    label: 'Destination Overview',  order: 1 },
-    { key: 'tourism_products',        label: 'Tourism Products',      order: 2 },
-    { key: 'trade_support',           label: 'Trade Support',         order: 3 },
-    { key: 'tourism_infrastructure',  label: 'Infrastructure',        order: 4 },
+    { key: 'tourism_products',        label: 'Tourisum Product',      order: 2 },
+    { key: 'trade_support',           label: 'Trade Support Programme', order: 3 },
+    { key: 'tourism_infrastructure',  label: 'Tourism Infrastructure', order: 4 },
   ],
 };
 
@@ -284,7 +288,7 @@ export const batchSyncProfileItems = async (
     formData.append('items', JSON.stringify(items));
     
     if (files?.length) {
-      files.forEach(f => formData.append('images', f));
+      files.forEach(f => formData.append('image', f));
     }
 
     const res = await fetch(`${API_URL}/api/profile-items/section/${sectionId}/batch`, {
