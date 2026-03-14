@@ -14,6 +14,7 @@ import {
 import { getUser, clearAuthData, isAuthenticated } from "@/lib/auth";
 import { useTeam } from "@/context/TeamContext";
 import { fetchEnquiryThreads } from "@/lib/enquiry";
+import { searchBusinessProfiles, BusinessProfile } from "@/lib/search";
 
 // Landing page menu: section anchors (scroll on /) or page links; primary = CTA button style
 const LANDING_MENU: {
@@ -43,6 +44,62 @@ const LANDING_HEADER_PAGES = [
   "/conduct",
 ];
 
+function SuggestionList({ query, onSelect }: { query: string; onSelect: (text: string) => void }) {
+  const [items, setItems] = useState<BusinessProfile[]>([]);
+
+  useEffect(() => {
+    if (!query.trim()) {
+      setItems([]);
+      return;
+    }
+
+    let cancelled = false;
+    const timeout = setTimeout(async () => {
+      try {
+        const results = await searchBusinessProfiles(query.trim(), "");
+        if (!cancelled) {
+          setItems(results.slice(0, 5));
+        }
+      } catch {
+        if (!cancelled) setItems([]);
+      }
+    }, 250);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timeout);
+    };
+  }, [query]);
+
+  if (!query.trim() || items.length === 0) return null;
+
+  return (
+    <div className="px-4 pt-2">
+      <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">
+        Suggestions
+      </p>
+      <div className="flex flex-col gap-1">
+        {items.map((biz) => {
+          const name = biz.company_name || biz.full_name || "Business";
+          return (
+            <button
+              key={biz.id}
+              type="button"
+              onClick={() => onSelect(name)}
+              className="flex items-center gap-2 w-full text-left px-2 py-1.5 rounded-lg hover:bg-slate-50 text-[12px] text-slate-700"
+            >
+              <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-slate-100 text-[10px] font-semibold text-slate-500">
+                {name.substring(0, 2).toUpperCase()}
+              </span>
+              <span className="truncate">{name}</span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 const Header = () => {
   const router = useRouter();
   const pathname = usePathname();
@@ -57,11 +114,26 @@ const Header = () => {
   const [activeSectionId, setActiveSectionId] = useState<string | null>(null);
   const [openDropdown, setOpenDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement | null>(null);
+  const [showSearchSuggestions, setShowSearchSuggestions] = useState(false);
+  const [searchSuggestions, setSearchSuggestions] = useState<BusinessProfile[]>([]);
+  const [recentSearches, setRecentSearches] = useState<string[]>([]);
 
   // Load auth state on client after first render to avoid SSR/client mismatch
   useEffect(() => {
     setUser(getUser());
     setIsLoggedIn(isAuthenticated());
+
+    // Load recent searches from localStorage
+    if (typeof window !== "undefined") {
+      const stored = window.localStorage.getItem("recent_searches");
+      if (stored) {
+        try {
+          setRecentSearches(JSON.parse(stored));
+        } catch {
+          setRecentSearches([]);
+        }
+      }
+    }
   }, []);
 
   useEffect(() => {
@@ -71,6 +143,7 @@ const Header = () => {
         !dropdownRef.current.contains(event.target as Node)
       ) {
         setOpenDropdown(false);
+        setShowSearchSuggestions(false);
       }
     };
 
@@ -123,6 +196,15 @@ const Header = () => {
       setMobileMenuOpen(false);
   }, [pathname, scrolledPastLanding]);
 
+  // Clear header search fields on all non-search pages
+  useEffect(() => {
+    if (!pathname.startsWith("/search")) {
+      setSearchText("");
+      setLocationText("");
+      setShowSearchSuggestions(false);
+    }
+  }, [pathname]);
+
   // Lock body scroll when full-page mobile menu is open
   useEffect(() => {
     if (!mobileMenuOpen) return;
@@ -161,6 +243,24 @@ const Header = () => {
   const handleLogout = () => {
     clearAuthData();
     router.push("/signin");
+  };
+
+  const handleSearch = () => {
+    const params = new URLSearchParams();
+    if (searchText.trim()) params.set("q", searchText.trim());
+    if (locationText.trim()) params.set("location", locationText.trim());
+    const queryString = params.toString();
+
+    // Store recent search text
+    const term = searchText.trim();
+    if (term && typeof window !== "undefined") {
+      const updated = [term, ...recentSearches.filter((t) => t !== term)].slice(0, 5);
+      setRecentSearches(updated);
+      window.localStorage.setItem("recent_searches", JSON.stringify(updated));
+    }
+
+    router.push(queryString ? `/search?${queryString}` : "/search");
+    setShowSearchSuggestions(false);
   };
 
   const handleSectionClick = useCallback((id: string) => {
@@ -487,7 +587,7 @@ const Header = () => {
           </div>
 
           {/* Center Section: Search Bar (Premium Design) */}
-          <div className="flex-1 max-w-[480px] px-6 hidden md:block">
+          <div className="flex-1 max-w-[480px] px-6 hidden md:block relative">
             <div className="flex items-center bg-[#f8f9fc] rounded-2xl border border-gray-100 shadow-sm focus-within:shadow-md focus-within:border-purple-200 focus-within:bg-white transition-all overflow-hidden h-10 ring-4 ring-transparent focus-within:ring-purple-50">
               <div className="flex-1 flex items-center px-4 gap-2 border-r border-gray-100">
                 <Image
@@ -501,7 +601,17 @@ const Header = () => {
                   placeholder="Business name or service..."
                   className="bg-transparent border-none outline-none text-[13px] font-semibold w-full placeholder:text-gray-400 text-gray-700"
                   value={searchText}
-                  onChange={(e) => setSearchText(e.target.value)}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setSearchText(value);
+                    setShowSearchSuggestions(!!value);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      handleSearch();
+                    }
+                  }}
                 />
               </div>
               <div className="flex-[0.7] flex items-center px-4 gap-2">
@@ -516,12 +626,62 @@ const Header = () => {
                   className="bg-transparent border-none outline-none text-[13px] font-semibold w-full placeholder:text-gray-400 text-gray-700"
                   value={locationText}
                   onChange={(e) => setLocationText(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      handleSearch();
+                    }
+                  }}
                 />
               </div>
-              <button className="bg-[#6B3FA0] h-full px-5 text-white hover:bg-black transition-colors">
+              <button
+                type="button"
+                onClick={handleSearch}
+                className="bg-[#6B3FA0] h-full px-5 text-white hover:bg-black transition-colors"
+              >
                 <Search size={18} strokeWidth={3} />
               </button>
             </div>
+            {/* Search suggestions dropdown */}
+            {showSearchSuggestions && (searchText.trim() || recentSearches.length > 0) && (
+              <div className="absolute left-6 right-6 mt-2 bg-white rounded-2xl shadow-2xl border border-slate-100 py-3 z-50">
+                {recentSearches.length > 0 && (
+                  <div className="px-4 pb-3 border-b border-slate-50">
+                    <p className="text-[11px] font-medium text-black uppercase tracking-widest mb-1.5">
+                      Recent Searches
+                    </p>
+                    <div className="flex flex-col gap-1">
+                      {recentSearches.map((term) => (
+                        <button
+                          key={term}
+                          type="button"
+                          onClick={() => {
+                            setSearchText(term);
+                            setShowSearchSuggestions(false);
+                            const params = new URLSearchParams();
+                            params.set("q", term);
+                            if (locationText.trim()) params.set("location", locationText.trim());
+                            router.push(`/search?${params.toString()}`);
+                          }}
+                          className="flex items-center justify-between w-full text-left px-2 py-1.5 rounded-lg hover:bg-slate-50 text-[12px] text-black"
+                        >
+                          <span className="truncate">{term}</span>
+                          <span className="text-[10px] text-black">Search again</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                <SuggestionList query={searchText} onSelect={(text) => {
+                  setSearchText(text);
+                  setShowSearchSuggestions(false);
+                  const params = new URLSearchParams();
+                  params.set("q", text);
+                  if (locationText.trim()) params.set("location", locationText.trim());
+                  router.push(`/search?${params.toString()}`);
+                }} />
+              </div>
+            )}
           </div>
         </div>
 
