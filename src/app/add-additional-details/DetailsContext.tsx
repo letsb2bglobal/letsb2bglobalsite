@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useAuth } from '@/components/ProtectedRoute';
-import { getMyProfile, UserProfile, updateUserProfileById } from '@/lib/profile';
+import { getMyProfile, getFullProfile, UserProfile, updateUserProfileById, updateUserProfile } from '@/lib/profile';
 import { uploadKYCWithData, KYCDocumentFiles, getKycInfo } from '@/lib/kyc';
 import { getProfileData } from '@/lib/auth';
 import { getBusinessInfo, submitBusinessInfo } from '@/lib/business';
@@ -23,15 +23,10 @@ interface FormData {
   languages: string[];
   languageInput: string;
   website: string;
-  location: string;
+  address: string;
   country: string;
   state: string;
   city: string;
-  contactPerson: string;
-  designation: string;
-  email: string;
-  countryCode: string;
-  phone: string;
   yearOfEstablishment: string;
   gstNumber: string;
   panNumber: string;
@@ -47,12 +42,20 @@ interface DetailsContextType {
   setBusinessCardFile: React.Dispatch<React.SetStateAction<File | null>>;
   businessCardUrl: string | null;
   setBusinessCardUrl: React.Dispatch<React.SetStateAction<string | null>>;
-  additionalPhones: { countryCode: string; phone: string }[];
-  setAdditionalPhones: React.Dispatch<React.SetStateAction<{ countryCode: string; phone: string }[]>>;
+  contacts: { name: string; position: string; email: string; countryCode: string; phone_number: string }[];
+  setContacts: React.Dispatch<React.SetStateAction<{ name: string; position: string; email: string; countryCode: string; phone_number: string }[]>>;
   kycAttachments: { document_type: string; url: string; name: string; size?: number }[];
   setKycAttachments: React.Dispatch<React.SetStateAction<{ document_type: string; url: string; name: string; size?: number }[]>>;
   socialMediaProfiles: { platform: string; value: string }[];
   setSocialMediaProfiles: React.Dispatch<React.SetStateAction<{ platform: string; value: string }[]>>;
+  coverPhotoFile: File | null;
+  setCoverPhotoFile: React.Dispatch<React.SetStateAction<File | null>>;
+  coverPhotoUrl: string | null;
+  setCoverPhotoUrl: React.Dispatch<React.SetStateAction<string | null>>;
+  profilePhotoFile: File | null;
+  setProfilePhotoFile: React.Dispatch<React.SetStateAction<File | null>>;
+  profilePhotoUrl: string | null;
+  setProfilePhotoUrl: React.Dispatch<React.SetStateAction<string | null>>;
   showTourismLicense: boolean;
   setShowTourismLicense: React.Dispatch<React.SetStateAction<boolean>>;
   saving: boolean;
@@ -91,15 +94,10 @@ export function DetailsProvider({ children }: { children: React.ReactNode }) {
     languages: [],
     languageInput: '',
     website: '',
-    location: '',
+    address: '',
     country: '',
     state: '',
     city: '',
-    contactPerson: '',
-    designation: '',
-    email: '',
-    countryCode: '+91',
-    phone: '',
     yearOfEstablishment: '',
     gstNumber: '',
     panNumber: '',
@@ -110,9 +108,15 @@ export function DetailsProvider({ children }: { children: React.ReactNode }) {
   const [businessCardFile, setBusinessCardFile] = useState<File | null>(null);
   const [businessCardUrl, setBusinessCardUrl] = useState<string | null>(null);
   const [kycAttachments, setKycAttachments] = useState<{ document_type: string; url: string; name: string; size?: number }[]>([]);
-  const [additionalPhones, setAdditionalPhones] = useState<{ countryCode: string; phone: string }[]>([]);
+  const [contacts, setContacts] = useState<{ name: string; position: string; email: string; countryCode: string; phone_number: string }[]>([
+    { name: '', position: '', email: '', countryCode: '+91', phone_number: '' }
+  ]);
   const [showTourismLicense, setShowTourismLicense] = useState(false);
   const [socialMediaProfiles, setSocialMediaProfiles] = useState<{ platform: string; value: string }[]>([]);
+  const [coverPhotoFile, setCoverPhotoFile] = useState<File | null>(null);
+  const [coverPhotoUrl, setCoverPhotoUrl] = useState<string | null>(null);
+  const [profilePhotoFile, setProfilePhotoFile] = useState<File | null>(null);
+  const [profilePhotoUrl, setProfilePhotoUrl] = useState<string | null>(null);
 
   const completionPercent = 25;
 
@@ -134,14 +138,63 @@ export function DetailsProvider({ children }: { children: React.ReactNode }) {
           : prev.findingFor,
         findingBusiness: '',
         website: p.website_link || p.website || prev.website,
+        address: p.address || p.location || prev.address,
         country: p.country || prev.country,
         state: p.state || prev.state,
         city: p.city || prev.city,
-        contactPerson: p.contact_person_name || p.contact_person || prev.contactPerson,
-        designation: p.designation || prev.designation,
-        email: p.email || user?.email || prev.email,
-        phone: p.phone || phoneFirst || prev.phone,
       }));
+
+      // Extract image URLs if available
+      if (p.profile_image?.url) {
+        setProfilePhotoUrl(p.profile_image.url);
+      }
+      if (p.header_image?.url) {
+        setCoverPhotoUrl(p.header_image.url);
+      } else if (p.cover_photo?.url) {
+        setCoverPhotoUrl(p.cover_photo.url);
+      }
+
+      // Auto-fill contacts if present
+      const contactPersons = p.contact_person_name || p.contact_person;
+      if (Array.isArray(contactPersons) && contactPersons.length > 0) {
+        setContacts(
+          contactPersons.map((c: any) => {
+            const hasStrCode = typeof c.phone_number === 'string' && c.phone_number.includes('-');
+            const split = hasStrCode ? c.phone_number.split('-') : [];
+            const parsedCode = split.length > 1 ? split[0] : '+91';
+            const parsedNum = split.length > 1 ? split.slice(1).join('-') : c.phone_number;
+            return {
+              name: c.name || '',
+              position: c.position || c.designation || '',
+              email: c.email || '',
+              countryCode: parsedCode || '+91',
+              phone_number: parsedNum || '',
+            };
+          })
+        );
+      } else if (typeof contactPersons === 'string' || p.email || phoneFirst) {
+        setContacts([
+          {
+            name: (typeof contactPersons === 'string' ? contactPersons : '') || '',
+            position: p.designation || '',
+            email: p.email || user?.email || '',
+            countryCode: p.countryCode || '+91',
+            phone_number: p.phone || phoneFirst || '',
+          },
+        ]);
+      }
+
+      // Auto-fill social links if present
+      if (Array.isArray(p.social_links) && p.social_links.length > 0) {
+        setSocialMediaProfiles(p.social_links);
+      } else if (p.social_links && typeof p.social_links === 'object') {
+         // handle object syntax if that's what backend returns
+         const links = Object.keys(p.social_links).map(key => ({
+            platform: key,
+            value: p.social_links[key]
+         }));
+         setSocialMediaProfiles(links);
+      }
     };
     
     const applyBusinessInfo = (bi: any) => {
@@ -210,6 +263,11 @@ export function DetailsProvider({ children }: { children: React.ReactNode }) {
             applyProfile(p as any);
             
             if (p.documentId) {
+              const fullProfile = await getFullProfile(p.documentId);
+              if (fullProfile) {
+                applyProfile(fullProfile);
+              }
+
               const bi = await getBusinessInfo(p.documentId);
               if (bi) applyBusinessInfo(bi);
 
@@ -231,7 +289,7 @@ export function DetailsProvider({ children }: { children: React.ReactNode }) {
   const handleSave = async () => {
     setSaving(true);
     try {
-      if (activeTab === 'company' && profile?.id) {
+      if (activeTab === 'company' && profile?.documentId) {
         const payload = {
           company_name: formData.companyName,
           business_type: [formData.businessType],
@@ -242,16 +300,20 @@ export function DetailsProvider({ children }: { children: React.ReactNode }) {
           country: formData.country,
           state: formData.state,
           city: formData.city,
-          contact_person_name: formData.contactPerson,
-          designation: formData.designation,
-          email: formData.email,
-          phone_numbers: [
-            formData.phone,
-            ...additionalPhones.map(p => p.phone).filter(Boolean)
-          ],
+          address: formData.address,
+          contact_person_name: contacts.map(c => ({
+            name: c.name,
+            position: c.position,
+            email: c.email,
+            phone_number: c.phone_number ? (c.countryCode && c.countryCode !== '' ? `${c.countryCode}-${c.phone_number}` : c.phone_number) : ''
+          })),
+          phone_numbers: contacts.map(c => c.phone_number).filter(Boolean),
           social_links: socialMediaProfiles,
         };
-        await updateUserProfileById(profile.id, payload);
+        await updateUserProfile(profile.documentId, payload as any, {
+          profile_image: profilePhotoFile || undefined,
+          header_image: coverPhotoFile || undefined
+        });
 
       } else if (activeTab === 'kyc' && profile?.documentId) {
         const year =
@@ -322,10 +384,18 @@ export function DetailsProvider({ children }: { children: React.ReactNode }) {
         setBusinessCardUrl,
         kycAttachments,
         setKycAttachments,
-        additionalPhones,
-        setAdditionalPhones,
+        contacts,
+        setContacts,
         socialMediaProfiles,
         setSocialMediaProfiles,
+        coverPhotoFile,
+        setCoverPhotoFile,
+        coverPhotoUrl,
+        setCoverPhotoUrl,
+        profilePhotoFile,
+        setProfilePhotoFile,
+        profilePhotoUrl,
+        setProfilePhotoUrl,
         showTourismLicense,
         setShowTourismLicense,
         saving,
